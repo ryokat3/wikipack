@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<script type="text/template" id="markdown">
+
+# Write your Markdown here !!
+
+</script>
+
+<script inline type="text/javascript" src="../dist/inline_markdown.js"></script>
+
+<!-- Change CSS files in your preference -->
+<link inline rel="stylesheet" href="../node_modules/highlight.js/styles/monokai.css"/>
+<link inline rel="stylesheet" href="github.css"/>
+
+<!-- The text of the first heading in Markdown will automatically replace the title -->
+<title>inline_marked</title>
+
+</head>
+<body>
+<div id="html"></div>
+<script type="text/javascript">
+  window.onload = function() {    
+    converted = inline_markdown.render(document.getElementById("markdown").innerHTML)
+    document.getElementById("html").innerHTML = converted.html
+    if (converted.title !== undefined) {
+      document.title = converted.title
+    }
+  }
+</script>
+</body>
+</html>
