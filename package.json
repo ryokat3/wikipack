@@ -16,12 +16,12 @@
     "awesome-typescript-loader": "^5.0.0",
     "inline-source": "^6.1.5",
     "inline-source-cli": "^1.2.0",
-    "typescript": "^2.8.3",
-    "webpack": "^4.9.1",
-    "webpack-cli": "^2.1.4"
+    "typescript": "^2.9.1",
+    "webpack": "^4.10.2",
+    "webpack-cli": "^2.1.5"
   },
   "dependencies": {
-    "@types/highlight.js": "^9.12.2",
+    "@types/highlight.js": "^9.12.3",
     "@types/marked": "^0.3.0",
     "highlight.js": "^9.12.0",
     "marked": "^0.3.19"
