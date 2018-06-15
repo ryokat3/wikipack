@@ -1,6 +1,6 @@
 {
   "name": "inline_markdown",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "A customizable HTML template to self-render the inlined Markdown text",
   "main": "main.js",
   "scripts": {
@@ -16,7 +16,7 @@
     "awesome-typescript-loader": "^5.0.0",
     "inline-source": "^6.1.5",
     "inline-source-cli": "^1.2.0",
-    "typescript": "^2.9.1",
+    "typescript": "^2.9.2",
     "webpack": "^4.12.0",
     "webpack-cli": "^2.1.5"
   },
