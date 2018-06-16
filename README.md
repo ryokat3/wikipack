@@ -20,6 +20,30 @@ and `</screen>` at the top.
 </script>
 ```
 
+## Keywords Highlight
+
+A code block is highlighted by [highlight.js](https://highlightjs.org/).
+Other than the languages supported by [highlight.js](https://highlightjs.org/),
+any keywords can be highlighed with a special language name like `[word1,word2,word3,...]`.
+
+``````````
+```[foo,bar]
+My name is foo, and
+its name is bar.
+```
+``````````
+
+will be rendered as
+
+```
+<pre>
+<code>
+My name is <span class="hljs-name">foo</span>, and
+its name is <span class="hljs-name">bar</span>.
+</code>
+</pre>
+```
+
 ## Customize
 
 In order to apply othor CSS on your preference, edit the template
