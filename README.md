@@ -62,6 +62,10 @@ HTML file, and generate new HTML file with other CSS inlined.
    <link inline rel="stylesheet" href="github.css"/>
    ```
 
+   [MarkedCustomStyles](https://github.com/ttscoff/MarkedCustomStyles) provides
+   excellent CSSes that can be used for 'marked' HTML files.
+   
+
 3. Generate new HTML file
    ```
    $ npm run build
