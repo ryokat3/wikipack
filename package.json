@@ -13,7 +13,7 @@
   "author": "https://github.com/wak109",
   "license": "MIT",
   "devDependencies": {
-    "awesome-typescript-loader": "^5.0.0",
+    "awesome-typescript-loader": "^5.1.1",
     "inline-source": "^6.1.5",
     "inline-source-cli": "^1.2.0",
     "typescript": "^2.9.2",
