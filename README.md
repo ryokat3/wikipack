@@ -24,10 +24,12 @@ and `</screen>` at the top.
 
 A code block is highlighted by [highlight.js](https://highlightjs.org/).
 Other than the languages supported by [highlight.js](https://highlightjs.org/),
-any keywords can be highlighed with a special language name like `[word1,word2,word3,...]`.
+any keywords can be highlighed with a special language name like
+`%[word1,word2,word3,...],#[word4,word5,...]`.
+
 
 ``````````
-```[foo,bar]
+```%[foo,bar],#[baz,qux]
 My name is foo, and
 its name is bar.
 ```
