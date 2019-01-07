@@ -14,7 +14,7 @@ class MyRenderer extends marked.Renderer {
         if (this.title === undefined && text !== "") {
             this.title = text
         }
-        return super.heading(text, level, raw)
+        return super.heading(text, level, raw, new marked.Slugger())
     }
 }
 
