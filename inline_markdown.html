@@ -4,11 +4,7 @@
 <meta charset="UTF-8">
 <script type="text/template" id="markdown">
 
-# Hello, world
-
-## It is it.
-
-Hello, world!!
+# Write your Markdown here !!
 
 </script>
 
@@ -26657,13 +26653,13 @@ pre {
 <body>
 <div id="html"></div>
 <script type="text/javascript">
-  window.onload = function() {    
-    converted = inline_markdown.render(document.getElementById("markdown").innerHTML)
-    document.getElementById("html").innerHTML = converted.html
-    if (converted.title !== undefined) {
-      document.title = converted.title
+    window.onload = function() {    
+        converted = inline_markdown.render(document.getElementById("markdown").innerHTML)
+        document.getElementById("html").innerHTML = converted.html
+        if (converted.title !== undefined) {
+        document.title = converted.title
+        }
     }
-  }
 </script>
 </body>
 </html>
