@@ -190,7 +190,7 @@ https://highlightjs.org/
     classes = classes.split(/\s+/);
 
     for (i = 0, length = classes.length; i < length; i++) {
-      _class = classes[i]
+      _class = classes[i];
 
       if (isNotHighlighted(_class) || getLanguage(_class)) {
         return _class;
@@ -396,7 +396,7 @@ https://highlightjs.org/
         mode.contains = [];
       }
       mode.contains = Array.prototype.concat.apply([], mode.contains.map(function(c) {
-        return expand_mode(c === 'self' ? mode : c)
+        return expand_mode(c === 'self' ? mode : c);
       }));
       mode.contains.forEach(function(c) {compileMode(c, mode);});
 
@@ -469,7 +469,7 @@ https://highlightjs.org/
     function buildSpan(classname, insideSpan, leaveOpen, noPrefix) {
       var classPrefix = noPrefix ? '' : options.classPrefix,
           openSpan    = '<span class="' + classPrefix,
-          closeSpan   = leaveOpen ? '' : spanEndTag
+          closeSpan   = leaveOpen ? '' : spanEndTag;
 
       openSpan += classname + '">';
 
@@ -3876,6 +3876,8 @@ module.exports = function(hljs) {
         'implementation definition system module from import qualified as ' +
         'special code inline foreign export ccall stdcall generic derive ' +
         'infix infixl infixr',
+      built_in:
+        'Int Real Char Bool',
       literal:
         'True False'
     },
@@ -3887,7 +3889,7 @@ module.exports = function(hljs) {
       hljs.QUOTE_STRING_MODE,
       hljs.C_NUMBER_MODE,
 
-      {begin: '->|<-[|:]?|::|#!?|>>=|\\{\\||\\|\\}|:==|=:|\\.\\.|<>|`'} // relevance booster
+      {begin: '->|<-[|:]?|#!?|>>=|\\{\\||\\|\\}|:==|=:|<>'} // relevance booster
     ]
   };
 };
@@ -3906,7 +3908,7 @@ module.exports = function(hljs) {
     contains: [
       {
         className: 'meta',
-        begin: /^([\w.-]+|\s*#_)=>/,
+        begin: /^([\w.-]+|\s*#_)?=>/,
         starts: {
           end: /$/,
           subLanguage: 'clojure'
@@ -4761,16 +4763,16 @@ module.exports = function(hljs) {
 /***/ (function(module, exports) {
 
 module.exports = function(hljs) {
-  var NUM_SUFFIX = '(_[uif](8|16|32|64))?';
+  var INT_SUFFIX = '(_*[ui](8|16|32|64|128))?';
+  var FLOAT_SUFFIX = '(_*f(32|64))?';
   var CRYSTAL_IDENT_RE = '[a-zA-Z_]\\w*[!?=]?';
-  var RE_STARTER = '!=|!==|%|%=|&|&&|&=|\\*|\\*=|\\+|\\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|' +
-    '>>|>|\\[|\\{|\\(|\\^|\\^=|\\||\\|=|\\|\\||~';
-  var CRYSTAL_METHOD_RE = '[a-zA-Z_]\\w*[!?=]?|[-+~]\\@|<<|>>|=~|===?|<=>|[<>]=?|\\*\\*|[-/+%^&*~`|]|\\[\\][=?]?';
+  var CRYSTAL_METHOD_RE = '[a-zA-Z_]\\w*[!?=]?|[-+~]\\@|<<|>>|=~|===?|<=>|[<>]=?|\\*\\*|[-/+%^&*~|]|//|//=|&[-+*]=?|&\\*\\*|\\[\\][=?]?';
+  var CRYSTAL_PATH_RE = '[A-Za-z_]\\w*(::\\w+)*(\\?|\\!)?';
   var CRYSTAL_KEYWORDS = {
     keyword:
-      'abstract alias as as? asm begin break case class def do else elsif end ensure enum extend for fun if ' +
+      'abstract alias annotation as as? asm begin break case class def do else elsif end ensure enum extend for fun if ' +
       'include instance_sizeof is_a? lib macro module next nil? of out pointerof private protected rescue responds_to? ' +
-      'return require select self sizeof struct super then type typeof union uninitialized unless until when while with yield ' +
+      'return require select self sizeof struct super then type typeof union uninitialized unless until verbatim when while with yield ' +
       '__DIR__ __END_LINE__ __FILE__ __LINE__',
     literal: 'false nil true'
   };
@@ -4801,14 +4803,11 @@ module.exports = function(hljs) {
       {begin: /'/, end: /'/},
       {begin: /"/, end: /"/},
       {begin: /`/, end: /`/},
-      {begin: '%w?\\(', end: '\\)', contains: recursiveParen('\\(', '\\)')},
-      {begin: '%w?\\[', end: '\\]', contains: recursiveParen('\\[', '\\]')},
-      {begin: '%w?{', end: '}', contains: recursiveParen('{', '}')},
-      {begin: '%w?<', end: '>', contains: recursiveParen('<', '>')},
-      {begin: '%w?/', end: '/'},
-      {begin: '%w?%', end: '%'},
-      {begin: '%w?-', end: '-'},
-      {begin: '%w?\\|', end: '\\|'},
+      {begin: '%[Qwi]?\\(', end: '\\)', contains: recursiveParen('\\(', '\\)')},
+      {begin: '%[Qwi]?\\[', end: '\\]', contains: recursiveParen('\\[', '\\]')},
+      {begin: '%[Qwi]?{', end: '}', contains: recursiveParen('{', '}')},
+      {begin: '%[Qwi]?<', end: '>', contains: recursiveParen('<', '>')},
+      {begin: '%[Qwi]?\\|', end: '\\|'},
       {begin: /<<-\w+$/, end: /^\s*\w+$/},
     ],
     relevance: 0,
@@ -4820,31 +4819,21 @@ module.exports = function(hljs) {
       {begin: '%q\\[', end: '\\]', contains: recursiveParen('\\[', '\\]')},
       {begin: '%q{', end: '}', contains: recursiveParen('{', '}')},
       {begin: '%q<', end: '>', contains: recursiveParen('<', '>')},
-      {begin: '%q/', end: '/'},
-      {begin: '%q%', end: '%'},
-      {begin: '%q-', end: '-'},
       {begin: '%q\\|', end: '\\|'},
       {begin: /<<-'\w+'$/, end: /^\s*\w+$/},
     ],
     relevance: 0,
   };
   var REGEXP = {
-    begin: '(' + RE_STARTER + ')\\s*',
+    begin: '(?!%})(' + hljs.RE_STARTERS_RE + '|\\n|\\b(case|if|select|unless|until|when|while)\\b)\\s*',
+    keywords: 'case if select unless until when while',
     contains: [
       {
         className: 'regexp',
         contains: [hljs.BACKSLASH_ESCAPE, SUBST],
         variants: [
           {begin: '//[a-z]*', relevance: 0},
-          {begin: '/', end: '/[a-z]*'},
-          {begin: '%r\\(', end: '\\)', contains: recursiveParen('\\(', '\\)')},
-          {begin: '%r\\[', end: '\\]', contains: recursiveParen('\\[', '\\]')},
-          {begin: '%r{', end: '}', contains: recursiveParen('{', '}')},
-          {begin: '%r<', end: '>', contains: recursiveParen('<', '>')},
-          {begin: '%r/', end: '/'},
-          {begin: '%r%', end: '%'},
-          {begin: '%r-', end: '-'},
-          {begin: '%r\\|', end: '\\|'},
+          {begin: '/(?!\\/)', end: '/[a-z]*'},
         ]
       }
     ],
@@ -4858,9 +4847,6 @@ module.exports = function(hljs) {
       {begin: '%r\\[', end: '\\]', contains: recursiveParen('\\[', '\\]')},
       {begin: '%r{', end: '}', contains: recursiveParen('{', '}')},
       {begin: '%r<', end: '>', contains: recursiveParen('<', '>')},
-      {begin: '%r/', end: '/'},
-      {begin: '%r%', end: '%'},
-      {begin: '%r-', end: '-'},
       {begin: '%r\\|', end: '\\|'},
     ],
     relevance: 0
@@ -4876,8 +4862,8 @@ module.exports = function(hljs) {
     EXPANSION,
     STRING,
     Q_STRING,
-    REGEXP,
     REGEXP2,
+    REGEXP,
     ATTRIBUTE,
     hljs.HASH_COMMENT_MODE,
     {
@@ -4886,7 +4872,7 @@ module.exports = function(hljs) {
       illegal: /=/,
       contains: [
         hljs.HASH_COMMENT_MODE,
-        hljs.inherit(hljs.TITLE_MODE, {begin: '[A-Za-z_]\\w*(::\\w+)*(\\?|\\!)?'}),
+        hljs.inherit(hljs.TITLE_MODE, {begin: CRYSTAL_PATH_RE}),
         {begin: '<'} // relevance booster for inheritance
       ]
     },
@@ -4896,7 +4882,16 @@ module.exports = function(hljs) {
       illegal: /=/,
       contains: [
         hljs.HASH_COMMENT_MODE,
-        hljs.inherit(hljs.TITLE_MODE, {begin: '[A-Za-z_]\\w*(::\\w+)*(\\?|\\!)?'}),
+        hljs.inherit(hljs.TITLE_MODE, {begin: CRYSTAL_PATH_RE}),
+      ],
+      relevance: 10
+    },
+    {
+      beginKeywords: 'annotation', end: '$|;',
+      illegal: /=/,
+      contains: [
+        hljs.HASH_COMMENT_MODE,
+        hljs.inherit(hljs.TITLE_MODE, {begin: CRYSTAL_PATH_RE}),
       ],
       relevance: 10
     },
@@ -4935,10 +4930,11 @@ module.exports = function(hljs) {
     {
       className: 'number',
       variants: [
-        { begin: '\\b0b([01_]*[01])' + NUM_SUFFIX },
-        { begin: '\\b0o([0-7_]*[0-7])' + NUM_SUFFIX },
-        { begin: '\\b0x([A-Fa-f0-9_]*[A-Fa-f0-9])' + NUM_SUFFIX },
-        { begin: '\\b(([0-9][0-9_]*[0-9]|[0-9])(\\.[0-9_]*[0-9])?([eE][+-]?[0-9_]*[0-9])?)' + NUM_SUFFIX}
+        { begin: '\\b0b([01_]+)' + INT_SUFFIX },
+        { begin: '\\b0o([0-7_]+)' + INT_SUFFIX },
+        { begin: '\\b0x([A-Fa-f0-9_]+)' + INT_SUFFIX },
+        { begin: '\\b([1-9][0-9_]*[0-9]|[0-9])(\\.[0-9][0-9_]*)?([eE]_*[-+]?[0-9_]*)?' + FLOAT_SUFFIX + '(?!_)' },
+        { begin: '\\b([1-9][0-9_]*|0)' + INT_SUFFIX }
       ],
       relevance: 0
     }
@@ -5046,7 +5042,7 @@ module.exports = function(hljs) {
   var TYPE_IDENT_RE = hljs.IDENT_RE + '(<' + hljs.IDENT_RE + '(\\s*,\\s*' + hljs.IDENT_RE + ')*>)?(\\[\\])?';
 
   return {
-    aliases: ['csharp'],
+    aliases: ['csharp', 'c#'],
     keywords: KEYWORDS,
     illegal: /::/,
     contains: [
@@ -5573,10 +5569,16 @@ module.exports = function (hljs) {
   var SUBST = {
     className: 'subst',
     variants: [
-       {begin: '\\${', end: '}'},
        {begin: '\\$[A-Za-z0-9_]+'}
     ],
-    keywords: 'true false null this is new super'
+  };
+
+  var BRACED_SUBST = {
+    className: 'subst',
+    variants: [
+       {begin: '\\${', end: '}'},
+    ],
+    keywords: 'true false null this is new super',
   };
 
   var STRING = {
@@ -5598,25 +5600,25 @@ module.exports = function (hljs) {
       },
       {
         begin: '\'\'\'', end: '\'\'\'',
-        contains: [hljs.BACKSLASH_ESCAPE, SUBST]
+        contains: [hljs.BACKSLASH_ESCAPE, SUBST, BRACED_SUBST]
       },
       {
         begin: '"""', end: '"""',
-        contains: [hljs.BACKSLASH_ESCAPE, SUBST]
+        contains: [hljs.BACKSLASH_ESCAPE, SUBST, BRACED_SUBST]
       },
       {
         begin: '\'', end: '\'',
         illegal: '\\n',
-        contains: [hljs.BACKSLASH_ESCAPE, SUBST]
+        contains: [hljs.BACKSLASH_ESCAPE, SUBST, BRACED_SUBST]
       },
       {
         begin: '"', end: '"',
         illegal: '\\n',
-        contains: [hljs.BACKSLASH_ESCAPE, SUBST]
+        contains: [hljs.BACKSLASH_ESCAPE, SUBST, BRACED_SUBST]
       }
     ]
   };
-  SUBST.contains = [
+  BRACED_SUBST.contains = [
     hljs.C_NUMBER_MODE, STRING
   ];
 
@@ -5933,7 +5935,7 @@ module.exports = function(hljs) {
       {
         beginKeywords: 'run cmd entrypoint volume add copy workdir label healthcheck shell',
         starts: {
-          end: /[^\\]\n/,
+          end: /[^\\]$/,
           subLanguage: 'bash'
         }
       }
@@ -7188,15 +7190,16 @@ module.exports = function (hljs) {
 
 module.exports = function(hljs) {
   var KEYWORDS = {
-    keyword: 'and bool break call callexe checkinterrupt clear clearg closeall cls comlog compile ' +
+    keyword:  'bool break call callexe checkinterrupt clear clearg closeall cls comlog compile ' +
               'continue create debug declare delete disable dlibrary dllcall do dos ed edit else ' +
               'elseif enable end endfor endif endp endo errorlog errorlogat expr external fn ' +
               'for format goto gosub graph if keyword let lib library line load loadarray loadexe ' +
               'loadf loadk loadm loadp loads loadx local locate loopnextindex lprint lpwidth lshow ' +
-              'matrix msym ndpclex new not open or output outwidth plot plotsym pop prcsn print ' +
+              'matrix msym ndpclex new open output outwidth plot plotsym pop prcsn print ' +
               'printdos proc push retp return rndcon rndmod rndmult rndseed run save saveall screen ' +
               'scroll setarray show sparse stop string struct system trace trap threadfor ' +
-              'threadendfor threadbegin threadjoin threadstat threadend until use while winprint',
+              'threadendfor threadbegin threadjoin threadstat threadend until use while winprint ' +
+              'ne ge le gt lt and xor or not eq eqv',
     built_in: 'abs acf aconcat aeye amax amean AmericanBinomCall AmericanBinomCall_Greeks AmericanBinomCall_ImpVol ' +
               'AmericanBinomPut AmericanBinomPut_Greeks AmericanBinomPut_ImpVol AmericanBSCall AmericanBSCall_Greeks ' +
               'AmericanBSCall_ImpVol AmericanBSPut AmericanBSPut_Greeks AmericanBSPut_ImpVol amin amult annotationGetDefaults ' +
@@ -7272,21 +7275,25 @@ module.exports = function(hljs) {
               'spTScalar spZeros sqpSolve sqpSolveMT sqpSolveMTControlCreate sqpSolveMTlagrangeCreate sqpSolveMToutCreate sqpSolveSet ' +
               'sqrt statements stdc stdsc stocv stof strcombine strindx strlen strput strrindx strsect strsplit strsplitPad strtodt ' +
               'strtof strtofcplx strtriml strtrimr strtrunc strtruncl strtruncpad strtruncr submat subscat substute subvec sumc sumr ' +
-              'surface svd svd1 svd2 svdcusv svds svdusv sysstate tab tan tanh tempname threadBegin threadEnd threadEndFor threadFor ' +
-              'threadJoin threadStat time timedt timestr timeutc title tkf2eps tkf2ps tocart todaydt toeplitz token topolar trapchk ' +
+              'surface svd svd1 svd2 svdcusv svds svdusv sysstate tab tan tanh tempname ' +
+              'time timedt timestr timeutc title tkf2eps tkf2ps tocart todaydt toeplitz token topolar trapchk ' +
               'trigamma trimr trunc type typecv typef union unionsa uniqindx uniqindxsa unique uniquesa upmat upmat1 upper utctodt ' +
               'utctodtv utrisol vals varCovMS varCovXS varget vargetl varmall varmares varput varputl vartypef vcm vcms vcx vcxs ' +
               'vec vech vecr vector vget view viewxyz vlist vnamecv volume vput vread vtypecv wait waitc walkindex where window ' +
               'writer xlabel xlsGetSheetCount xlsGetSheetSize xlsGetSheetTypes xlsMakeRange xlsReadM xlsReadSA xlsWrite xlsWriteM ' +
               'xlsWriteSA xpnd xtics xy xyz ylabel ytics zeros zeta zlabel ztics cdfEmpirical dot h5create h5open h5read h5readAttribute ' +
               'h5write h5writeAttribute ldl plotAddErrorBar plotAddSurface plotCDFEmpirical plotSetColormap plotSetContourLabels ' +
-              'plotSetLegendFont plotSetTextInterpreter plotSetXTicCount plotSetYTicCount plotSetZLevels powerm strjoin strtrim sylvester',
+              'plotSetLegendFont plotSetTextInterpreter plotSetXTicCount plotSetYTicCount plotSetZLevels powerm strjoin sylvester ' +
+              'strtrim',
     literal: 'DB_AFTER_LAST_ROW DB_ALL_TABLES DB_BATCH_OPERATIONS DB_BEFORE_FIRST_ROW DB_BLOB DB_EVENT_NOTIFICATIONS ' +
              'DB_FINISH_QUERY DB_HIGH_PRECISION DB_LAST_INSERT_ID DB_LOW_PRECISION_DOUBLE DB_LOW_PRECISION_INT32 ' +
              'DB_LOW_PRECISION_INT64 DB_LOW_PRECISION_NUMBERS DB_MULTIPLE_RESULT_SETS DB_NAMED_PLACEHOLDERS ' +
              'DB_POSITIONAL_PLACEHOLDERS DB_PREPARED_QUERIES DB_QUERY_SIZE DB_SIMPLE_LOCKING DB_SYSTEM_TABLES DB_TABLES ' +
-             'DB_TRANSACTIONS DB_UNICODE DB_VIEWS'
+             'DB_TRANSACTIONS DB_UNICODE DB_VIEWS __STDIN __STDOUT __STDERR __FILE_DIR'
   };
+
+
+  var AT_COMMENT_MODE = hljs.COMMENT('@', '@');
 
   var PREPROCESSOR =
   {
@@ -7309,103 +7316,165 @@ module.exports = function(hljs) {
         ]
       },
       hljs.C_LINE_COMMENT_MODE,
-      hljs.C_BLOCK_COMMENT_MODE
+      hljs.C_BLOCK_COMMENT_MODE,
+      AT_COMMENT_MODE,
     ]
   };
 
-  var FUNCTION_TITLE = hljs.UNDERSCORE_IDENT_RE + '\\s*\\(?';
+  var STRUCT_TYPE =
+  {
+    begin: /\bstruct\s+/,
+    end: /\s/,
+    keywords: "struct",
+    contains: [
+      {
+        className: "type",
+        begin: hljs.UNDERSCORE_IDENT_RE,
+        relevance: 0,
+      },
+    ],
+  };
+
+  // only for definitions
   var PARSE_PARAMS = [
     {
       className: 'params',
       begin: /\(/, end: /\)/,
-      keywords: KEYWORDS,
+      excludeBegin: true,
+      excludeEnd: true,
+      endsWithParent: true,
       relevance: 0,
       contains: [
+        { // dots
+          className: 'literal',
+          begin: /\.\.\./,
+        },
         hljs.C_NUMBER_MODE,
-        hljs.C_LINE_COMMENT_MODE,
-        hljs.C_BLOCK_COMMENT_MODE
+        hljs.C_BLOCK_COMMENT_MODE,
+        AT_COMMENT_MODE,
+        STRUCT_TYPE,
       ]
     }
   ];
+
+  var FUNCTION_DEF =
+  {
+    className: "title",
+    begin: hljs.UNDERSCORE_IDENT_RE,
+    relevance: 0,
+  };
+
+  var DEFINITION = function (beginKeywords, end, inherits) {
+    var mode = hljs.inherit(
+      {
+        className: "function",
+        beginKeywords: beginKeywords,
+        end: end,
+        excludeEnd: true,
+        contains: [].concat(PARSE_PARAMS),
+      },
+      inherits || {}
+    );
+    mode.contains.push(FUNCTION_DEF);
+    mode.contains.push(hljs.C_NUMBER_MODE);
+    mode.contains.push(hljs.C_BLOCK_COMMENT_MODE);
+    mode.contains.push(AT_COMMENT_MODE);
+    return mode;
+  };
+
+  var BUILT_IN_REF =
+  { // these are explicitly named internal function calls
+    className: 'built_in',
+    begin: '\\b(' + KEYWORDS.built_in.split(' ').join('|') + ')\\b',
+  };
+
+  var STRING_REF =
+  {
+    className: 'string',
+    begin: '"', end: '"',
+    contains: [hljs.BACKSLASH_ESCAPE],
+    relevance: 0,
+  };
+
+  var FUNCTION_REF =
+  {
+    //className: "fn_ref",
+    begin: hljs.UNDERSCORE_IDENT_RE + '\\s*\\(',
+    returnBegin: true,
+    keywords: KEYWORDS,
+    relevance: 0,
+    contains: [
+      {
+        beginKeywords: KEYWORDS.keyword,
+      },
+      BUILT_IN_REF,
+      { // ambiguously named function calls get a relevance of 0
+        className: 'built_in',
+        begin: hljs.UNDERSCORE_IDENT_RE,
+        relevance: 0,
+      },
+    ],
+  };
+
+  var FUNCTION_REF_PARAMS =
+  {
+    //className: "fn_ref_params",
+    begin: /\(/,
+    end: /\)/,
+    relevance: 0,
+    keywords: { built_in: KEYWORDS.built_in, literal: KEYWORDS.literal },
+    contains: [
+      hljs.C_NUMBER_MODE,
+      hljs.C_BLOCK_COMMENT_MODE,
+      AT_COMMENT_MODE,
+      BUILT_IN_REF,
+      FUNCTION_REF,
+      STRING_REF,
+      'self',
+    ],
+  };
+
+  FUNCTION_REF.contains.push(FUNCTION_REF_PARAMS);
 
   return {
     aliases: ['gss'],
     case_insensitive: true, // language is case-insensitive
     keywords: KEYWORDS,
-    illegal: '(\\{[%#]|[%#]\\})',
+    illegal: /(\{[%#]|[%#]\}| <- )/,
     contains: [
       hljs.C_NUMBER_MODE,
       hljs.C_LINE_COMMENT_MODE,
       hljs.C_BLOCK_COMMENT_MODE,
-      hljs.COMMENT('@', '@'),
+      AT_COMMENT_MODE,
+      STRING_REF,
       PREPROCESSOR,
       {
-        className: 'string',
-        begin: '"', end: '"',
-        contains: [hljs.BACKSLASH_ESCAPE]
+        className: 'keyword',
+        begin: /\bexternal (matrix|string|array|sparse matrix|struct|proc|keyword|fn)/,
       },
+      DEFINITION('proc keyword', ';'),
+      DEFINITION('fn', '='),
       {
-        className: 'function',
-        beginKeywords: 'proc keyword',
-        end: ';',
-        excludeEnd: true,
-        keywords: KEYWORDS,
+        beginKeywords: 'for threadfor',
+        end: /;/,
+        //end: /\(/,
+        relevance: 0,
         contains: [
-          {
-            begin: FUNCTION_TITLE, returnBegin: true,
-            contains: [hljs.UNDERSCORE_TITLE_MODE],
-            relevance: 0
-          },
-          hljs.C_NUMBER_MODE,
-          hljs.C_LINE_COMMENT_MODE,
           hljs.C_BLOCK_COMMENT_MODE,
-          PREPROCESSOR
-        ].concat(PARSE_PARAMS)
+          AT_COMMENT_MODE,
+          FUNCTION_REF_PARAMS,
+        ],
       },
-      {
-        className: 'function',
-        beginKeywords: 'fn',
-        end: ';',
-        excludeEnd: true,
-        keywords: KEYWORDS,
-        contains: [
-          {
-            begin: FUNCTION_TITLE + hljs.IDENT_RE + '\\)?\\s*\\=\\s*', returnBegin: true,
-            contains: [hljs.UNDERSCORE_TITLE_MODE],
-            relevance: 0
-          },
-          hljs.C_NUMBER_MODE,
-          hljs.C_LINE_COMMENT_MODE,
-          hljs.C_BLOCK_COMMENT_MODE
-        ].concat(PARSE_PARAMS)
+      { // custom method guard
+        // excludes method names from keyword processing
+        variants: [
+          { begin: hljs.UNDERSCORE_IDENT_RE + '\\.' + hljs.UNDERSCORE_IDENT_RE, },
+          { begin: hljs.UNDERSCORE_IDENT_RE + '\\s*=', },
+        ],
+        relevance: 0,
       },
-      {
-        className: 'function',
-        begin: '\\bexternal (proc|keyword|fn)\\s+',
-        end: ';',
-        excludeEnd: true,
-        keywords: KEYWORDS,
-        contains: [
-          {
-            begin: FUNCTION_TITLE, returnBegin: true,
-            contains: [hljs.UNDERSCORE_TITLE_MODE],
-            relevance: 0
-          },
-          hljs.C_LINE_COMMENT_MODE,
-          hljs.C_BLOCK_COMMENT_MODE
-        ]
-      },
-      {
-        className: 'function',
-        begin: '\\bexternal (matrix|string|array|sparse matrix|struct ' + hljs.IDENT_RE + ')\\s+',
-        end: ';',
-        excludeEnd: true,
-        keywords: KEYWORDS,
-        contains: [
-          hljs.C_LINE_COMMENT_MODE,
-          hljs.C_BLOCK_COMMENT_MODE
-        ]
-      }
+      FUNCTION_REF,
+      STRUCT_TYPE,
     ]
   };
 };
@@ -13045,7 +13114,6 @@ module.exports = function(hljs) {
       'module console window document Symbol Set Map WeakSet WeakMap Proxy Reflect ' +
       'Promise'
   };
-  var EXPRESSIONS;
   var NUMBER = {
     className: 'number',
     variants: [
@@ -13187,7 +13255,7 @@ module.exports = function(hljs) {
         ]
       },
       {
-        beginKeywords: 'constructor', end: /\{/, excludeEnd: true
+        beginKeywords: 'constructor get set', end: /\{/, excludeEnd: true
       }
     ],
     illegal: /#(?!!)/
@@ -18020,8 +18088,13 @@ module.exports = function(hljs) {
 
   var CLASS = {
     className: 'class',
-    beginKeywords: 'class actor', end: '$',
+    beginKeywords: 'class actor object primitive', end: '$',
     contains: [
+      {
+        className: 'keyword',
+        begin: 'is'
+      },
+      TYPE_NAME,
       hljs.TITLE_MODE,
       hljs.C_LINE_COMMENT_MODE
     ]
@@ -18029,7 +18102,7 @@ module.exports = function(hljs) {
 
   var FUNCTION = {
     className: 'function',
-    beginKeywords: 'new fun', end: '=>',
+    beginKeywords: 'new fun be', end: '=>',
     contains: [
       hljs.TITLE_MODE,
       {
@@ -18754,7 +18827,7 @@ module.exports = function(hljs) {
   };
   SUBST.contains = [STRING, NUMBER, PROMPT];
   return {
-    aliases: ['py', 'gyp'],
+    aliases: ['py', 'gyp', 'ipython'],
     keywords: KEYWORDS,
     illegal: /(<\/|->|\?)|=>/,
     contains: [
@@ -21325,20 +21398,20 @@ module.exports = function(hljs) {
           'delete do handler insert load replace select truncate update set show pragma grant ' +
           'merge describe use explain help declare prepare execute deallocate release ' +
           'unlock purge reset change stop analyze cache flush optimize repair kill ' +
-          'install uninstall checksum restore check backup revoke comment with',
+          'install uninstall checksum restore check backup revoke comment values with',
         end: /;/, endsWithParent: true,
         lexemes: /[\w\.]+/,
         keywords: {
           keyword:
             'as abort abs absolute acc acce accep accept access accessed accessible account acos action activate add ' +
             'addtime admin administer advanced advise aes_decrypt aes_encrypt after agent aggregate ali alia alias ' +
-            'allocate allow alter always analyze ancillary and any anydata anydataset anyschema anytype apply ' +
+            'all allocate allow alter always analyze ancillary and anti any anydata anydataset anyschema anytype apply ' +
             'archive archived archivelog are as asc ascii asin assembly assertion associate asynchronous at atan ' +
             'atn2 attr attri attrib attribu attribut attribute attributes audit authenticated authentication authid ' +
             'authors auto autoallocate autodblink autoextend automatic availability avg backup badfile basicfile ' +
             'before begin beginning benchmark between bfile bfile_base big bigfile bin binary_double binary_float ' +
             'binlog bit_and bit_count bit_length bit_or bit_xor bitmap blob_base block blocksize body both bound ' +
-            'buffer_cache buffer_pool build bulk by byte byteordermark bytes cache caching call calling cancel ' +
+            'bucket buffer_cache buffer_pool build bulk by byte byteordermark bytes cache caching call calling cancel ' +
             'capacity cascade cascaded case cast catalog category ceil ceiling chain change changed char_base ' +
             'char_length character_length characters characterset charindex charset charsetform charsetid check ' +
             'checksum checksum_agg child choose chr chunk class cleanup clear client clob clob_base clone close ' +
@@ -21362,7 +21435,7 @@ module.exports = function(hljs) {
             'editions element ellipsis else elsif elt empty enable enable_all enclosed encode encoding encrypt ' +
             'end end-exec endian enforced engine engines enqueue enterprise entityescaping eomonth error errors ' +
             'escaped evalname evaluate event eventdata events except exception exceptions exchange exclude excluding ' +
-            'execu execut execute exempt exists exit exp expire explain export export_set extended extent external ' +
+            'execu execut execute exempt exists exit exp expire explain explode export export_set extended extent external ' +
             'external_1 external_2 externally extract failed failed_login_attempts failover failure far fast ' +
             'feature_set feature_value fetch field fields file file_name_convert filesystem_like_logging final ' +
             'finish first first_value fixed flash_cache flashback floor flush following follows for forall force foreign ' +
@@ -21370,13 +21443,13 @@ module.exports = function(hljs) {
             'ftp full function general generated get get_format get_lock getdate getutcdate global global_name ' +
             'globally go goto grant grants greatest group group_concat group_id grouping grouping_id groups ' +
             'gtid_subtract guarantee guard handler hash hashkeys having hea head headi headin heading heap help hex ' +
-            'hierarchy high high_priority hosts hour http id ident_current ident_incr ident_seed identified ' +
+            'hierarchy high high_priority hosts hour hours http id ident_current ident_incr ident_seed identified ' +
             'identity idle_time if ifnull ignore iif ilike ilm immediate import in include including increment ' +
             'index indexes indexing indextype indicator indices inet6_aton inet6_ntoa inet_aton inet_ntoa infile ' +
             'initial initialized initially initrans inmemory inner innodb input insert install instance instantiable ' +
             'instr interface interleaved intersect into invalidate invisible is is_free_lock is_ipv4 is_ipv4_compat ' +
             'is_not is_not_null is_used_lock isdate isnull isolation iterate java join json json_exists ' +
-            'keep keep_duplicates key keys kill language large last last_day last_insert_id last_value lax lcase ' +
+            'keep keep_duplicates key keys kill language large last last_day last_insert_id last_value lateral lax lcase ' +
             'lead leading least leaves left len lenght length less level levels library like like2 like4 likec limit ' +
             'lines link list listagg little ln load load_file lob lobs local localtime localtimestamp locate ' +
             'locator lock locked log log10 log2 logfile logfiles logging logical logical_reads_per_call ' +
@@ -21384,7 +21457,7 @@ module.exports = function(hljs) {
             'managed management manual map mapping mask master master_pos_wait match matched materialized max ' +
             'maxextents maximize maxinstances maxlen maxlogfiles maxloghistory maxlogmembers maxsize maxtrans ' +
             'md5 measures median medium member memcompress memory merge microsecond mid migration min minextents ' +
-            'minimum mining minus minute minvalue missing mod mode model modification modify module monitoring month ' +
+            'minimum mining minus minute minutes minvalue missing mod mode model modification modify module monitoring month ' +
             'months mount move movement multiset mutex name name_const names nan national native natural nav nchar ' +
             'nclob nested never new newline next nextval no no_write_to_binlog noarchivelog noaudit nobadfile ' +
             'nocheck nocompress nocopy nocycle nodelay nodiscardfile noentityescaping noguarantee nokeep nologfile ' +
@@ -21412,8 +21485,8 @@ module.exports = function(hljs) {
             'restricted result result_cache resumable resume retention return returning returns reuse reverse revoke ' +
             'right rlike role roles rollback rolling rollup round row row_count rowdependencies rowid rownum rows ' +
             'rtrim rules safe salt sample save savepoint sb1 sb2 sb4 scan schema schemacheck scn scope scroll ' +
-            'sdo_georaster sdo_topo_geometry search sec_to_time second section securefile security seed segment select ' +
-            'self sequence sequential serializable server servererror session session_user sessions_per_user set ' +
+            'sdo_georaster sdo_topo_geometry search sec_to_time second seconds section securefile security seed segment select ' +
+            'self semi sequence sequential serializable server servererror session session_user sessions_per_user set ' +
             'sets settings sha sha1 sha2 share shared shared_pool short show shrink shutdown si_averagecolor ' +
             'si_colorhistogram si_featurelist si_positionalcolor si_stillimage si_texture siblings sid sign sin ' +
             'size size_t sizes skip slave sleep smalldatetimefromparts smallfile snapshot some soname sort soundex ' +
@@ -21425,7 +21498,7 @@ module.exports = function(hljs) {
             'stop storage store stored str str_to_date straight_join strcmp strict string struct stuff style subdate ' +
             'subpartition subpartitions substitutable substr substring subtime subtring_index subtype success sum ' +
             'suspend switch switchoffset switchover sync synchronous synonym sys sys_xmlagg sysasm sysaux sysdate ' +
-            'sysdatetimeoffset sysdba sysoper system system_user sysutcdatetime table tables tablespace tan tdo ' +
+            'sysdatetimeoffset sysdba sysoper system system_user sysutcdatetime table tables tablespace tablesample tan tdo ' +
             'template temporary terminated tertiary_weights test than then thread through tier ties time time_format ' +
             'time_zone timediff timefromparts timeout timestamp timestampadd timestampdiff timezone_abbr ' +
             'timezone_minute timezone_region to to_base64 to_date to_days to_seconds todatetimeoffset trace tracking ' +
@@ -21437,14 +21510,14 @@ module.exports = function(hljs) {
             'utc_timestamp uuid uuid_short validate validate_password_strength validation valist value values var ' +
             'var_samp varcharc vari varia variab variabl variable variables variance varp varraw varrawc varray ' +
             'verify version versions view virtual visible void wait wallet warning warnings week weekday weekofyear ' +
-            'wellformed when whene whenev wheneve whenever where while whitespace with within without work wrapped ' +
+            'wellformed when whene whenev wheneve whenever where while whitespace window with within without work wrapped ' +
             'xdb xml xmlagg xmlattributes xmlcast xmlcolattval xmlelement xmlexists xmlforest xmlindex xmlnamespaces ' +
             'xmlpi xmlquery xmlroot xmlschema xmlserialize xmltable xmltype xor year year_to_month years yearweek',
           literal:
             'true false null unknown',
           built_in:
             'array bigint binary bit blob bool boolean char character date dec decimal float int int8 integer interval number ' +
-            'numeric real record serial serial8 smallint text time timestamp varchar varying void'
+            'numeric real record serial serial8 smallint text time timestamp tinyint varchar varying void'
         },
         contains: [
           {
@@ -22220,6 +22293,11 @@ module.exports = function(hljs) {
     begin: '\\b[A-Z][\\w\u00C0-\u02B8\']*',
     relevance: 0
   };
+  // slightly more special to swift
+  var OPTIONAL_USING_TYPE = {
+    className: 'type',
+    begin: '\\b[A-Z][\\w\u00C0-\u02B8\']*[!?]'
+  }
   var BLOCK_COMMENT = hljs.COMMENT(
     '/\\*',
     '\\*/',
@@ -22254,6 +22332,7 @@ module.exports = function(hljs) {
       STRING,
       hljs.C_LINE_COMMENT_MODE,
       BLOCK_COMMENT,
+      OPTIONAL_USING_TYPE,
       TYPE,
       NUMBERS,
       {
@@ -22465,7 +22544,6 @@ module.exports = function(hljs) {
         className: 'string',
         contains: [hljs.BACKSLASH_ESCAPE],
         variants: [
-          hljs.inherit(hljs.APOS_STRING_MODE, {illegal: null}),
           hljs.inherit(hljs.QUOTE_STRING_MODE, {illegal: null})
         ]
       },
@@ -22495,8 +22573,8 @@ module.exports = function(hljs) {
       {
         className: 'name',
         variants: [
-          {begin: /[a-zA-Zа-яА-я]+[*]?/},
-          {begin: /[^a-zA-Zа-яА-я0-9]/}
+          {begin: /[a-zA-Z\u0430-\u044f\u0410-\u042f]+[*]?/},
+          {begin: /[^a-zA-Z\u0430-\u044f\u0410-\u042f0-9]/}
         ],
         starts: {
           endsWithParent: true,
@@ -22613,8 +22691,8 @@ module.exports = function(hljs) {
   };
   var TPDATA = {
     className: 'built_in',
-    begin: '(AR|P|PAYLOAD|PR|R|SR|RSR|LBL|VR|UALM|MESSAGE|UTOOL|UFRAME|TIMER|\
-    TIMER_OVERFLOW|JOINT_MAX_SPEED|RESUME_PROG|DIAG_REC)\\[', end: '\\]',
+    begin: '(AR|P|PAYLOAD|PR|R|SR|RSR|LBL|VR|UALM|MESSAGE|UTOOL|UFRAME|TIMER|' +
+    'TIMER_OVERFLOW|JOINT_MAX_SPEED|RESUME_PROG|DIAG_REC)\\[', end: '\\]',
     contains: [
       'self',
       TPID,
@@ -23779,16 +23857,72 @@ module.exports = function(hljs) {
 /***/ (function(module, exports) {
 
 module.exports = function(hljs) {
-  var KEYWORDS = 'for let if while then else return where group by xquery encoding version' +
-    'module namespace boundary-space preserve strip default collation base-uri ordering' +
-    'copy-namespaces order declare import schema namespace function option in allowing empty' +
-    'at tumbling window sliding window start when only end when previous next stable ascending' +
-    'descending empty greatest least some every satisfies switch case typeswitch try catch and' +
-    'or to union intersect instance of treat as castable cast map array delete insert into' +
-    'replace value rename copy modify update';
-  var LITERAL = 'false true xs:string xs:integer element item xs:date xs:datetime xs:float xs:double xs:decimal QName xs:anyURI xs:long xs:int xs:short xs:byte attribute';
+  // see https://www.w3.org/TR/xquery/#id-terminal-delimitation
+  var KEYWORDS = 'module schema namespace boundary-space preserve no-preserve strip default collation base-uri ordering context decimal-format decimal-separator copy-namespaces empty-sequence except exponent-separator external grouping-separator inherit no-inherit lax minus-sign per-mille percent schema-attribute schema-element strict unordered zero-digit ' +
+  'declare import option function validate variable ' +
+  'for at in let where order group by return if then else ' +
+  'tumbling sliding window start when only end previous next stable ' +
+  'ascending descending allowing empty greatest least some every satisfies switch case typeswitch try catch ' +
+  'and or to union intersect instance of treat as castable cast map array ' +
+  'delete insert into replace value rename copy modify update';
+
+  // Node Types (sorted by inheritance)
+  // atomic types (sorted by inheritance)
+  var TYPE = 'item document-node node attribute document element comment namespace namespace-node processing-instruction text construction ' +
+  'xs:anyAtomicType xs:untypedAtomic xs:duration xs:time xs:decimal xs:float xs:double xs:gYearMonth xs:gYear xs:gMonthDay xs:gMonth xs:gDay xs:boolean xs:base64Binary xs:hexBinary xs:anyURI xs:QName xs:NOTATION xs:dateTime xs:dateTimeStamp xs:date xs:string xs:normalizedString xs:token xs:language xs:NMTOKEN xs:Name xs:NCName xs:ID xs:IDREF xs:ENTITY xs:integer xs:nonPositiveInteger xs:negativeInteger xs:long xs:int xs:short xs:byte xs:nonNegativeInteger xs:unisignedLong xs:unsignedInt xs:unsignedShort xs:unsignedByte xs:positiveInteger xs:yearMonthDuration xs:dayTimeDuration';
+
+  var LITERAL = 'eq ne lt le gt ge is ' +
+    'self:: child:: descendant:: descendant-or-self:: attribute:: following:: following-sibling:: parent:: ancestor:: ancestor-or-self:: preceding:: preceding-sibling:: ' +
+    'NaN';
+
+  // functions (TODO: find regex for op: without breaking build)
+  var BUILT_IN = {
+    className: 'built_in',
+    variants: [{
+      begin: /\barray\:/,
+      end: /(?:append|filter|flatten|fold\-(?:left|right)|for-each(?:\-pair)?|get|head|insert\-before|join|put|remove|reverse|size|sort|subarray|tail)\b/
+    }, {
+      begin: /\bmap\:/,
+      end: /(?:contains|entry|find|for\-each|get|keys|merge|put|remove|size)\b/
+    }, {
+      begin: /\bmath\:/,
+      end: /(?:a(?:cos|sin|tan[2]?)|cos|exp(?:10)?|log(?:10)?|pi|pow|sin|sqrt|tan)\b/
+    }, {
+      begin: /\bop\:/,
+      end: /\(/,
+      excludeEnd: true
+    }, {
+      begin: /\bfn\:/,
+      end: /\(/,
+      excludeEnd: true
+    },
+// do not highlight inbuilt strings as variable or xml element names
+    {
+      begin: /[^<\/\$\:'"-]\b(?:abs|accumulator\-(?:after|before)|adjust\-(?:date(?:Time)?|time)\-to\-timezone|analyze\-string|apply|available\-(?:environment\-variables|system\-properties)|avg|base\-uri|boolean|ceiling|codepoints?\-(?:equal|to\-string)|collation\-key|collection|compare|concat|contains(?:\-token)?|copy\-of|count|current(?:\-)?(?:date(?:Time)?|time|group(?:ing\-key)?|output\-uri|merge\-(?:group|key))?data|dateTime|days?\-from\-(?:date(?:Time)?|duration)|deep\-equal|default\-(?:collation|language)|distinct\-values|document(?:\-uri)?|doc(?:\-available)?|element\-(?:available|with\-id)|empty|encode\-for\-uri|ends\-with|environment\-variable|error|escape\-html\-uri|exactly\-one|exists|false|filter|floor|fold\-(?:left|right)|for\-each(?:\-pair)?|format\-(?:date(?:Time)?|time|integer|number)|function\-(?:arity|available|lookup|name)|generate\-id|has\-children|head|hours\-from\-(?:dateTime|duration|time)|id(?:ref)?|implicit\-timezone|in\-scope\-prefixes|index\-of|innermost|insert\-before|iri\-to\-uri|json\-(?:doc|to\-xml)|key|lang|last|load\-xquery\-module|local\-name(?:\-from\-QName)?|(?:lower|upper)\-case|matches|max|minutes\-from\-(?:dateTime|duration|time)|min|months?\-from\-(?:date(?:Time)?|duration)|name(?:space\-uri\-?(?:for\-prefix|from\-QName)?)?|nilled|node\-name|normalize\-(?:space|unicode)|not|number|one\-or\-more|outermost|parse\-(?:ietf\-date|json)|path|position|(?:prefix\-from\-)?QName|random\-number\-generator|regex\-group|remove|replace|resolve\-(?:QName|uri)|reverse|root|round(?:\-half\-to\-even)?|seconds\-from\-(?:dateTime|duration|time)|snapshot|sort|starts\-with|static\-base\-uri|stream\-available|string\-?(?:join|length|to\-codepoints)?|subsequence|substring\-?(?:after|before)?|sum|system\-property|tail|timezone\-from\-(?:date(?:Time)?|time)|tokenize|trace|trans(?:form|late)|true|type\-available|unordered|unparsed\-(?:entity|text)?\-?(?:public\-id|uri|available|lines)?|uri\-collection|xml\-to\-json|years?\-from\-(?:date(?:Time)?|duration)|zero\-or\-one)\b/,
+    }, {
+      begin: /\blocal\:/,
+      end: /\(/,
+      excludeEnd: true
+    }, {
+      begin: /\bzip\:/,
+      end: /(?:zip\-file|(?:xml|html|text|binary)\-entry| (?:update\-)?entries)\b/
+    }, {
+      begin: /\b(?:util|db|functx|app|xdmp|xmldb)\:/,
+      end: /\(/,
+      excludeEnd: true
+    }
+  ]
+  };
+
+  var TITLE = {
+    className: 'title',
+    begin: /\bxquery version "[13]\.[01]"\s?(?:encoding ".+")?/,
+    end: /;/
+  };
+
   var VAR = {
-    begin: /\$[a-zA-Z0-9\-]+/
+    className: 'variable',
+    begin: /[\$][\w-:]+/
   };
 
   var NUMBER = {
@@ -23799,41 +23933,83 @@ module.exports = function(hljs) {
 
   var STRING = {
     className: 'string',
-    variants: [
-      {begin: /"/, end: /"/, contains: [{begin: /""/, relevance: 0}]},
-      {begin: /'/, end: /'/, contains: [{begin: /''/, relevance: 0}]}
+    variants: [{
+        begin: /"/,
+        end: /"/,
+        contains: [{
+          begin: /""/,
+          relevance: 0
+        }]
+      },
+      {
+        begin: /'/,
+        end: /'/,
+        contains: [{
+          begin: /''/,
+          relevance: 0
+        }]
+      }
     ]
   };
 
   var ANNOTATION = {
     className: 'meta',
-    begin: '%\\w+'
+    begin: /%[\w-:]+/
   };
 
   var COMMENT = {
     className: 'comment',
-    begin: '\\(:', end: ':\\)',
+    begin: '\\(:',
+    end: ':\\)',
     relevance: 10,
-    contains: [
-      {
-        className: 'doctag', begin: '@\\w+'
-      }
-    ]
+    contains: [{
+      className: 'doctag',
+      begin: '@\\w+'
+    }]
   };
 
-  var METHOD = {
-    begin: '{', end: '}'
+  // see https://www.w3.org/TR/xquery/#id-computedConstructors
+  // mocha: computed_inbuilt
+  // see https://www.regexpal.com/?fam=99749
+  var COMPUTED = {
+    beginKeywords: 'element attribute comment document processing-instruction',
+    end: '{',
+    excludeEnd: true
   };
+
+  // mocha: direct_method
+    var DIRECT = {
+      begin: /<([\w\._:\-]+)((\s*.*)=('|").*('|"))?>/,
+      end: /(\/[\w\._:\-]+>)/,
+      subLanguage: 'xml',
+      contains: [{
+        begin: '{',
+        end: '}',
+        subLanguage: 'xquery'
+      }, 'self']
+    };
+
 
   var CONTAINS = [
     VAR,
+    BUILT_IN,
     STRING,
     NUMBER,
     COMMENT,
     ANNOTATION,
-    METHOD
+    TITLE,
+    COMPUTED,
+    DIRECT
   ];
-  METHOD.contains = CONTAINS;
+
+
+
+    var METHOD = {
+      begin: '{',
+      end: '}',
+      contains: CONTAINS
+    };
+
 
 
   return {
@@ -23843,6 +24019,7 @@ module.exports = function(hljs) {
     illegal: /(proc)|(abstract)|(extends)|(until)|(#)/,
     keywords: {
       keyword: KEYWORDS,
+      type: TYPE,
       literal: LITERAL
     },
     contains: CONTAINS
@@ -25775,18 +25952,12 @@ module.exports = g;
 /*!*********************!*\
   !*** ./src/main.ts ***!
   \*********************/
-/*! exports provided: highlight_keywords, render */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "highlight_keywords", function() { return highlight_keywords; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "render", function() { return render; });
-/* harmony import */ var marked__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! marked */ "./node_modules/marked/lib/marked.js");
-/* harmony import */ var marked__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(marked__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var highlight_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! highlight.js */ "./node_modules/highlight.js/lib/index.js");
-/* harmony import */ var highlight_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(highlight_js__WEBPACK_IMPORTED_MODULE_1__);
-var __extends = (undefined && undefined.__extends) || (function () {
+
+var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
@@ -25799,8 +25970,16 @@ var __extends = (undefined && undefined.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-
-
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var marked = __importStar(__webpack_require__(/*! marked */ "./node_modules/marked/lib/marked.js"));
+var hljs = __importStar(__webpack_require__(/*! highlight.js */ "./node_modules/highlight.js/lib/index.js"));
 var MyRenderer = /** @class */ (function (_super) {
     __extends(MyRenderer, _super);
     function MyRenderer() {
@@ -25812,37 +25991,37 @@ var MyRenderer = /** @class */ (function (_super) {
         if (this.title === undefined && text !== "") {
             this.title = text;
         }
-        return _super.prototype.heading.call(this, text, level, raw, new marked__WEBPACK_IMPORTED_MODULE_0__["Slugger"]());
+        return _super.prototype.heading.call(this, text, level, raw, new marked.Slugger());
     };
     return MyRenderer;
-}(marked__WEBPACK_IMPORTED_MODULE_0__["Renderer"]));
-var highlight_keywords = function (code, keywords, class_name) {
+}(marked.Renderer));
+exports.highlight_keywords = function (code, keywords, class_name) {
     if (keywords.length === 0) {
         return code;
     }
-    return highlight_keywords(code.replace(new RegExp(keywords[0], 'gi'), "<span class=\"" + class_name + "\">" + keywords[0] + "</span>"), keywords.slice(1), class_name);
+    return exports.highlight_keywords(code.replace(new RegExp(keywords[0], 'gi'), "<span class=\"" + class_name + "\">" + keywords[0] + "</span>"), keywords.slice(1), class_name);
 };
-var render = function (text) {
-    highlight_js__WEBPACK_IMPORTED_MODULE_1__["initHighlightingOnLoad"]();
+exports.render = function (text) {
+    hljs.initHighlightingOnLoad();
     var myRenderer = new MyRenderer;
-    marked__WEBPACK_IMPORTED_MODULE_0__["setOptions"]({
+    marked.setOptions({
         renderer: myRenderer,
         highlight: function (code, lang, callback) {
             if (!lang) {
-                return highlight_js__WEBPACK_IMPORTED_MODULE_1__["highlightAuto"](code, [lang]).value;
+                return hljs.highlightAuto(code, [lang]).value;
             }
             var match = lang.match(/[#%]/i);
             if (match === null) {
-                return highlight_js__WEBPACK_IMPORTED_MODULE_1__["highlightAuto"](code, [lang]).value;
+                return hljs.highlightAuto(code, [lang]).value;
             }
             var escaped_code = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             match = lang.match(/#\[(.*?)\]/i);
             if (match !== null) {
-                escaped_code = highlight_keywords(escaped_code, match[1].split(','), "hljs-name");
+                escaped_code = exports.highlight_keywords(escaped_code, match[1].split(','), "hljs-name");
             }
             match = lang.match(/%\[(.*?)\]/i);
             if (match !== null) {
-                escaped_code = highlight_keywords(escaped_code, match[1].split(','), "hljs-type");
+                escaped_code = exports.highlight_keywords(escaped_code, match[1].split(','), "hljs-type");
             }
             return "<pre><code>" + escaped_code + "</code></pre>";
         },
@@ -25855,10 +26034,10 @@ var render = function (text) {
         smartypants: false,
         xhtml: false
     });
-    var html = marked__WEBPACK_IMPORTED_MODULE_0__["parse"](text);
+    var html = marked.parse(text);
     return {
         html: html,
-        title: myRenderer.title
+        title: myRenderer.title || "No title"
     };
 };
 
@@ -25946,461 +26125,21 @@ Monokai style - ported by Luigi Maselli - http://grigio.org
   src: url(data:font/woff;charset=utf-8;base64,d09GRgABAAAAAAZwABAAAAAACFQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABEU0lHAAAGaAAAAAgAAAAIAAAAAUdTVUIAAAZcAAAACgAAAAoAAQAAT1MvMgAAAyQAAABJAAAAYFYEU3RjbWFwAAADcAAAAEUAAACAAJThvmN2dCAAAATkAAAABAAAAAQAAAAAZnBnbQAAA7gAAACyAAABCUM+8IhnYXNwAAAGTAAAABAAAAAQABoAI2dseWYAAAFsAAABPAAAAZwcEq9taGVhZAAAAsgAAAA0AAAANgh4a91oaGVhAAADCAAAABoAAAAkCA8DRGhtdHgAAAL8AAAADAAAAAwGAACfbG9jYQAAAsAAAAAIAAAACABiATBtYXhwAAACqAAAABgAAAAgAA8ASm5hbWUAAAToAAABQgAAAlXu73sOcG9zdAAABiwAAAAeAAAAME3QpOBwcmVwAAAEbAAAAHYAAAB/aFGpk3jaTY6xa8JAGMW/O62BDi0tJLYQincXEypYIiGJjSgHniQ6umTsUEyLm5BV6NDBP8Tpts6F0v+k/0an2i+itHDw3v2+9+DBKTzsJNnWJNTgHEy4BgG3EMI9DCEDOGEXzDADU5hBKMIgNPZqoD3SilVaXZCER3/I7AtxEJLtzzuZfI+VVkprxTlXShWKb3TBecG11rwoNlmmn1P2WYcJczl32etSpKnziC7lQyWe1smVPy/Lt7Kc+0vWY/gAgIIEqAN9we0pwKXreiMasxvabDQMM4riO+qxM2ogwDGOZTXxwxDiycQIcoYFBLj5K3EIaSctAq2kTYiw+ymhce7vwM9jSqO8JyVd5RH9gyTt2+J/yUmYlIR0s04n6+7Vm1ozezUeLEaUjhaDSuXHwVRgvLJn1tQ7xiuVv/ocTRF42mNgZGBgYGbwZOBiAAFGJBIMAAizAFoAAABiAGIAznjaY2BkYGAA4in8zwXi+W2+MjCzMIDApSwvXzC97Z4Ig8N/BxYGZgcgl52BCSQKAA3jCV8CAABfAAAAAAQAAEB42mNgZGBg4f3vACQZQABIMjKgAmYAKEgBXgAAeNpjYGY6wTiBgZWBg2kmUxoDA4MPhGZMYzBi1AHygVLYQUCaawqDA4PChxhmh/8ODDEsvAwHgMKMIDnGL0x7gJQCAwMAJd4MFwAAAHjaY2BgYGaA4DAGRgYQkAHyGMF8NgYrIM3JIAGVYYDT+AEjAwuDFpBmA9KMDEwMCh9i/v8H8sH0/4dQc1iAmAkALaUKLgAAAHjaTY9LDsIgEIbtgqHUPpDi3gPoBVyRTmTddOmqTXThEXqrob2gQ1FjwpDvfwCBdmdXC5AVKFu3e5MfNFJ29KTQT48Ob9/lqYwOGZxeUelN2U2R6+cArgtCJpauW7UQBqnFkUsjAY/kOU1cP+DAgvxwn1chZDwUbd6CFimGXwzwF6tPbFIcjEl+vvmM/byA48e6tWrKArm4ZJlCbdsrxksL1AwWn/yBSJKpYbq8AXaaTb8AAHja28jAwOC00ZrBeQNDQOWO//sdBBgYGRiYWYAEELEwMTE4uzo5Zzo5b2BxdnFOcALxNjA6b2ByTswC8jYwg0VlNuoCTWAMqNzMzsoK1rEhNqByEyerg5PMJlYuVueETKcd/89uBpnpvIEVomeHLoMsAAe1Id4AAAAAAAB42oWQT07CQBTGv0JBhagk7HQzKxca2sJCE1hDt4QF+9JOS0nbaaYDCQfwCJ7Au3AHj+LO13FMmm6cl7785vven0kBjHCBhfpYuNa5Ph1c0e2Xu3jEvWG7UdPDLZ4N92nOm+EBXuAbHmIMSRMs+4aUEd4Nd3CHD8NdvOLTsA2GL8M9PODbcL+hD7C1xoaHeLJSEao0FEW14ckxC+TU8TxvsY6X0eLPmRhry2WVioLpkrbp84LLQPGI7c6sOiUzpWIWS5GzlSgUzzLBSikOPFTOXqly7rqx0Z1Q5BAIoZBSFihQYQOOBEdkCOgXTOHA07HAGjGWiIjaPZNW13/+lm6S9FT7rLHFJ6fQbkATOG1j2OFMucKJJsxIVfQORl+9Jyda6Sl1dUYhSCm1dyClfoeDve4qMYdLEbfqHf3O/AdDumsjAAB42mNgYoAAZQYjBmyAGYQZmdhL8zLdDEydARfoAqIAAAABAAMABwAKABMAB///AA8AAQAAAAAAAAAAAAAAAAABAAAAAA==) format('woff');
 }
 
-.markdown-body {
-  -ms-text-size-adjust: 100%;
-  -webkit-text-size-adjust: 100%;
-  line-height: 1.5;
-  color: #24292e;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-  font-size: 16px;
-  line-height: 1.5;
-  word-wrap: break-word;
-}
-
-.markdown-body .pl-c {
-  color: #6a737d;
-}
-
-.markdown-body .pl-c1,
-.markdown-body .pl-s .pl-v {
-  color: #005cc5;
-}
-
-.markdown-body .pl-e,
-.markdown-body .pl-en {
-  color: #6f42c1;
-}
-
-.markdown-body .pl-smi,
-.markdown-body .pl-s .pl-s1 {
-  color: #24292e;
-}
-
-.markdown-body .pl-ent {
-  color: #22863a;
-}
-
-.markdown-body .pl-k {
-  color: #d73a49;
-}
-
-.markdown-body .pl-s,
-.markdown-body .pl-pds,
-.markdown-body .pl-s .pl-pse .pl-s1,
-.markdown-body .pl-sr,
-.markdown-body .pl-sr .pl-cce,
-.markdown-body .pl-sr .pl-sre,
-.markdown-body .pl-sr .pl-sra {
-  color: #032f62;
-}
-
-.markdown-body .pl-v,
-.markdown-body .pl-smw {
-  color: #e36209;
-}
-
-.markdown-body .pl-bu {
-  color: #b31d28;
-}
-
-.markdown-body .pl-ii {
-  color: #fafbfc;
-  background-color: #b31d28;
-}
-
-.markdown-body .pl-c2 {
-  color: #fafbfc;
-  background-color: #d73a49;
-}
-
-.markdown-body .pl-c2::before {
-  content: "^M";
-}
-
-.markdown-body .pl-sr .pl-cce {
-  font-weight: bold;
-  color: #22863a;
-}
-
-.markdown-body .pl-ml {
-  color: #735c0f;
-}
-
-.markdown-body .pl-mh,
-.markdown-body .pl-mh .pl-en,
-.markdown-body .pl-ms {
-  font-weight: bold;
-  color: #005cc5;
-}
-
-.markdown-body .pl-mi {
-  font-style: italic;
-  color: #24292e;
-}
-
-.markdown-body .pl-mb {
-  font-weight: bold;
-  color: #24292e;
-}
-
-.markdown-body .pl-md {
-  color: #b31d28;
-  background-color: #ffeef0;
-}
-
-.markdown-body .pl-mi1 {
-  color: #22863a;
-  background-color: #f0fff4;
-}
-
-.markdown-body .pl-mc {
-  color: #e36209;
-  background-color: #ffebda;
-}
-
-.markdown-body .pl-mi2 {
-  color: #f6f8fa;
-  background-color: #005cc5;
-}
-
-.markdown-body .pl-mdr {
-  font-weight: bold;
-  color: #6f42c1;
-}
-
-.markdown-body .pl-ba {
-  color: #586069;
-}
-
-.markdown-body .pl-sg {
-  color: #959da5;
-}
-
-.markdown-body .pl-corl {
-  text-decoration: underline;
-  color: #032f62;
-}
-
 .markdown-body .octicon {
   display: inline-block;
-  vertical-align: text-top;
   fill: currentColor;
-}
-
-.markdown-body a {
-  background-color: transparent;
-}
-
-.markdown-body a:active,
-.markdown-body a:hover {
-  outline-width: 0;
-}
-
-.markdown-body strong {
-  font-weight: inherit;
-}
-
-.markdown-body strong {
-  font-weight: bolder;
-}
-
-.markdown-body h1 {
-  font-size: 2em;
-  margin: 0.67em 0;
-}
-
-.markdown-body img {
-  border-style: none;
-}
-
-.markdown-body code,
-.markdown-body kbd,
-.markdown-body pre {
-  font-family: monospace, monospace;
-  font-size: 1em;
-}
-
-.markdown-body hr {
-  box-sizing: content-box;
-  height: 0;
-  overflow: visible;
-}
-
-.markdown-body input {
-  font: inherit;
-  margin: 0;
-}
-
-.markdown-body input {
-  overflow: visible;
-}
-
-.markdown-body [type="checkbox"] {
-  box-sizing: border-box;
-  padding: 0;
-}
-
-.markdown-body * {
-  box-sizing: border-box;
-}
-
-.markdown-body input {
-  font-family: inherit;
-  font-size: inherit;
-  line-height: inherit;
-}
-
-.markdown-body a {
-  color: #0366d6;
-  text-decoration: none;
-}
-
-.markdown-body a:hover {
-  text-decoration: underline;
-}
-
-.markdown-body strong {
-  font-weight: 600;
-}
-
-.markdown-body hr {
-  height: 0;
-  margin: 15px 0;
-  overflow: hidden;
-  background: transparent;
-  border: 0;
-  border-bottom: 1px solid #dfe2e5;
-}
-
-.markdown-body hr::before {
-  display: table;
-  content: "";
-}
-
-.markdown-body hr::after {
-  display: table;
-  clear: both;
-  content: "";
-}
-
-.markdown-body table {
-  border-spacing: 0;
-  border-collapse: collapse;
-}
-
-.markdown-body td,
-.markdown-body th {
-  padding: 0;
-}
-
-.markdown-body h1,
-.markdown-body h2,
-.markdown-body h3,
-.markdown-body h4,
-.markdown-body h5,
-.markdown-body h6 {
-  margin-top: 0;
-  margin-bottom: 0;
-}
-
-.markdown-body h1 {
-  font-size: 32px;
-  font-weight: 600;
-}
-
-.markdown-body h2 {
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.markdown-body h3 {
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.markdown-body h4 {
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.markdown-body h5 {
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.markdown-body h6 {
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.markdown-body p {
-  margin-top: 0;
-  margin-bottom: 10px;
-}
-
-.markdown-body blockquote {
-  margin: 0;
-}
-
-.markdown-body ul,
-.markdown-body ol {
-  padding-left: 0;
-  margin-top: 0;
-  margin-bottom: 0;
-}
-
-.markdown-body ol ol,
-.markdown-body ul ol {
-  list-style-type: lower-roman;
-}
-
-.markdown-body ul ul ol,
-.markdown-body ul ol ol,
-.markdown-body ol ul ol,
-.markdown-body ol ol ol {
-  list-style-type: lower-alpha;
-}
-
-.markdown-body dd {
-  margin-left: 0;
-}
-
-.markdown-body code {
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
-  font-size: 12px;
-}
-
-.markdown-body pre {
-  margin-top: 0;
-  margin-bottom: 0;
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
-  font-size: 12px;
-}
-
-.markdown-body .octicon {
   vertical-align: text-bottom;
-}
-
-.markdown-body .pl-0 {
-  padding-left: 0 !important;
-}
-
-.markdown-body .pl-1 {
-  padding-left: 4px !important;
-}
-
-.markdown-body .pl-2 {
-  padding-left: 8px !important;
-}
-
-.markdown-body .pl-3 {
-  padding-left: 16px !important;
-}
-
-.markdown-body .pl-4 {
-  padding-left: 24px !important;
-}
-
-.markdown-body .pl-5 {
-  padding-left: 32px !important;
-}
-
-.markdown-body .pl-6 {
-  padding-left: 40px !important;
-}
-
-.markdown-body::before {
-  display: table;
-  content: "";
-}
-
-.markdown-body::after {
-  display: table;
-  clear: both;
-  content: "";
-}
-
-.markdown-body>*:first-child {
-  margin-top: 0 !important;
-}
-
-.markdown-body>*:last-child {
-  margin-bottom: 0 !important;
-}
-
-.markdown-body a:not([href]) {
-  color: inherit;
-  text-decoration: none;
 }
 
 .markdown-body .anchor {
   float: left;
-  padding-right: 4px;
-  margin-left: -20px;
   line-height: 1;
+  margin-left: -20px;
+  padding-right: 4px;
 }
 
 .markdown-body .anchor:focus {
   outline: none;
-}
-
-.markdown-body p,
-.markdown-body blockquote,
-.markdown-body ul,
-.markdown-body ol,
-.markdown-body dl,
-.markdown-body table,
-.markdown-body pre {
-  margin-top: 0;
-  margin-bottom: 16px;
-}
-
-.markdown-body hr {
-  height: 0.25em;
-  padding: 0;
-  margin: 24px 0;
-  background-color: #e1e4e8;
-  border: 0;
-}
-
-.markdown-body blockquote {
-  padding: 0 1em;
-  color: #6a737d;
-  border-left: 0.25em solid #dfe2e5;
-}
-
-.markdown-body blockquote>:first-child {
-  margin-top: 0;
-}
-
-.markdown-body blockquote>:last-child {
-  margin-bottom: 0;
-}
-
-.markdown-body kbd {
-  display: inline-block;
-  padding: 3px 5px;
-  font-size: 11px;
-  line-height: 10px;
-  color: #444d56;
-  vertical-align: middle;
-  background-color: #fafbfc;
-  border: solid 1px #c6cbd1;
-  border-bottom-color: #959da5;
-  border-radius: 3px;
-  box-shadow: inset 0 -1px 0 #959da5;
-}
-
-.markdown-body h1,
-.markdown-body h2,
-.markdown-body h3,
-.markdown-body h4,
-.markdown-body h5,
-.markdown-body h6 {
-  margin-top: 24px;
-  margin-bottom: 16px;
-  font-weight: 600;
-  line-height: 1.25;
 }
 
 .markdown-body h1 .octicon-link,
@@ -26432,16 +26171,542 @@ Monokai style - ported by Luigi Maselli - http://grigio.org
   visibility: visible;
 }
 
+.markdown-body {
+  -ms-text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+  color: #24292e;
+  line-height: 1.5;
+  font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol;
+  font-size: 16px;
+  line-height: 1.5;
+  word-wrap: break-word;
+}
+
+.markdown-body .pl-c {
+  color: #6a737d;
+}
+
+.markdown-body .pl-c1,
+.markdown-body .pl-s .pl-v {
+  color: #005cc5;
+}
+
+.markdown-body .pl-e,
+.markdown-body .pl-en {
+  color: #6f42c1;
+}
+
+.markdown-body .pl-s .pl-s1,
+.markdown-body .pl-smi {
+  color: #24292e;
+}
+
+.markdown-body .pl-ent {
+  color: #22863a;
+}
+
+.markdown-body .pl-k {
+  color: #d73a49;
+}
+
+.markdown-body .pl-pds,
+.markdown-body .pl-s,
+.markdown-body .pl-s .pl-pse .pl-s1,
+.markdown-body .pl-sr,
+.markdown-body .pl-sr .pl-cce,
+.markdown-body .pl-sr .pl-sra,
+.markdown-body .pl-sr .pl-sre {
+  color: #032f62;
+}
+
+.markdown-body .pl-smw,
+.markdown-body .pl-v {
+  color: #e36209;
+}
+
+.markdown-body .pl-bu {
+  color: #b31d28;
+}
+
+.markdown-body .pl-ii {
+  background-color: #b31d28;
+  color: #fafbfc;
+}
+
+.markdown-body .pl-c2 {
+  background-color: #d73a49;
+  color: #fafbfc;
+}
+
+.markdown-body .pl-c2:before {
+  content: "^M";
+}
+
+.markdown-body .pl-sr .pl-cce {
+  color: #22863a;
+  font-weight: 700;
+}
+
+.markdown-body .pl-ml {
+  color: #735c0f;
+}
+
+.markdown-body .pl-mh,
+.markdown-body .pl-mh .pl-en,
+.markdown-body .pl-ms {
+  color: #005cc5;
+  font-weight: 700;
+}
+
+.markdown-body .pl-mi {
+  color: #24292e;
+  font-style: italic;
+}
+
+.markdown-body .pl-mb {
+  color: #24292e;
+  font-weight: 700;
+}
+
+.markdown-body .pl-md {
+  background-color: #ffeef0;
+  color: #b31d28;
+}
+
+.markdown-body .pl-mi1 {
+  background-color: #f0fff4;
+  color: #22863a;
+}
+
+.markdown-body .pl-mc {
+  background-color: #ffebda;
+  color: #e36209;
+}
+
+.markdown-body .pl-mi2 {
+  background-color: #005cc5;
+  color: #f6f8fa;
+}
+
+.markdown-body .pl-mdr {
+  color: #6f42c1;
+  font-weight: 700;
+}
+
+.markdown-body .pl-ba {
+  color: #586069;
+}
+
+.markdown-body .pl-sg {
+  color: #959da5;
+}
+
+.markdown-body .pl-corl {
+  color: #032f62;
+  text-decoration: underline;
+}
+
+.markdown-body details {
+  display: block;
+}
+
+.markdown-body summary {
+  display: list-item;
+}
+
+.markdown-body a {
+  background-color: transparent;
+}
+
+.markdown-body a:active,
+.markdown-body a:hover {
+  outline-width: 0;
+}
+
+.markdown-body strong {
+  font-weight: inherit;
+  font-weight: bolder;
+}
+
 .markdown-body h1 {
-  padding-bottom: 0.3em;
   font-size: 2em;
-  border-bottom: 1px solid #eaecef;
+  margin: .67em 0;
+}
+
+.markdown-body img {
+  border-style: none;
+}
+
+.markdown-body code,
+.markdown-body kbd,
+.markdown-body pre {
+  font-family: monospace,monospace;
+  font-size: 1em;
+}
+
+.markdown-body hr {
+  box-sizing: content-box;
+  height: 0;
+  overflow: visible;
+}
+
+.markdown-body input {
+  font: inherit;
+  margin: 0;
+}
+
+.markdown-body input {
+  overflow: visible;
+}
+
+.markdown-body [type=checkbox] {
+  box-sizing: border-box;
+  padding: 0;
+}
+
+.markdown-body * {
+  box-sizing: border-box;
+}
+
+.markdown-body input {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.markdown-body a {
+  color: #0366d6;
+  text-decoration: none;
+}
+
+.markdown-body a:hover {
+  text-decoration: underline;
+}
+
+.markdown-body strong {
+  font-weight: 600;
+}
+
+.markdown-body hr {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #dfe2e5;
+  height: 0;
+  margin: 15px 0;
+  overflow: hidden;
+}
+
+.markdown-body hr:before {
+  content: "";
+  display: table;
+}
+
+.markdown-body hr:after {
+  clear: both;
+  content: "";
+  display: table;
+}
+
+.markdown-body table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.markdown-body td,
+.markdown-body th {
+  padding: 0;
+}
+
+.markdown-body details summary {
+  cursor: pointer;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  margin-bottom: 0;
+  margin-top: 0;
+}
+
+.markdown-body h1 {
+  font-size: 32px;
+}
+
+.markdown-body h1,
+.markdown-body h2 {
+  font-weight: 600;
 }
 
 .markdown-body h2 {
-  padding-bottom: 0.3em;
-  font-size: 1.5em;
+  font-size: 24px;
+}
+
+.markdown-body h3 {
+  font-size: 20px;
+}
+
+.markdown-body h3,
+.markdown-body h4 {
+  font-weight: 600;
+}
+
+.markdown-body h4 {
+  font-size: 16px;
+}
+
+.markdown-body h5 {
+  font-size: 14px;
+}
+
+.markdown-body h5,
+.markdown-body h6 {
+  font-weight: 600;
+}
+
+.markdown-body h6 {
+  font-size: 12px;
+}
+
+.markdown-body p {
+  margin-bottom: 10px;
+  margin-top: 0;
+}
+
+.markdown-body blockquote {
+  margin: 0;
+}
+
+.markdown-body ol,
+.markdown-body ul {
+  margin-bottom: 0;
+  margin-top: 0;
+  padding-left: 0;
+}
+
+.markdown-body ol ol,
+.markdown-body ul ol {
+  list-style-type: lower-roman;
+}
+
+.markdown-body ol ol ol,
+.markdown-body ol ul ol,
+.markdown-body ul ol ol,
+.markdown-body ul ul ol {
+  list-style-type: lower-alpha;
+}
+
+.markdown-body dd {
+  margin-left: 0;
+}
+
+.markdown-body code,
+.markdown-body pre {
+  font-family: SFMono-Regular,Consolas,Liberation Mono,Menlo,Courier,monospace;
+  font-size: 12px;
+}
+
+.markdown-body pre {
+  margin-bottom: 0;
+  margin-top: 0;
+}
+
+.markdown-body input::-webkit-inner-spin-button,
+.markdown-body input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+.markdown-body .border {
+  border: 1px solid #e1e4e8!important;
+}
+
+.markdown-body .border-0 {
+  border: 0!important;
+}
+
+.markdown-body .border-bottom {
+  border-bottom: 1px solid #e1e4e8!important;
+}
+
+.markdown-body .rounded-1 {
+  border-radius: 3px!important;
+}
+
+.markdown-body .bg-white {
+  background-color: #fff!important;
+}
+
+.markdown-body .bg-gray-light {
+  background-color: #fafbfc!important;
+}
+
+.markdown-body .text-gray-light {
+  color: #6a737d!important;
+}
+
+.markdown-body .mb-0 {
+  margin-bottom: 0!important;
+}
+
+.markdown-body .my-2 {
+  margin-bottom: 8px!important;
+  margin-top: 8px!important;
+}
+
+.markdown-body .pl-0 {
+  padding-left: 0!important;
+}
+
+.markdown-body .py-0 {
+  padding-bottom: 0!important;
+  padding-top: 0!important;
+}
+
+.markdown-body .pl-1 {
+  padding-left: 4px!important;
+}
+
+.markdown-body .pl-2 {
+  padding-left: 8px!important;
+}
+
+.markdown-body .py-2 {
+  padding-bottom: 8px!important;
+  padding-top: 8px!important;
+}
+
+.markdown-body .pl-3,
+.markdown-body .px-3 {
+  padding-left: 16px!important;
+}
+
+.markdown-body .px-3 {
+  padding-right: 16px!important;
+}
+
+.markdown-body .pl-4 {
+  padding-left: 24px!important;
+}
+
+.markdown-body .pl-5 {
+  padding-left: 32px!important;
+}
+
+.markdown-body .pl-6 {
+  padding-left: 40px!important;
+}
+
+.markdown-body .f6 {
+  font-size: 12px!important;
+}
+
+.markdown-body .lh-condensed {
+  line-height: 1.25!important;
+}
+
+.markdown-body .text-bold {
+  font-weight: 600!important;
+}
+
+.markdown-body:before {
+  content: "";
+  display: table;
+}
+
+.markdown-body:after {
+  clear: both;
+  content: "";
+  display: table;
+}
+
+.markdown-body>:first-child {
+  margin-top: 0!important;
+}
+
+.markdown-body>:last-child {
+  margin-bottom: 0!important;
+}
+
+.markdown-body a:not([href]) {
+  color: inherit;
+  text-decoration: none;
+}
+
+.markdown-body blockquote,
+.markdown-body dl,
+.markdown-body ol,
+.markdown-body p,
+.markdown-body pre,
+.markdown-body table,
+.markdown-body ul {
+  margin-bottom: 16px;
+  margin-top: 0;
+}
+
+.markdown-body hr {
+  background-color: #e1e4e8;
+  border: 0;
+  height: .25em;
+  margin: 24px 0;
+  padding: 0;
+}
+
+.markdown-body blockquote {
+  border-left: .25em solid #dfe2e5;
+  color: #6a737d;
+  padding: 0 1em;
+}
+
+.markdown-body blockquote>:first-child {
+  margin-top: 0;
+}
+
+.markdown-body blockquote>:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-body kbd {
+  background-color: #fafbfc;
+  border: 1px solid #c6cbd1;
+  border-bottom-color: #959da5;
+  border-radius: 3px;
+  box-shadow: inset 0 -1px 0 #959da5;
+  color: #444d56;
+  display: inline-block;
+  font-size: 11px;
+  line-height: 10px;
+  padding: 3px 5px;
+  vertical-align: middle;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  font-weight: 600;
+  line-height: 1.25;
+  margin-bottom: 16px;
+  margin-top: 24px;
+}
+
+.markdown-body h1 {
+  font-size: 2em;
+}
+
+.markdown-body h1,
+.markdown-body h2 {
   border-bottom: 1px solid #eaecef;
+  padding-bottom: .3em;
+}
+
+.markdown-body h2 {
+  font-size: 1.5em;
 }
 
 .markdown-body h3 {
@@ -26453,25 +26718,25 @@ Monokai style - ported by Luigi Maselli - http://grigio.org
 }
 
 .markdown-body h5 {
-  font-size: 0.875em;
+  font-size: .875em;
 }
 
 .markdown-body h6 {
-  font-size: 0.85em;
   color: #6a737d;
+  font-size: .85em;
 }
 
-.markdown-body ul,
-.markdown-body ol {
+.markdown-body ol,
+.markdown-body ul {
   padding-left: 2em;
 }
 
-.markdown-body ul ul,
-.markdown-body ul ol,
 .markdown-body ol ol,
-.markdown-body ol ul {
-  margin-top: 0;
+.markdown-body ol ul,
+.markdown-body ul ol,
+.markdown-body ul ul {
   margin-bottom: 0;
+  margin-top: 0;
 }
 
 .markdown-body li {
@@ -26483,7 +26748,7 @@ Monokai style - ported by Luigi Maselli - http://grigio.org
 }
 
 .markdown-body li+li {
-  margin-top: 0.25em;
+  margin-top: .25em;
 }
 
 .markdown-body dl {
@@ -26491,32 +26756,32 @@ Monokai style - ported by Luigi Maselli - http://grigio.org
 }
 
 .markdown-body dl dt {
-  padding: 0;
-  margin-top: 16px;
   font-size: 1em;
   font-style: italic;
   font-weight: 600;
+  margin-top: 16px;
+  padding: 0;
 }
 
 .markdown-body dl dd {
-  padding: 0 16px;
   margin-bottom: 16px;
+  padding: 0 16px;
 }
 
 .markdown-body table {
   display: block;
-  width: 100%;
   overflow: auto;
+  width: 100%;
 }
 
 .markdown-body table th {
   font-weight: 600;
 }
 
-.markdown-body table th,
-.markdown-body table td {
-  padding: 6px 13px;
+.markdown-body table td,
+.markdown-body table th {
   border: 1px solid #dfe2e5;
+  padding: 6px 13px;
 }
 
 .markdown-body table tr {
@@ -26529,9 +26794,9 @@ Monokai style - ported by Luigi Maselli - http://grigio.org
 }
 
 .markdown-body img {
-  max-width: 100%;
-  box-sizing: content-box;
   background-color: #fff;
+  box-sizing: content-box;
+  max-width: 100%;
 }
 
 .markdown-body img[align=right] {
@@ -26543,11 +26808,11 @@ Monokai style - ported by Luigi Maselli - http://grigio.org
 }
 
 .markdown-body code {
-  padding: 0.2em 0.4em;
-  margin: 0;
-  font-size: 85%;
-  background-color: rgba(27,31,35,0.05);
+  background-color: rgba(27,31,35,.05);
   border-radius: 3px;
+  font-size: 85%;
+  margin: 0;
+  padding: .2em .4em;
 }
 
 .markdown-body pre {
@@ -26555,13 +26820,13 @@ Monokai style - ported by Luigi Maselli - http://grigio.org
 }
 
 .markdown-body pre>code {
-  padding: 0;
-  margin: 0;
-  font-size: 100%;
-  word-break: normal;
-  white-space: pre;
   background: transparent;
   border: 0;
+  font-size: 100%;
+  margin: 0;
+  padding: 0;
+  white-space: pre;
+  word-break: normal;
 }
 
 .markdown-body .highlight {
@@ -26575,49 +26840,173 @@ Monokai style - ported by Luigi Maselli - http://grigio.org
 
 .markdown-body .highlight pre,
 .markdown-body pre {
-  padding: 16px;
-  overflow: auto;
-  font-size: 85%;
-  line-height: 1.45;
   background-color: #f6f8fa;
   border-radius: 3px;
+  font-size: 85%;
+  line-height: 1.45;
+  overflow: auto;
+  padding: 16px;
 }
 
 .markdown-body pre code {
-  display: inline;
-  max-width: auto;
-  padding: 0;
-  margin: 0;
-  overflow: visible;
-  line-height: inherit;
-  word-wrap: normal;
   background-color: transparent;
   border: 0;
+  display: inline;
+  line-height: inherit;
+  margin: 0;
+  max-width: auto;
+  overflow: visible;
+  padding: 0;
+  word-wrap: normal;
 }
 
-.markdown-body .full-commit .btn-outline:not(:disabled):hover {
-  color: #005cc5;
-  border-color: #005cc5;
+.markdown-body .commit-tease-sha {
+  color: #444d56;
+  display: inline-block;
+  font-family: SFMono-Regular,Consolas,Liberation Mono,Menlo,Courier,monospace;
+  font-size: 90%;
+}
+
+.markdown-body .blob-wrapper {
+  border-bottom-left-radius: 3px;
+  border-bottom-right-radius: 3px;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.markdown-body .blob-wrapper-embedded {
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.markdown-body .blob-num {
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-user-select: none;
+  color: rgba(27,31,35,.3);
+  cursor: pointer;
+  font-family: SFMono-Regular,Consolas,Liberation Mono,Menlo,Courier,monospace;
+  font-size: 12px;
+  line-height: 20px;
+  min-width: 50px;
+  padding-left: 10px;
+  padding-right: 10px;
+  text-align: right;
+  user-select: none;
+  vertical-align: top;
+  white-space: nowrap;
+  width: 1%;
+}
+
+.markdown-body .blob-num:hover {
+  color: rgba(27,31,35,.6);
+}
+
+.markdown-body .blob-num:before {
+  content: attr(data-line-number);
+}
+
+.markdown-body .blob-code {
+  line-height: 20px;
+  padding-left: 10px;
+  padding-right: 10px;
+  position: relative;
+  vertical-align: top;
+}
+
+.markdown-body .blob-code-inner {
+  color: #24292e;
+  font-family: SFMono-Regular,Consolas,Liberation Mono,Menlo,Courier,monospace;
+  font-size: 12px;
+  overflow: visible;
+  white-space: pre;
+  word-wrap: normal;
+}
+
+.markdown-body .pl-token.active,
+.markdown-body .pl-token:hover {
+  background: #ffea7f;
+  cursor: pointer;
 }
 
 .markdown-body kbd {
-  display: inline-block;
-  padding: 3px 5px;
-  font: 11px "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
-  line-height: 10px;
-  color: #444d56;
-  vertical-align: middle;
   background-color: #fafbfc;
-  border: solid 1px #d1d5da;
+  border: 1px solid #d1d5da;
   border-bottom-color: #c6cbd1;
   border-radius: 3px;
   box-shadow: inset 0 -1px 0 #c6cbd1;
+  color: #444d56;
+  display: inline-block;
+  font: 11px SFMono-Regular,Consolas,Liberation Mono,Menlo,Courier,monospace;
+  line-height: 10px;
+  padding: 3px 5px;
+  vertical-align: middle;
 }
 
 .markdown-body :checked+.radio-label {
+  border-color: #0366d6;
   position: relative;
   z-index: 1;
-  border-color: #0366d6;
+}
+
+.markdown-body .tab-size[data-tab-size="1"] {
+  -moz-tab-size: 1;
+  tab-size: 1;
+}
+
+.markdown-body .tab-size[data-tab-size="2"] {
+  -moz-tab-size: 2;
+  tab-size: 2;
+}
+
+.markdown-body .tab-size[data-tab-size="3"] {
+  -moz-tab-size: 3;
+  tab-size: 3;
+}
+
+.markdown-body .tab-size[data-tab-size="4"] {
+  -moz-tab-size: 4;
+  tab-size: 4;
+}
+
+.markdown-body .tab-size[data-tab-size="5"] {
+  -moz-tab-size: 5;
+  tab-size: 5;
+}
+
+.markdown-body .tab-size[data-tab-size="6"] {
+  -moz-tab-size: 6;
+  tab-size: 6;
+}
+
+.markdown-body .tab-size[data-tab-size="7"] {
+  -moz-tab-size: 7;
+  tab-size: 7;
+}
+
+.markdown-body .tab-size[data-tab-size="8"] {
+  -moz-tab-size: 8;
+  tab-size: 8;
+}
+
+.markdown-body .tab-size[data-tab-size="9"] {
+  -moz-tab-size: 9;
+  tab-size: 9;
+}
+
+.markdown-body .tab-size[data-tab-size="10"] {
+  -moz-tab-size: 10;
+  tab-size: 10;
+}
+
+.markdown-body .tab-size[data-tab-size="11"] {
+  -moz-tab-size: 11;
+  tab-size: 11;
+}
+
+.markdown-body .tab-size[data-tab-size="12"] {
+  -moz-tab-size: 12;
+  tab-size: 12;
 }
 
 .markdown-body .task-list-item {
@@ -26629,12 +27018,64 @@ Monokai style - ported by Luigi Maselli - http://grigio.org
 }
 
 .markdown-body .task-list-item input {
-  margin: 0 0.2em 0.25em -1.6em;
+  margin: 0 .2em .25em -1.6em;
   vertical-align: middle;
 }
 
 .markdown-body hr {
   border-bottom-color: #eee;
+}
+
+.markdown-body .pl-0 {
+  padding-left: 0!important;
+}
+
+.markdown-body .pl-1 {
+  padding-left: 4px!important;
+}
+
+.markdown-body .pl-2 {
+  padding-left: 8px!important;
+}
+
+.markdown-body .pl-3 {
+  padding-left: 16px!important;
+}
+
+.markdown-body .pl-4 {
+  padding-left: 24px!important;
+}
+
+.markdown-body .pl-5 {
+  padding-left: 32px!important;
+}
+
+.markdown-body .pl-6 {
+  padding-left: 40px!important;
+}
+
+.markdown-body .pl-7 {
+  padding-left: 48px!important;
+}
+
+.markdown-body .pl-8 {
+  padding-left: 64px!important;
+}
+
+.markdown-body .pl-9 {
+  padding-left: 80px!important;
+}
+
+.markdown-body .pl-10 {
+  padding-left: 96px!important;
+}
+
+.markdown-body .pl-11 {
+  padding-left: 112px!important;
+}
+
+.markdown-body .pl-12 {
+  padding-left: 128px!important;
 }
 </style>
 <style>body {
@@ -26645,13 +27086,29 @@ pre {
 	font-family: Consolas, 'Courier New', Courier, Monaco, monospace;
 }</style>
 
+<!-- Styles from https://github.com/sindresorhus/github-markdown-css -->
+<style>
+	.markdown-body {
+		box-sizing: border-box;
+		min-width: 200px;
+		max-width: 980px;
+		margin: 0 auto;
+		padding: 45px;
+	}
+
+	@media (max-width: 767px) {
+		.markdown-body {
+			padding: 15px;
+		}
+	}
+</style>
 
 <!-- The text of the first heading in Markdown will automatically replace the title -->
 <title>inline_marked</title>
 
 </head>
 <body>
-<div id="html"></div>
+<div id="html" class="markdown-body"></div>
 <script type="text/javascript">
     window.onload = function() {    
         converted = inline_markdown.render(document.getElementById("markdown").innerHTML)

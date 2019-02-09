@@ -18,7 +18,7 @@ class MyRenderer extends marked.Renderer {
     }
 }
 
-export const highlight_keywords = (code:string, keywords:string[], class_name:string) => {
+export const highlight_keywords = (code:string, keywords:string[], class_name:string):string => {
     if (keywords.length === 0) {
         return code
     }
@@ -65,6 +65,6 @@ export const render = (text:string):{ html:string, title:string } => {
 
     return {
         html: html,
-        title: myRenderer.title
+        title: myRenderer.title || "No title"
     }   
 }

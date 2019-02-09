@@ -15,13 +15,29 @@
 <link inline rel="stylesheet" href="../node_modules/github-markdown-css/github-markdown.css"/>
 <link inline rel="stylesheet" href="../css/extra.css"/>
 
+<!-- Styles from https://github.com/sindresorhus/github-markdown-css -->
+<style>
+	.markdown-body {
+		box-sizing: border-box;
+		min-width: 200px;
+		max-width: 980px;
+		margin: 0 auto;
+		padding: 45px;
+	}
+
+	@media (max-width: 767px) {
+		.markdown-body {
+			padding: 15px;
+		}
+	}
+</style>
 
 <!-- The text of the first heading in Markdown will automatically replace the title -->
 <title>inline_marked</title>
 
 </head>
 <body>
-<div id="html"></div>
+<div id="html" class="markdown-body"></div>
 <script type="text/javascript">
     window.onload = function() {    
         converted = inline_markdown.render(document.getElementById("markdown").innerHTML)
