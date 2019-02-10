@@ -15,7 +15,7 @@ module.exports = {
   mode: 'development',
   module: {
     rules: [
-      { test: /\.tsx?$/, loader: "awesome-typescript-loader" },
+      { test: /\.tsx?$/, loader: "ts-loader" },
       { enforce: "pre", test: /\.js\.map$/, loader: "source-map-loader" }
     ]
   }
