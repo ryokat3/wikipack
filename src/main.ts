@@ -9,13 +9,14 @@ class MyRenderer extends marked.Renderer {
     public constructor () {
         super()
     }
-
-    public heading(text:string, level:number, raw:string) {
+    
+    public heading(text:string, level:1|2|3|4|5|6, raw:string) {
         if (this.title === undefined && text !== "") {
             this.title = text
         }
         return super.heading(text, level, raw, new marked.Slugger())
     }
+
 }
 
 export const highlight_keywords = (code:string, keywords:string[], class_name:string):string => {
@@ -32,7 +33,7 @@ export const render = (text:string):{ html:string, title:string } => {
 
     marked.setOptions({
         renderer: myRenderer,
-        highlight: (code:string, lang:string, callback:(error:any, code:string)=>void) => {
+        highlight: (code:string, lang:string, callback?:(error:any, code:string)=>void) => {
             if (!lang) {
                 return hljs.highlightAuto(code, [ lang ]).value
             }
@@ -53,8 +54,7 @@ export const render = (text:string):{ html:string, title:string } => {
             return `<pre><code>${escaped_code}</code></pre>`
         },
         pedantic: false,
-        gfm: true,
-        tables: true,
+        gfm: true,        
         breaks: false,
         sanitize: false,
         smartLists: true,
