@@ -25,10 +25,10 @@ and `</screen>` at the top.
 A code block is highlighted by [highlight.js](https://highlightjs.org/).
 Other than the languages supported by [highlight.js](https://highlightjs.org/),
 any keywords can be highlighed with a special language name like
-`%[word1,word2,word3,...],#[word4,word5,...]`.
+`#<text-color>[word1,word2,word3,...];%<background-color>[word4,word5,...];#....`.
 
 ``````````plaintext
-```%[foo,bar],#[baz,qux]
+```%yellow[foo,bar];#ff0000[baz,qux]
 My name is foo, and
 its name is bar.
 ```
@@ -39,8 +39,8 @@ will be rendered as
 ```html
 <pre>
 <code>
-My name is <span class="hljs-name">foo</span>, and
-its name is <span class="hljs-name">bar</span>.
+My name is <span style="background-color:yellow">foo</span>, and
+its name is <span style="color:#ff0000">bar</span>.
 </code>
 </pre>
 ```

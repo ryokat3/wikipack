@@ -6,7 +6,7 @@ function newInlineSourcePlugin (assetFileName, rootPath, template, target) {
     return (compiler) => {
         compiler.hooks.assetEmitted.tap('Inline Source', async (fileName, info) => {
             if (assetFileName === fileName) {
-                html = await inlineSource(template, { rootpath: rootPath })                
+                html = await inlineSource(template, { rootpath: rootPath, compress: false })                
                 fs.writeFileSync(target, html)
             }
         })
