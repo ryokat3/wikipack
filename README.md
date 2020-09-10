@@ -27,8 +27,7 @@ Other than the languages supported by [highlight.js](https://highlightjs.org/),
 any keywords can be highlighed with a special language name like
 `%[word1,word2,word3,...],#[word4,word5,...]`.
 
-
-``````````
+``````````plaintext
 ```%[foo,bar],#[baz,qux]
 My name is foo, and
 its name is bar.
@@ -37,7 +36,7 @@ its name is bar.
 
 will be rendered as
 
-```
+```html
 <pre>
 <code>
 My name is <span class="hljs-name">foo</span>, and
@@ -52,8 +51,9 @@ In order to apply othor CSS on your preference, edit the template
 HTML file, and generate new HTML file with other CSS inlined.
 
 1. Download npm modules
-   ```
-   $ npm install
+
+   ```shell
+   npm install
    ```
 
 2. Edit the HTML template
@@ -66,9 +66,9 @@ HTML file, and generate new HTML file with other CSS inlined.
 
    [MarkedCustomStyles](https://github.com/ttscoff/MarkedCustomStyles) provides
    excellent CSSes that can be used for 'marked' HTML files.
-   
 
 3. Generate new HTML file
-   ```
-   $ npm run build
+
+   ```shell
+   npm run build
    ```
