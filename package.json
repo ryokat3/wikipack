@@ -3,15 +3,15 @@
   "version": "0.6.0",
   "description": "A customizable HTML template to self-render the inlined Markdown text",
   "main": "main.js",
-  "scripts": {    
-    "build": "webpack-cli",    
-    "clean": "shx rm -rf dist inline_markdown.html"        
+  "scripts": {
+    "build": "webpack-cli",
+    "clean": "shx rm -rf dist inline_markdown.html"
   },
   "author": "https://github.com/wak109",
   "license": "MIT",
   "devDependencies": {
     "inline-source": "^7.2.0",
-    "inline-source-cli": "^2.0.0",
+    "shx": "^0.3.2",
     "ts-loader": "^8.0.3",
     "typescript": "^4.0.2",
     "webpack": "^4.44.1",
@@ -22,7 +22,6 @@
     "@types/marked": "^1.1.0",
     "github-markdown-css": "^4.0.0",
     "highlight.js": "^10.2.0",
-    "marked": "^1.1.1",
-    "shx": "^0.3.2"
+    "marked": "^1.1.1"
   }
 }
