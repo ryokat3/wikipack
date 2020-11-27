@@ -1203,7 +1203,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = "./src/main.ts");
+/******/ 	return __webpack_require__(__webpack_require__.s = "./src/index.ts");
 /******/ })
 /************************************************************************/
 /******/ ({
@@ -45900,10 +45900,10 @@ module.exports = zephir;
 
 /***/ }),
 
-/***/ "./src/main.ts":
-/*!*********************!*\
-  !*** ./src/main.ts ***!
-  \*********************/
+/***/ "./src/index.ts":
+/*!**********************!*\
+  !*** ./src/index.ts ***!
+  \**********************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -45962,12 +45962,26 @@ var MyRenderer = /** @class */ (function (_super) {
     return MyRenderer;
 }(marked.Renderer));
 var colorAndKeywordsRegex = /([#%](?:[0-9a-fA-F]{3,6}|\w+))\[(.*?)\]/;
+function decodeUriOrEcho(uri) {
+    try {
+        return decodeURIComponent(uri);
+    }
+    catch (e) {
+        if (e instanceof URIError) {
+            return uri;
+        }
+        throw e;
+    }
+}
 var render = function (text) {
     hljs.initHighlightingOnLoad();
     var myRenderer = new MyRenderer;
     marked.setOptions({
         renderer: myRenderer,
-        highlight: function (code, lang, callback) {
+        highlight: function (code, _lang, callback) {
+            // NOTE: to avoid space character in lang
+            //    
+            var lang = decodeUriOrEcho(_lang);
             if ((!lang) || (lang.match(colorAndKeywordsRegex) === null)) {
                 return hljs.highlightAuto(code, [lang]).value;
             }
