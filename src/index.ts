@@ -1,5 +1,5 @@
 import * as marked from 'marked'
-import * as hljs from 'highlight.js';
+import hljs from 'highlight.js';
 
 const MARKDOWN_BLOCK_ID = "markdown"
 const HTML_BLOCK_ID = "html"
@@ -36,7 +36,7 @@ function decodeUriOrEcho(uri:string) {
 }
 
 const render = (text:string):{ html:string, title:string } => {
-    hljs.initHighlightingOnLoad()
+    hljs.highlightAll()
 
     const myRenderer = new MyRenderer
 
