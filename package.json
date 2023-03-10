@@ -18,9 +18,9 @@
     "webpack-cli": "^3.3.12"
   },
   "dependencies": {
-    "@types/marked": "^1.2.0",
+    "@types/marked": "^4.0.8",
     "github-markdown-css": "^5.2.0",
     "highlight.js": "^11.7.0",
-    "marked": "^1.2.5"
+    "marked": "^4.2.12"
   }
 }

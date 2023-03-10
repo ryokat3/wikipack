@@ -1,4 +1,4 @@
-import * as marked from 'marked'
+import { marked } from 'marked'
 import hljs from 'highlight.js';
 
 const MARKDOWN_BLOCK_ID = "markdown"
@@ -39,7 +39,6 @@ const render = (text:string):{ html:string, title:string } => {
     hljs.highlightAll()
 
     const myRenderer = new MyRenderer
-
     marked.setOptions({
         renderer: myRenderer,
         highlight: (code:string, _lang:string, callback?:(error:any, code:string)=>void) => {
