@@ -89,8 +89,18 @@ const render = (text:string):{ html:string, title:string } => {
 }
 
 window.onload = function() {
+
+    // Find 'body' element    
+    const bodyElems = document.getElementsByTagName('body')
+    if (bodyElems.length == 0) {
+        console.debug("No body element found")
+        return
+    }
+    const bodyElem = bodyElems[0]
+
     const markdownElem = document.getElementById(MARKDOWN_BLOCK_ID)
     const htmlElem = document.getElementById(HTML_BLOCK_ID)    
+          
     if ((markdownElem !== null) && (htmlElem !== null)) {
         const converted = render(markdownElem.innerHTML)
         htmlElem.innerHTML = converted.html
@@ -98,15 +108,10 @@ window.onload = function() {
             document.title = converted.title
         }
     }
-    else {
-        const bodyElems = document.getElementsByTagName('body')
-        if (bodyElems.length > 0) {
-            if (markdownElem === null) {
-                bodyElems[0].innerHTML = '<p>No elememt whose id attribute is "markdown" found</p>'
-            }
-            else if (htmlElem === null) {
-                bodyElems[0].innerHTML = '<p>No elememt whose id attribute is "html" found</p>'
-            }
-        }
+    else if (markdownElem === null) {
+        bodyElem.innerHTML = '<p>No elememt whose id attribute is "markdown" found</p>'
+    }
+    else if (htmlElem === null) {
+        bodyElem.innerHTML = '<p>No elememt whose id attribute is "html" found</p>'
     }
 }
