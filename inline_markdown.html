@@ -1281,7 +1281,13 @@ function onFileDropped(elem, ev) {
     if ((files === undefined) || (files.length == 0)) {
         return;
     }
-    render_markdown(elem, "# ".concat(files[0].name));
+    var reader = new FileReader();
+    reader.onload = function (e) {
+        if ((e.target !== null) && (e.target.result !== null) && (typeof e.target.result == 'string')) {
+            render_markdown(elem, e.target.result);
+        }
+    };
+    reader.readAsText(files[0], "utf-8");
 }
 function render_markdown(elem, markdown) {
     var converted = render(markdown);
@@ -1310,15 +1316,15 @@ window.onload = function () {
         bodyElem.innerHTML = '<p>No elememt whose id attribute is "html" found</p>';
     }
     if (htmlElem !== null) {
-        htmlElem.addEventListener('dragover', function (e) {
+        window.addEventListener('dragover', function (e) {
             e.stopPropagation();
             e.preventDefault();
         }, false);
-        htmlElem.addEventListener('dragleave', function (e) {
+        window.addEventListener('dragleave', function (e) {
             e.stopPropagation();
             e.preventDefault();
         }, false);
-        htmlElem.addEventListener("drop", function (e) { return onFileDropped(htmlElem, e); }, false);
+        window.addEventListener("drop", function (e) { return onFileDropped(htmlElem, e); }, false);
     }
 };
 

@@ -58,7 +58,7 @@ const render = (text:string):{ html:string, title:string } => {
                 if (colorAndKeywordsMatch === null) {            
                     return codeByColor
                 }
-                else {                    
+                else {              
                     const isTextHighlight = (colorAndKeywordsMatch[1][0] === '#')
                     const color = colorAndKeywordsMatch[1].substring(1)                    
                     const isRgb:boolean = (color.match(/^[0-9a-fA-F]{3,6}$/) !== null)
@@ -99,8 +99,15 @@ function onFileDropped(elem:HTMLElement, ev:Event):void {
     if ((files === undefined) || (files.length == 0)) {
         return
     }
+    const reader = new FileReader()
+    reader.onload = (e:ProgressEvent<FileReader>) => {
+        if ((e.target !== null) && (e.target.result !== null) && (typeof e.target.result == 'string')) {
+            render_markdown(elem, e.target.result)    
+        }
+    }
+    reader.readAsText(files[0], "utf-8")
         
-    render_markdown(elem, `# ${files[0].name}`)    
+    
 }
 
 function render_markdown(elem:HTMLElement, markdown:string):void {
@@ -135,15 +142,15 @@ window.onload = function() {
     }
     
     if (htmlElem !== null) {        
-        htmlElem.addEventListener('dragover', function(e:Event) {
+        window.addEventListener('dragover', function(e:Event) {
             e.stopPropagation()
             e.preventDefault()
         }, false)
-        htmlElem.addEventListener('dragleave', function(e:Event) {
+        window.addEventListener('dragleave', function(e:Event) {
             e.stopPropagation()
             e.preventDefault()            
         }, false)        
-        htmlElem.addEventListener("drop", (e:Event)=>onFileDropped(htmlElem, e), false)
+        window.addEventListener("drop", (e:Event)=>onFileDropped(htmlElem, e), false)
     }
 }
 
