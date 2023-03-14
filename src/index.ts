@@ -54,7 +54,7 @@ const render = (text:string):{ html:string, title:string } => {
 
             const highlightedCode = lang.split(';').reduce((codeByColor, colorAndKeywords)=>{            
 
-                const colorAndKeywordsMatch = colorAndKeywords.match(colorAndKeywordsRegex)
+                const colorAndKeywordsMatch:RegExpMatchArray|null = colorAndKeywords.match(colorAndKeywordsRegex)
                 if (colorAndKeywordsMatch === null) {            
                     return codeByColor
                 }
@@ -88,7 +88,30 @@ const render = (text:string):{ html:string, title:string } => {
     }   
 }
 
-window.onload = function() {
+function onFileDropped(elem:HTMLElement, ev:Event):void {
+    ev.stopPropagation()
+    ev.preventDefault()
+
+    if (!(ev instanceof DragEvent)) {
+        return
+    }
+    const files = ev.dataTransfer?.files    
+    if ((files === undefined) || (files.length == 0)) {
+        return
+    }
+        
+    render_markdown(elem, `# ${files[0].name}`)    
+}
+
+function render_markdown(elem:HTMLElement, markdown:string):void {
+    const converted = render(markdown)
+    elem.innerHTML = converted.html
+    if (converted.title !== undefined) {
+        document.title = converted.title
+    }   
+}
+
+window.onload = function() {    
 
     // Find 'body' element    
     const bodyElems = document.getElementsByTagName('body')
@@ -102,11 +125,7 @@ window.onload = function() {
     const htmlElem = document.getElementById(HTML_BLOCK_ID)    
           
     if ((markdownElem !== null) && (htmlElem !== null)) {
-        const converted = render(markdownElem.innerHTML)
-        htmlElem.innerHTML = converted.html
-        if (converted.title !== undefined) {
-            document.title = converted.title
-        }
+        render_markdown(htmlElem, markdownElem.innerHTML)
     }
     else if (markdownElem === null) {
         bodyElem.innerHTML = '<p>No elememt whose id attribute is "markdown" found</p>'
@@ -114,4 +133,18 @@ window.onload = function() {
     else if (htmlElem === null) {
         bodyElem.innerHTML = '<p>No elememt whose id attribute is "html" found</p>'
     }
+    
+    if (htmlElem !== null) {        
+        htmlElem.addEventListener('dragover', function(e:Event) {
+            e.stopPropagation()
+            e.preventDefault()
+        }, false)
+        htmlElem.addEventListener('dragleave', function(e:Event) {
+            e.stopPropagation()
+            e.preventDefault()            
+        }, false)        
+        htmlElem.addEventListener("drop", (e:Event)=>onFileDropped(htmlElem, e), false)
+    }
 }
+
+

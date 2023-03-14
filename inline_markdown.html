@@ -1270,6 +1270,26 @@ var render = function (text) {
         title: myRenderer.title || "No title"
     };
 };
+function onFileDropped(elem, ev) {
+    var _a;
+    ev.stopPropagation();
+    ev.preventDefault();
+    if (!(ev instanceof DragEvent)) {
+        return;
+    }
+    var files = (_a = ev.dataTransfer) === null || _a === void 0 ? void 0 : _a.files;
+    if ((files === undefined) || (files.length == 0)) {
+        return;
+    }
+    render_markdown(elem, "# ".concat(files[0].name));
+}
+function render_markdown(elem, markdown) {
+    var converted = render(markdown);
+    elem.innerHTML = converted.html;
+    if (converted.title !== undefined) {
+        document.title = converted.title;
+    }
+}
 window.onload = function () {
     // Find 'body' element    
     var bodyElems = document.getElementsByTagName('body');
@@ -1281,17 +1301,24 @@ window.onload = function () {
     var markdownElem = document.getElementById(MARKDOWN_BLOCK_ID);
     var htmlElem = document.getElementById(HTML_BLOCK_ID);
     if ((markdownElem !== null) && (htmlElem !== null)) {
-        var converted = render(markdownElem.innerHTML);
-        htmlElem.innerHTML = converted.html;
-        if (converted.title !== undefined) {
-            document.title = converted.title;
-        }
+        render_markdown(htmlElem, markdownElem.innerHTML);
     }
     else if (markdownElem === null) {
         bodyElem.innerHTML = '<p>No elememt whose id attribute is "markdown" found</p>';
     }
     else if (htmlElem === null) {
         bodyElem.innerHTML = '<p>No elememt whose id attribute is "html" found</p>';
+    }
+    if (htmlElem !== null) {
+        htmlElem.addEventListener('dragover', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+        }, false);
+        htmlElem.addEventListener('dragleave', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+        }, false);
+        htmlElem.addEventListener("drop", function (e) { return onFileDropped(htmlElem, e); }, false);
     }
 };
 
