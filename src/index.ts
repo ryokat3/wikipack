@@ -110,15 +110,6 @@ function onFileDropped(elem:HTMLElement, ev:Event):void {
     if ((files === undefined) || (files.length == 0)) {
         return
     }
-    /*
-    const reader = new FileReader()
-    reader.onload = (e:ProgressEvent<FileReader>) => {
-        if ((e.target !== null) && (e.target.result !== null) && (typeof e.target.result == 'string')) {
-            render_markdown(elem, e.target.result)    
-        }
-    }
-    reader.readAsText(files[0], "utf-8") 
-    */
     render_markdown_blog(elem, files[0])
 }
 
@@ -197,18 +188,17 @@ window.onload = function() {
 
         
         _open_markdown = (fileName:string) => {
-            /*
-            const reader = new FileReader()
-            reader.onload = (e:ProgressEvent<FileReader>) => {
-                if ((e.target !== null) && (e.target.result !== null) && (typeof e.target.result == 'string')) {
-                    render_markdown(htmlElem, e.target.result)    
-                }
-            }   
-            fetch(fileName).then(response => response.blob()).then(blob => reader.readAsText(blob))
-            */
-            fetch(fileName).then(response => response.blob()).then(blob => render_markdown_blog(htmlElem, blob))
+            const url = new URL(document.location.href)
+            if (url.protocol.toLowerCase() == "file:") {                
+                //@ts-ignore
+                window.showOpenFilePicker({
+                    mode: "read",
+                    startIn: url.pathname.replace(/(.*)\/.*/, '$1')
+                });                
+            }
+            else {
+                fetch(fileName).then(response => response.blob()).then(blob => render_markdown_blog(htmlElem, blob))
+            }
         }
     }
 }
-
-
