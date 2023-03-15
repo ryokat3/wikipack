@@ -1,8 +1,12 @@
-import { marked } from 'marked'
+import { marked, Slugger } from 'marked'
 import hljs from 'highlight.js';
 
 const MARKDOWN_BLOCK_ID = "markdown"
 const HTML_BLOCK_ID = "html"
+const FADE_LAYER_ID = "fadeLayer"
+
+declare var _open_markdown: Function
+
 
 class MyRenderer extends marked.Renderer {
 
@@ -12,11 +16,21 @@ class MyRenderer extends marked.Renderer {
         super()
     }
     
-    public heading(text:string, level:1|2|3|4|5|6, raw:string) {
+    public heading(text:string, level:1|2|3|4|5|6, raw:string, slugger:Slugger) {
         if (this.title === undefined && text !== "") {
             this.title = text
         }
-        return super.heading(text, level, raw, new marked.Slugger())
+        return super.heading(text, level, raw, slugger)
+    }
+
+    public link(href:string, title:string, text:string) {
+        if (href.toLowerCase().match(/\.(md|mkd|markdown)$/)) {
+            return super.link(`javascript:_open_markdown('${href}')`, title, text)
+        }
+        else {
+            return super.link(href, title, text)
+        }
+        
     }
 
 }
@@ -35,8 +49,8 @@ function decodeUriOrEcho(uri:string) {
     }
 }
 
-const render = (text:string):{ html:string, title:string } => {
-    hljs.highlightAll()
+const render = (text:string):{ html:string, title:string } => {    
+    // hljs.highlightAll()
 
     const myRenderer = new MyRenderer
     marked.setOptions({
@@ -81,7 +95,7 @@ const render = (text:string):{ html:string, title:string } => {
         xhtml: false
     })    
     const html = marked.parse(text)
-
+    
     return {
         html: html,
         title: myRenderer.title || "No title"
@@ -89,9 +103,6 @@ const render = (text:string):{ html:string, title:string } => {
 }
 
 function onFileDropped(elem:HTMLElement, ev:Event):void {
-    ev.stopPropagation()
-    ev.preventDefault()
-
     if (!(ev instanceof DragEvent)) {
         return
     }
@@ -99,15 +110,16 @@ function onFileDropped(elem:HTMLElement, ev:Event):void {
     if ((files === undefined) || (files.length == 0)) {
         return
     }
+    /*
     const reader = new FileReader()
     reader.onload = (e:ProgressEvent<FileReader>) => {
         if ((e.target !== null) && (e.target.result !== null) && (typeof e.target.result == 'string')) {
             render_markdown(elem, e.target.result)    
         }
     }
-    reader.readAsText(files[0], "utf-8")
-        
-    
+    reader.readAsText(files[0], "utf-8") 
+    */
+    render_markdown_blog(elem, files[0])
 }
 
 function render_markdown(elem:HTMLElement, markdown:string):void {
@@ -116,6 +128,16 @@ function render_markdown(elem:HTMLElement, markdown:string):void {
     if (converted.title !== undefined) {
         document.title = converted.title
     }   
+}
+
+function render_markdown_blog(elem:HTMLElement, blob:Blob):void {
+    const reader = new FileReader()
+    reader.onload = (e:ProgressEvent<FileReader>) => {
+        if ((e.target !== null) && (e.target.result !== null) && (typeof e.target.result == 'string')) {
+            render_markdown(elem, e.target.result)    
+        }
+    }
+    reader.readAsText(blob, "utf-8") 
 }
 
 window.onload = function() {    
@@ -130,6 +152,7 @@ window.onload = function() {
 
     const markdownElem = document.getElementById(MARKDOWN_BLOCK_ID)
     const htmlElem = document.getElementById(HTML_BLOCK_ID)    
+    const fadeLayerElem = document.getElementById(FADE_LAYER_ID)    
           
     if ((markdownElem !== null) && (htmlElem !== null)) {
         render_markdown(htmlElem, markdownElem.innerHTML)
@@ -141,16 +164,50 @@ window.onload = function() {
         bodyElem.innerHTML = '<p>No elememt whose id attribute is "html" found</p>'
     }
     
-    if (htmlElem !== null) {        
-        window.addEventListener('dragover', function(e:Event) {
+    if (htmlElem !== null) {
+        window.addEventListener('dragenter', function(e:Event) {
             e.stopPropagation()
             e.preventDefault()
+            if ((fadeLayerElem != null) && (fadeLayerElem.style.visibility != "visible")) {
+                fadeLayerElem.style.visibility = "visible"
+            }                               
         }, false)
         window.addEventListener('dragleave', function(e:Event) {
             e.stopPropagation()
-            e.preventDefault()            
-        }, false)        
-        window.addEventListener("drop", (e:Event)=>onFileDropped(htmlElem, e), false)
+            e.preventDefault()
+            if ((fadeLayerElem != null) && (fadeLayerElem.style.visibility != "hidden")) {
+                fadeLayerElem.style.visibility = "hidden"
+            }                                    
+        }, false)  
+        window.addEventListener('dragover', function(e:Event) {
+            e.stopPropagation()
+            e.preventDefault()
+            if ((fadeLayerElem != null) && (fadeLayerElem.style.visibility != "visible")) {
+                fadeLayerElem.style.visibility = "visible"
+            }
+        }, false)      
+        window.addEventListener("drop", (e:Event)=>{
+            e.stopPropagation()
+            e.preventDefault()
+            if ((fadeLayerElem != null) && (fadeLayerElem.style.visibility != "hidden")) {
+                fadeLayerElem.style.visibility = "hidden"
+            }            
+            onFileDropped(htmlElem, e)
+        }, false)
+
+        
+        _open_markdown = (fileName:string) => {
+            /*
+            const reader = new FileReader()
+            reader.onload = (e:ProgressEvent<FileReader>) => {
+                if ((e.target !== null) && (e.target.result !== null) && (typeof e.target.result == 'string')) {
+                    render_markdown(htmlElem, e.target.result)    
+                }
+            }   
+            fetch(fileName).then(response => response.blob()).then(blob => reader.readAsText(blob))
+            */
+            fetch(fileName).then(response => response.blob()).then(blob => render_markdown_blog(htmlElem, blob))
+        }
     }
 }
 

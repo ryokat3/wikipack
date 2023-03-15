@@ -6,6 +6,9 @@
 
 # Write your Markdown here !!
 
+- [example](example.md)
+- [example2](example2.md)
+
 ```#blue[text-blue,foo];#dc143c[text-#dc143c,bar];%yellow[background-yellow,baz];%7fff00[background-#7fff00]
 text-blue
 text-#dc143c
@@ -42,11 +45,29 @@ background-#7fff00
 		white-space: pre-wrap;
 		font-family: Consolas, 'Courier New', Courier, Monaco, monospace;
 	}
+	#fadeLayer {
+		position: absolute;
+		top: 0px;
+		left: 0px;
+
+		width: 100%;
+		height:100%;
+
+		background-color:#000000;
+		opacity: 0.5;
+		visibility: hidden;
+  		z-index: 1;
+}
 </style>
 
 <!-- The text of the first heading in Markdown will automatically replace the title -->
 <title>inline_marked</title>
-
+<script>
+var _open_markdown = (fileName) => {
+    alert(`Can't open ${fileName}`)    
+}
+</script>
+<script inline type="text/javascript" src="../dist/inline_markdown.js"></script>
 </head>
 <body>
 <div id="html" class="markdown-body"></div>
@@ -54,6 +75,7 @@ background-#7fff00
 id attribute of Marddown element (input) must be "markdown"
 id attribute of HTML element (output) must be "html"
 -->
-<script inline type="text/javascript" src="../dist/inline_markdown.js"></script>
+
+<div id="fadeLayer"></div>
 </body>
 </html>
