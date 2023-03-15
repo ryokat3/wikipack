@@ -2,6 +2,7 @@
 hehe*
 tmp*
 .*.swp
+example*.md
 dist
 node_modules
 package-lock.json
