@@ -1182,6 +1182,3899 @@ var _open_markdown = (fileName) => {
 return /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
+/***/ "./node_modules/fp-ts/es6/Applicative.js":
+/*!***********************************************!*\
+  !*** ./node_modules/fp-ts/es6/Applicative.js ***!
+  \***********************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "getApplicativeComposition": () => (/* binding */ getApplicativeComposition),
+/* harmony export */   "getApplicativeMonoid": () => (/* binding */ getApplicativeMonoid)
+/* harmony export */ });
+/* harmony import */ var _Apply__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Apply */ "./node_modules/fp-ts/es6/Apply.js");
+/* harmony import */ var _function__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./function */ "./node_modules/fp-ts/es6/function.js");
+/* harmony import */ var _Functor__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Functor */ "./node_modules/fp-ts/es6/Functor.js");
+/**
+ * The `Applicative` type class extends the `Apply` type class with a `of` function, which can be used to create values
+ * of type `f a` from values of type `a`.
+ *
+ * Where `Apply` provides the ability to lift functions of two or more arguments to functions whose arguments are
+ * wrapped using `f`, and `Functor` provides the ability to lift functions of one argument, `pure` can be seen as the
+ * function which lifts functions of _zero_ arguments. That is, `Applicative` functors support a lifting operation for
+ * any number of function arguments.
+ *
+ * Instances must satisfy the following laws in addition to the `Apply` laws:
+ *
+ * 1. Identity: `A.ap(A.of(a => a), fa) <-> fa`
+ * 2. Homomorphism: `A.ap(A.of(ab), A.of(a)) <-> A.of(ab(a))`
+ * 3. Interchange: `A.ap(fab, A.of(a)) <-> A.ap(A.of(ab => ab(a)), fab)`
+ *
+ * Note. `Functor`'s `map` can be derived: `A.map(x, f) = A.ap(A.of(f), x)`
+ *
+ * @since 2.0.0
+ */
+
+
+
+function getApplicativeMonoid(F) {
+    var f = (0,_Apply__WEBPACK_IMPORTED_MODULE_0__.getApplySemigroup)(F);
+    return function (M) { return ({
+        concat: f(M).concat,
+        empty: F.of(M.empty)
+    }); };
+}
+/** @deprecated */
+function getApplicativeComposition(F, G) {
+    var map = (0,_Functor__WEBPACK_IMPORTED_MODULE_1__.getFunctorComposition)(F, G).map;
+    var _ap = (0,_Apply__WEBPACK_IMPORTED_MODULE_0__.ap)(F, G);
+    return {
+        map: map,
+        of: function (a) { return F.of(G.of(a)); },
+        ap: function (fgab, fga) { return (0,_function__WEBPACK_IMPORTED_MODULE_2__.pipe)(fgab, _ap(fga)); }
+    };
+}
+
+
+/***/ }),
+
+/***/ "./node_modules/fp-ts/es6/Apply.js":
+/*!*****************************************!*\
+  !*** ./node_modules/fp-ts/es6/Apply.js ***!
+  \*****************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "ap": () => (/* binding */ ap),
+/* harmony export */   "apFirst": () => (/* binding */ apFirst),
+/* harmony export */   "apS": () => (/* binding */ apS),
+/* harmony export */   "apSecond": () => (/* binding */ apSecond),
+/* harmony export */   "getApplySemigroup": () => (/* binding */ getApplySemigroup),
+/* harmony export */   "sequenceS": () => (/* binding */ sequenceS),
+/* harmony export */   "sequenceT": () => (/* binding */ sequenceT)
+/* harmony export */ });
+/* harmony import */ var _function__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./function */ "./node_modules/fp-ts/es6/function.js");
+/* harmony import */ var _internal__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./internal */ "./node_modules/fp-ts/es6/internal.js");
+
+
+function ap(F, G) {
+    return function (fa) {
+        return function (fab) {
+            return F.ap(F.map(fab, function (gab) { return function (ga) { return G.ap(gab, ga); }; }), fa);
+        };
+    };
+}
+function apFirst(A) {
+    return function (second) { return function (first) {
+        return A.ap(A.map(first, function (a) { return function () { return a; }; }), second);
+    }; };
+}
+function apSecond(A) {
+    return function (second) {
+        return function (first) {
+            return A.ap(A.map(first, function () { return function (b) { return b; }; }), second);
+        };
+    };
+}
+function apS(F) {
+    return function (name, fb) {
+        return function (fa) {
+            return F.ap(F.map(fa, function (a) { return function (b) {
+                var _a;
+                return Object.assign({}, a, (_a = {}, _a[name] = b, _a));
+            }; }), fb);
+        };
+    };
+}
+function getApplySemigroup(F) {
+    return function (S) { return ({
+        concat: function (first, second) {
+            return F.ap(F.map(first, function (x) { return function (y) { return S.concat(x, y); }; }), second);
+        }
+    }); };
+}
+function curried(f, n, acc) {
+    return function (x) {
+        var combined = Array(acc.length + 1);
+        for (var i = 0; i < acc.length; i++) {
+            combined[i] = acc[i];
+        }
+        combined[acc.length] = x;
+        return n === 0 ? f.apply(null, combined) : curried(f, n - 1, combined);
+    };
+}
+var tupleConstructors = {
+    1: function (a) { return [a]; },
+    2: function (a) { return function (b) { return [a, b]; }; },
+    3: function (a) { return function (b) { return function (c) { return [a, b, c]; }; }; },
+    4: function (a) { return function (b) { return function (c) { return function (d) { return [a, b, c, d]; }; }; }; },
+    5: function (a) { return function (b) { return function (c) { return function (d) { return function (e) { return [a, b, c, d, e]; }; }; }; }; }
+};
+function getTupleConstructor(len) {
+    if (!_internal__WEBPACK_IMPORTED_MODULE_0__.has.call(tupleConstructors, len)) {
+        tupleConstructors[len] = curried(_function__WEBPACK_IMPORTED_MODULE_1__.tuple, len - 1, []);
+    }
+    return tupleConstructors[len];
+}
+function sequenceT(F) {
+    return function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        var len = args.length;
+        var f = getTupleConstructor(len);
+        var fas = F.map(args[0], f);
+        for (var i = 1; i < len; i++) {
+            fas = F.ap(fas, args[i]);
+        }
+        return fas;
+    };
+}
+function getRecordConstructor(keys) {
+    var len = keys.length;
+    switch (len) {
+        case 1:
+            return function (a) {
+                var _a;
+                return (_a = {}, _a[keys[0]] = a, _a);
+            };
+        case 2:
+            return function (a) { return function (b) {
+                var _a;
+                return (_a = {}, _a[keys[0]] = a, _a[keys[1]] = b, _a);
+            }; };
+        case 3:
+            return function (a) { return function (b) { return function (c) {
+                var _a;
+                return (_a = {}, _a[keys[0]] = a, _a[keys[1]] = b, _a[keys[2]] = c, _a);
+            }; }; };
+        case 4:
+            return function (a) { return function (b) { return function (c) { return function (d) {
+                var _a;
+                return (_a = {},
+                    _a[keys[0]] = a,
+                    _a[keys[1]] = b,
+                    _a[keys[2]] = c,
+                    _a[keys[3]] = d,
+                    _a);
+            }; }; }; };
+        case 5:
+            return function (a) { return function (b) { return function (c) { return function (d) { return function (e) {
+                var _a;
+                return (_a = {},
+                    _a[keys[0]] = a,
+                    _a[keys[1]] = b,
+                    _a[keys[2]] = c,
+                    _a[keys[3]] = d,
+                    _a[keys[4]] = e,
+                    _a);
+            }; }; }; }; };
+        default:
+            return curried(function () {
+                var args = [];
+                for (var _i = 0; _i < arguments.length; _i++) {
+                    args[_i] = arguments[_i];
+                }
+                var r = {};
+                for (var i = 0; i < len; i++) {
+                    r[keys[i]] = args[i];
+                }
+                return r;
+            }, len - 1, []);
+    }
+}
+function sequenceS(F) {
+    return function (r) {
+        var keys = Object.keys(r);
+        var len = keys.length;
+        var f = getRecordConstructor(keys);
+        var fr = F.map(r[keys[0]], f);
+        for (var i = 1; i < len; i++) {
+            fr = F.ap(fr, r[keys[i]]);
+        }
+        return fr;
+    };
+}
+
+
+/***/ }),
+
+/***/ "./node_modules/fp-ts/es6/Chain.js":
+/*!*****************************************!*\
+  !*** ./node_modules/fp-ts/es6/Chain.js ***!
+  \*****************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "bind": () => (/* binding */ bind),
+/* harmony export */   "chainFirst": () => (/* binding */ chainFirst)
+/* harmony export */ });
+function chainFirst(M) {
+    return function (f) { return function (first) { return M.chain(first, function (a) { return M.map(f(a), function () { return a; }); }); }; };
+}
+function bind(M) {
+    return function (name, f) { return function (ma) { return M.chain(ma, function (a) { return M.map(f(a), function (b) {
+        var _a;
+        return Object.assign({}, a, (_a = {}, _a[name] = b, _a));
+    }); }); }; };
+}
+
+
+/***/ }),
+
+/***/ "./node_modules/fp-ts/es6/Eq.js":
+/*!**************************************!*\
+  !*** ./node_modules/fp-ts/es6/Eq.js ***!
+  \**************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "Contravariant": () => (/* binding */ Contravariant),
+/* harmony export */   "URI": () => (/* binding */ URI),
+/* harmony export */   "contramap": () => (/* binding */ contramap),
+/* harmony export */   "eq": () => (/* binding */ eq),
+/* harmony export */   "eqBoolean": () => (/* binding */ eqBoolean),
+/* harmony export */   "eqDate": () => (/* binding */ eqDate),
+/* harmony export */   "eqNumber": () => (/* binding */ eqNumber),
+/* harmony export */   "eqStrict": () => (/* binding */ eqStrict),
+/* harmony export */   "eqString": () => (/* binding */ eqString),
+/* harmony export */   "fromEquals": () => (/* binding */ fromEquals),
+/* harmony export */   "getMonoid": () => (/* binding */ getMonoid),
+/* harmony export */   "getSemigroup": () => (/* binding */ getSemigroup),
+/* harmony export */   "getStructEq": () => (/* binding */ getStructEq),
+/* harmony export */   "getTupleEq": () => (/* binding */ getTupleEq),
+/* harmony export */   "strictEqual": () => (/* binding */ strictEqual),
+/* harmony export */   "struct": () => (/* binding */ struct),
+/* harmony export */   "tuple": () => (/* binding */ tuple)
+/* harmony export */ });
+/* harmony import */ var _function__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./function */ "./node_modules/fp-ts/es6/function.js");
+
+// -------------------------------------------------------------------------------------
+// constructors
+// -------------------------------------------------------------------------------------
+/**
+ * @category constructors
+ * @since 2.0.0
+ */
+var fromEquals = function (equals) { return ({
+    equals: function (x, y) { return x === y || equals(x, y); }
+}); };
+// -------------------------------------------------------------------------------------
+// combinators
+// -------------------------------------------------------------------------------------
+/**
+ * @since 2.10.0
+ */
+var struct = function (eqs) {
+    return fromEquals(function (first, second) {
+        for (var key in eqs) {
+            if (!eqs[key].equals(first[key], second[key])) {
+                return false;
+            }
+        }
+        return true;
+    });
+};
+/**
+ * Given a tuple of `Eq`s returns a `Eq` for the tuple
+ *
+ * @example
+ * import { tuple } from 'fp-ts/Eq'
+ * import * as S from 'fp-ts/string'
+ * import * as N from 'fp-ts/number'
+ * import * as B from 'fp-ts/boolean'
+ *
+ * const E = tuple(S.Eq, N.Eq, B.Eq)
+ * assert.strictEqual(E.equals(['a', 1, true], ['a', 1, true]), true)
+ * assert.strictEqual(E.equals(['a', 1, true], ['b', 1, true]), false)
+ * assert.strictEqual(E.equals(['a', 1, true], ['a', 2, true]), false)
+ * assert.strictEqual(E.equals(['a', 1, true], ['a', 1, false]), false)
+ *
+ * @since 2.10.0
+ */
+var tuple = function () {
+    var eqs = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        eqs[_i] = arguments[_i];
+    }
+    return fromEquals(function (first, second) { return eqs.every(function (E, i) { return E.equals(first[i], second[i]); }); });
+};
+/* istanbul ignore next */
+var contramap_ = function (fa, f) { return (0,_function__WEBPACK_IMPORTED_MODULE_0__.pipe)(fa, contramap(f)); };
+/**
+ * A typical use case for `contramap` would be like, given some `User` type, to construct an `Eq<User>`.
+ *
+ * We can do so with a function from `User -> X` where `X` is some value that we know how to compare
+ * for equality (meaning we have an `Eq<X>`)
+ *
+ * For example, given the following `User` type, we want to construct an `Eq<User>` that just looks at the `key` field
+ * for each user (since it's known to be unique).
+ *
+ * If we have a way of comparing `UUID`s for equality (`eqUUID: Eq<UUID>`) and we know how to go from `User -> UUID`,
+ * using `contramap` we can do this
+ *
+ * @example
+ * import { contramap, Eq } from 'fp-ts/Eq'
+ * import { pipe } from 'fp-ts/function'
+ * import * as S from 'fp-ts/string'
+ *
+ * type UUID = string
+ *
+ * interface User {
+ *   readonly key: UUID
+ *   readonly firstName: string
+ *   readonly lastName: string
+ * }
+ *
+ * const eqUUID: Eq<UUID> = S.Eq
+ *
+ * const eqUserByKey: Eq<User> = pipe(
+ *   eqUUID,
+ *   contramap((user) => user.key)
+ * )
+ *
+ * assert.deepStrictEqual(
+ *   eqUserByKey.equals(
+ *     { key: 'k1', firstName: 'a1', lastName: 'b1' },
+ *     { key: 'k2', firstName: 'a1', lastName: 'b1' }
+ *   ),
+ *   false
+ * )
+ * assert.deepStrictEqual(
+ *   eqUserByKey.equals(
+ *     { key: 'k1', firstName: 'a1', lastName: 'b1' },
+ *     { key: 'k1', firstName: 'a2', lastName: 'b1' }
+ *   ),
+ *   true
+ * )
+ *
+ * @since 2.0.0
+ */
+var contramap = function (f) { return function (fa) {
+    return fromEquals(function (x, y) { return fa.equals(f(x), f(y)); });
+}; };
+/**
+ * @category type lambdas
+ * @since 2.0.0
+ */
+var URI = 'Eq';
+/**
+ * @category instances
+ * @since 2.5.0
+ */
+var eqStrict = {
+    equals: function (a, b) { return a === b; }
+};
+var empty = {
+    equals: function () { return true; }
+};
+/**
+ * @category instances
+ * @since 2.10.0
+ */
+var getSemigroup = function () { return ({
+    concat: function (x, y) { return fromEquals(function (a, b) { return x.equals(a, b) && y.equals(a, b); }); }
+}); };
+/**
+ * @category instances
+ * @since 2.6.0
+ */
+var getMonoid = function () { return ({
+    concat: getSemigroup().concat,
+    empty: empty
+}); };
+/**
+ * @category instances
+ * @since 2.7.0
+ */
+var Contravariant = {
+    URI: URI,
+    contramap: contramap_
+};
+// -------------------------------------------------------------------------------------
+// deprecated
+// -------------------------------------------------------------------------------------
+/**
+ * Use [`tuple`](#tuple) instead.
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var getTupleEq = tuple;
+/**
+ * Use [`struct`](#struct) instead.
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var getStructEq = struct;
+/**
+ * Use [`eqStrict`](#eqstrict) instead
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var strictEqual = eqStrict.equals;
+/**
+ * This instance is deprecated, use small, specific instances instead.
+ * For example if a function needs a `Contravariant` instance, pass `E.Contravariant` instead of `E.eq`
+ * (where `E` is from `import E from 'fp-ts/Eq'`)
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var eq = Contravariant;
+/**
+ * Use [`Eq`](./boolean.ts.html#eq) instead.
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var eqBoolean = eqStrict;
+/**
+ * Use [`Eq`](./string.ts.html#eq) instead.
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var eqString = eqStrict;
+/**
+ * Use [`Eq`](./number.ts.html#eq) instead.
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var eqNumber = eqStrict;
+/**
+ * Use [`Eq`](./Date.ts.html#eq) instead.
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var eqDate = {
+    equals: function (first, second) { return first.valueOf() === second.valueOf(); }
+};
+
+
+/***/ }),
+
+/***/ "./node_modules/fp-ts/es6/FromEither.js":
+/*!**********************************************!*\
+  !*** ./node_modules/fp-ts/es6/FromEither.js ***!
+  \**********************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "chainEitherK": () => (/* binding */ chainEitherK),
+/* harmony export */   "chainFirstEitherK": () => (/* binding */ chainFirstEitherK),
+/* harmony export */   "chainOptionK": () => (/* binding */ chainOptionK),
+/* harmony export */   "filterOrElse": () => (/* binding */ filterOrElse),
+/* harmony export */   "fromEitherK": () => (/* binding */ fromEitherK),
+/* harmony export */   "fromOption": () => (/* binding */ fromOption),
+/* harmony export */   "fromOptionK": () => (/* binding */ fromOptionK),
+/* harmony export */   "fromPredicate": () => (/* binding */ fromPredicate)
+/* harmony export */ });
+/* harmony import */ var _Chain__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Chain */ "./node_modules/fp-ts/es6/Chain.js");
+/* harmony import */ var _function__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./function */ "./node_modules/fp-ts/es6/function.js");
+/* harmony import */ var _internal__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./internal */ "./node_modules/fp-ts/es6/internal.js");
+/**
+ * The `FromEither` type class represents those data types which support errors.
+ *
+ * @since 2.10.0
+ */
+
+
+
+function fromOption(F) {
+    return function (onNone) { return function (ma) { return F.fromEither(_internal__WEBPACK_IMPORTED_MODULE_0__.isNone(ma) ? _internal__WEBPACK_IMPORTED_MODULE_0__.left(onNone()) : _internal__WEBPACK_IMPORTED_MODULE_0__.right(ma.value)); }; };
+}
+function fromPredicate(F) {
+    return function (predicate, onFalse) {
+        return function (a) {
+            return F.fromEither(predicate(a) ? _internal__WEBPACK_IMPORTED_MODULE_0__.right(a) : _internal__WEBPACK_IMPORTED_MODULE_0__.left(onFalse(a)));
+        };
+    };
+}
+function fromOptionK(F) {
+    var fromOptionF = fromOption(F);
+    return function (onNone) {
+        var from = fromOptionF(onNone);
+        return function (f) { return (0,_function__WEBPACK_IMPORTED_MODULE_1__.flow)(f, from); };
+    };
+}
+function chainOptionK(F, M) {
+    var fromOptionKF = fromOptionK(F);
+    return function (onNone) {
+        var from = fromOptionKF(onNone);
+        return function (f) { return function (ma) { return M.chain(ma, from(f)); }; };
+    };
+}
+function fromEitherK(F) {
+    return function (f) { return (0,_function__WEBPACK_IMPORTED_MODULE_1__.flow)(f, F.fromEither); };
+}
+function chainEitherK(F, M) {
+    var fromEitherKF = fromEitherK(F);
+    return function (f) { return function (ma) { return M.chain(ma, fromEitherKF(f)); }; };
+}
+function chainFirstEitherK(F, M) {
+    return (0,_function__WEBPACK_IMPORTED_MODULE_1__.flow)(fromEitherK(F), (0,_Chain__WEBPACK_IMPORTED_MODULE_2__.chainFirst)(M));
+}
+function filterOrElse(F, M) {
+    return function (predicate, onFalse) {
+        return function (ma) {
+            return M.chain(ma, function (a) { return F.fromEither(predicate(a) ? _internal__WEBPACK_IMPORTED_MODULE_0__.right(a) : _internal__WEBPACK_IMPORTED_MODULE_0__.left(onFalse(a))); });
+        };
+    };
+}
+
+
+/***/ }),
+
+/***/ "./node_modules/fp-ts/es6/Functor.js":
+/*!*******************************************!*\
+  !*** ./node_modules/fp-ts/es6/Functor.js ***!
+  \*******************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "bindTo": () => (/* binding */ bindTo),
+/* harmony export */   "flap": () => (/* binding */ flap),
+/* harmony export */   "getFunctorComposition": () => (/* binding */ getFunctorComposition),
+/* harmony export */   "let": () => (/* binding */ let_),
+/* harmony export */   "map": () => (/* binding */ map)
+/* harmony export */ });
+/* harmony import */ var _function__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./function */ "./node_modules/fp-ts/es6/function.js");
+/**
+ * A `Functor` is a type constructor which supports a mapping operation `map`.
+ *
+ * `map` can be used to turn functions `a -> b` into functions `f a -> f b` whose argument and return types use the type
+ * constructor `f` to represent some computational context.
+ *
+ * Instances must satisfy the following laws:
+ *
+ * 1. Identity: `F.map(fa, a => a) <-> fa`
+ * 2. Composition: `F.map(fa, a => bc(ab(a))) <-> F.map(F.map(fa, ab), bc)`
+ *
+ * @since 2.0.0
+ */
+
+function map(F, G) {
+    return function (f) { return function (fa) { return F.map(fa, function (ga) { return G.map(ga, f); }); }; };
+}
+function flap(F) {
+    return function (a) { return function (fab) { return F.map(fab, function (f) { return f(a); }); }; };
+}
+function bindTo(F) {
+    return function (name) { return function (fa) { return F.map(fa, function (a) {
+        var _a;
+        return (_a = {}, _a[name] = a, _a);
+    }); }; };
+}
+function let_(F) {
+    return function (name, f) { return function (fa) { return F.map(fa, function (a) {
+        var _a;
+        return Object.assign({}, a, (_a = {}, _a[name] = f(a), _a));
+    }); }; };
+}
+
+/** @deprecated */
+function getFunctorComposition(F, G) {
+    var _map = map(F, G);
+    return {
+        map: function (fga, f) { return (0,_function__WEBPACK_IMPORTED_MODULE_0__.pipe)(fga, _map(f)); }
+    };
+}
+
+
+/***/ }),
+
+/***/ "./node_modules/fp-ts/es6/Magma.js":
+/*!*****************************************!*\
+  !*** ./node_modules/fp-ts/es6/Magma.js ***!
+  \*****************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "concatAll": () => (/* binding */ concatAll),
+/* harmony export */   "endo": () => (/* binding */ endo),
+/* harmony export */   "filterFirst": () => (/* binding */ filterFirst),
+/* harmony export */   "filterSecond": () => (/* binding */ filterSecond),
+/* harmony export */   "reverse": () => (/* binding */ reverse)
+/* harmony export */ });
+/**
+ * A `Magma` is a pair `(A, concat)` in which `A` is a non-empty set and `concat` is a binary operation on `A`
+ *
+ * See [Semigroup](https://gcanti.github.io/fp-ts/modules/Semigroup.ts.html) for some instances.
+ *
+ * @since 2.0.0
+ */
+// -------------------------------------------------------------------------------------
+// combinators
+// -------------------------------------------------------------------------------------
+/**
+ * The dual of a `Magma`, obtained by swapping the arguments of `concat`.
+ *
+ * @example
+ * import { reverse, concatAll } from 'fp-ts/Magma'
+ * import * as N from 'fp-ts/number'
+ *
+ * const subAll = concatAll(reverse(N.MagmaSub))(0)
+ *
+ * assert.deepStrictEqual(subAll([1, 2, 3]), 2)
+ *
+ * @since 2.11.0
+ */
+var reverse = function (M) { return ({
+    concat: function (first, second) { return M.concat(second, first); }
+}); };
+/**
+ * @since 2.11.0
+ */
+var filterFirst = function (predicate) {
+    return function (M) { return ({
+        concat: function (first, second) { return (predicate(first) ? M.concat(first, second) : second); }
+    }); };
+};
+/**
+ * @since 2.11.0
+ */
+var filterSecond = function (predicate) {
+    return function (M) { return ({
+        concat: function (first, second) { return (predicate(second) ? M.concat(first, second) : first); }
+    }); };
+};
+/**
+ * @since 2.11.0
+ */
+var endo = function (f) {
+    return function (M) { return ({
+        concat: function (first, second) { return M.concat(f(first), f(second)); }
+    }); };
+};
+// -------------------------------------------------------------------------------------
+// utils
+// -------------------------------------------------------------------------------------
+/**
+ * Given a sequence of `as`, concat them and return the total.
+ *
+ * If `as` is empty, return the provided `startWith` value.
+ *
+ * @example
+ * import { concatAll } from 'fp-ts/Magma'
+ * import * as N from 'fp-ts/number'
+ *
+ * const subAll = concatAll(N.MagmaSub)(0)
+ *
+ * assert.deepStrictEqual(subAll([1, 2, 3]), -6)
+ *
+ * @since 2.11.0
+ */
+var concatAll = function (M) {
+    return function (startWith) {
+        return function (as) {
+            return as.reduce(function (a, acc) { return M.concat(a, acc); }, startWith);
+        };
+    };
+};
+
+
+/***/ }),
+
+/***/ "./node_modules/fp-ts/es6/Option.js":
+/*!******************************************!*\
+  !*** ./node_modules/fp-ts/es6/Option.js ***!
+  \******************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "Alt": () => (/* binding */ Alt),
+/* harmony export */   "Alternative": () => (/* binding */ Alternative),
+/* harmony export */   "ApT": () => (/* binding */ ApT),
+/* harmony export */   "Applicative": () => (/* binding */ Applicative),
+/* harmony export */   "Apply": () => (/* binding */ Apply),
+/* harmony export */   "Chain": () => (/* binding */ Chain),
+/* harmony export */   "Compactable": () => (/* binding */ Compactable),
+/* harmony export */   "Do": () => (/* binding */ Do),
+/* harmony export */   "Extend": () => (/* binding */ Extend),
+/* harmony export */   "Filterable": () => (/* binding */ Filterable),
+/* harmony export */   "Foldable": () => (/* binding */ Foldable),
+/* harmony export */   "FromEither": () => (/* binding */ FromEither),
+/* harmony export */   "Functor": () => (/* binding */ Functor),
+/* harmony export */   "Monad": () => (/* binding */ Monad),
+/* harmony export */   "MonadThrow": () => (/* binding */ MonadThrow),
+/* harmony export */   "Pointed": () => (/* binding */ Pointed),
+/* harmony export */   "Traversable": () => (/* binding */ Traversable),
+/* harmony export */   "URI": () => (/* binding */ URI),
+/* harmony export */   "Witherable": () => (/* binding */ Witherable),
+/* harmony export */   "Zero": () => (/* binding */ Zero),
+/* harmony export */   "alt": () => (/* binding */ alt),
+/* harmony export */   "altW": () => (/* binding */ altW),
+/* harmony export */   "ap": () => (/* binding */ ap),
+/* harmony export */   "apFirst": () => (/* binding */ apFirst),
+/* harmony export */   "apS": () => (/* binding */ apS),
+/* harmony export */   "apSecond": () => (/* binding */ apSecond),
+/* harmony export */   "bind": () => (/* binding */ bind),
+/* harmony export */   "bindTo": () => (/* binding */ bindTo),
+/* harmony export */   "chain": () => (/* binding */ chain),
+/* harmony export */   "chainEitherK": () => (/* binding */ chainEitherK),
+/* harmony export */   "chainFirst": () => (/* binding */ chainFirst),
+/* harmony export */   "chainFirstEitherK": () => (/* binding */ chainFirstEitherK),
+/* harmony export */   "chainNullableK": () => (/* binding */ chainNullableK),
+/* harmony export */   "compact": () => (/* binding */ compact),
+/* harmony export */   "duplicate": () => (/* binding */ duplicate),
+/* harmony export */   "elem": () => (/* binding */ elem),
+/* harmony export */   "exists": () => (/* binding */ exists),
+/* harmony export */   "extend": () => (/* binding */ extend),
+/* harmony export */   "filter": () => (/* binding */ filter),
+/* harmony export */   "filterMap": () => (/* binding */ filterMap),
+/* harmony export */   "flap": () => (/* binding */ flap),
+/* harmony export */   "flatten": () => (/* binding */ flatten),
+/* harmony export */   "fold": () => (/* binding */ fold),
+/* harmony export */   "foldMap": () => (/* binding */ foldMap),
+/* harmony export */   "foldW": () => (/* binding */ foldW),
+/* harmony export */   "fromEither": () => (/* binding */ fromEither),
+/* harmony export */   "fromEitherK": () => (/* binding */ fromEitherK),
+/* harmony export */   "fromNullable": () => (/* binding */ fromNullable),
+/* harmony export */   "fromNullableK": () => (/* binding */ fromNullableK),
+/* harmony export */   "fromPredicate": () => (/* binding */ fromPredicate),
+/* harmony export */   "getApplyMonoid": () => (/* binding */ getApplyMonoid),
+/* harmony export */   "getApplySemigroup": () => (/* binding */ getApplySemigroup),
+/* harmony export */   "getEq": () => (/* binding */ getEq),
+/* harmony export */   "getFirstMonoid": () => (/* binding */ getFirstMonoid),
+/* harmony export */   "getLastMonoid": () => (/* binding */ getLastMonoid),
+/* harmony export */   "getLeft": () => (/* binding */ getLeft),
+/* harmony export */   "getMonoid": () => (/* binding */ getMonoid),
+/* harmony export */   "getOrElse": () => (/* binding */ getOrElse),
+/* harmony export */   "getOrElseW": () => (/* binding */ getOrElseW),
+/* harmony export */   "getOrd": () => (/* binding */ getOrd),
+/* harmony export */   "getRefinement": () => (/* binding */ getRefinement),
+/* harmony export */   "getRight": () => (/* binding */ getRight),
+/* harmony export */   "getShow": () => (/* binding */ getShow),
+/* harmony export */   "guard": () => (/* binding */ guard),
+/* harmony export */   "isNone": () => (/* binding */ isNone),
+/* harmony export */   "isSome": () => (/* binding */ isSome),
+/* harmony export */   "let": () => (/* binding */ let_),
+/* harmony export */   "map": () => (/* binding */ map),
+/* harmony export */   "mapNullable": () => (/* binding */ mapNullable),
+/* harmony export */   "match": () => (/* binding */ match),
+/* harmony export */   "matchW": () => (/* binding */ matchW),
+/* harmony export */   "none": () => (/* binding */ none),
+/* harmony export */   "of": () => (/* binding */ of),
+/* harmony export */   "option": () => (/* binding */ option),
+/* harmony export */   "partition": () => (/* binding */ partition),
+/* harmony export */   "partitionMap": () => (/* binding */ partitionMap),
+/* harmony export */   "reduce": () => (/* binding */ reduce),
+/* harmony export */   "reduceRight": () => (/* binding */ reduceRight),
+/* harmony export */   "separate": () => (/* binding */ separate),
+/* harmony export */   "sequence": () => (/* binding */ sequence),
+/* harmony export */   "sequenceArray": () => (/* binding */ sequenceArray),
+/* harmony export */   "some": () => (/* binding */ some),
+/* harmony export */   "throwError": () => (/* binding */ throwError),
+/* harmony export */   "toNullable": () => (/* binding */ toNullable),
+/* harmony export */   "toUndefined": () => (/* binding */ toUndefined),
+/* harmony export */   "traverse": () => (/* binding */ traverse),
+/* harmony export */   "traverseArray": () => (/* binding */ traverseArray),
+/* harmony export */   "traverseArrayWithIndex": () => (/* binding */ traverseArrayWithIndex),
+/* harmony export */   "traverseReadonlyArrayWithIndex": () => (/* binding */ traverseReadonlyArrayWithIndex),
+/* harmony export */   "traverseReadonlyNonEmptyArrayWithIndex": () => (/* binding */ traverseReadonlyNonEmptyArrayWithIndex),
+/* harmony export */   "tryCatch": () => (/* binding */ tryCatch),
+/* harmony export */   "tryCatchK": () => (/* binding */ tryCatchK),
+/* harmony export */   "wilt": () => (/* binding */ wilt),
+/* harmony export */   "wither": () => (/* binding */ wither),
+/* harmony export */   "zero": () => (/* binding */ zero)
+/* harmony export */ });
+/* harmony import */ var _Applicative__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./Applicative */ "./node_modules/fp-ts/es6/Applicative.js");
+/* harmony import */ var _Apply__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./Apply */ "./node_modules/fp-ts/es6/Apply.js");
+/* harmony import */ var _Chain__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./Chain */ "./node_modules/fp-ts/es6/Chain.js");
+/* harmony import */ var _FromEither__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./FromEither */ "./node_modules/fp-ts/es6/FromEither.js");
+/* harmony import */ var _function__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./function */ "./node_modules/fp-ts/es6/function.js");
+/* harmony import */ var _Functor__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./Functor */ "./node_modules/fp-ts/es6/Functor.js");
+/* harmony import */ var _internal__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./internal */ "./node_modules/fp-ts/es6/internal.js");
+/* harmony import */ var _Predicate__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./Predicate */ "./node_modules/fp-ts/es6/Predicate.js");
+/* harmony import */ var _Semigroup__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./Semigroup */ "./node_modules/fp-ts/es6/Semigroup.js");
+/* harmony import */ var _Separated__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./Separated */ "./node_modules/fp-ts/es6/Separated.js");
+/* harmony import */ var _Witherable__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./Witherable */ "./node_modules/fp-ts/es6/Witherable.js");
+/* harmony import */ var _Zero__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Zero */ "./node_modules/fp-ts/es6/Zero.js");
+
+
+
+
+
+
+
+
+
+
+
+
+// -------------------------------------------------------------------------------------
+// constructors
+// -------------------------------------------------------------------------------------
+/**
+ * `None` doesn't have a constructor, instead you can use it directly as a value. Represents a missing value.
+ *
+ * @category constructors
+ * @since 2.0.0
+ */
+var none = _internal__WEBPACK_IMPORTED_MODULE_0__.none;
+/**
+ * Constructs a `Some`. Represents an optional value that exists.
+ *
+ * @category constructors
+ * @since 2.0.0
+ */
+var some = _internal__WEBPACK_IMPORTED_MODULE_0__.some;
+function fromPredicate(predicate) {
+    return function (a) { return (predicate(a) ? some(a) : none); };
+}
+/**
+ * Returns the `Left` value of an `Either` if possible.
+ *
+ * @example
+ * import { getLeft, none, some } from 'fp-ts/Option'
+ * import { right, left } from 'fp-ts/Either'
+ *
+ * assert.deepStrictEqual(getLeft(right(1)), none)
+ * assert.deepStrictEqual(getLeft(left('a')), some('a'))
+ *
+ * @category constructors
+ * @since 2.0.0
+ */
+var getLeft = function (ma) { return (ma._tag === 'Right' ? none : some(ma.left)); };
+/**
+ * Returns the `Right` value of an `Either` if possible.
+ *
+ * @example
+ * import { getRight, none, some } from 'fp-ts/Option'
+ * import { right, left } from 'fp-ts/Either'
+ *
+ * assert.deepStrictEqual(getRight(right(1)), some(1))
+ * assert.deepStrictEqual(getRight(left('a')), none)
+ *
+ * @category constructors
+ * @since 2.0.0
+ */
+var getRight = function (ma) { return (ma._tag === 'Left' ? none : some(ma.right)); };
+var _map = function (fa, f) { return (0,_function__WEBPACK_IMPORTED_MODULE_1__.pipe)(fa, map(f)); };
+var _ap = function (fab, fa) { return (0,_function__WEBPACK_IMPORTED_MODULE_1__.pipe)(fab, ap(fa)); };
+var _chain = function (ma, f) { return (0,_function__WEBPACK_IMPORTED_MODULE_1__.pipe)(ma, chain(f)); };
+var _reduce = function (fa, b, f) { return (0,_function__WEBPACK_IMPORTED_MODULE_1__.pipe)(fa, reduce(b, f)); };
+var _foldMap = function (M) {
+    var foldMapM = foldMap(M);
+    return function (fa, f) { return (0,_function__WEBPACK_IMPORTED_MODULE_1__.pipe)(fa, foldMapM(f)); };
+};
+var _reduceRight = function (fa, b, f) { return (0,_function__WEBPACK_IMPORTED_MODULE_1__.pipe)(fa, reduceRight(b, f)); };
+var _traverse = function (F) {
+    var traverseF = traverse(F);
+    return function (ta, f) { return (0,_function__WEBPACK_IMPORTED_MODULE_1__.pipe)(ta, traverseF(f)); };
+};
+/* istanbul ignore next */
+var _alt = function (fa, that) { return (0,_function__WEBPACK_IMPORTED_MODULE_1__.pipe)(fa, alt(that)); };
+var _filter = function (fa, predicate) { return (0,_function__WEBPACK_IMPORTED_MODULE_1__.pipe)(fa, filter(predicate)); };
+/* istanbul ignore next */
+var _filterMap = function (fa, f) { return (0,_function__WEBPACK_IMPORTED_MODULE_1__.pipe)(fa, filterMap(f)); };
+/* istanbul ignore next */
+var _extend = function (wa, f) { return (0,_function__WEBPACK_IMPORTED_MODULE_1__.pipe)(wa, extend(f)); };
+/* istanbul ignore next */
+var _partition = function (fa, predicate) {
+    return (0,_function__WEBPACK_IMPORTED_MODULE_1__.pipe)(fa, partition(predicate));
+};
+/* istanbul ignore next */
+var _partitionMap = function (fa, f) { return (0,_function__WEBPACK_IMPORTED_MODULE_1__.pipe)(fa, partitionMap(f)); };
+/**
+ * @category type lambdas
+ * @since 2.0.0
+ */
+var URI = 'Option';
+/**
+ * @category instances
+ * @since 2.0.0
+ */
+var getShow = function (S) { return ({
+    show: function (ma) { return (isNone(ma) ? 'none' : "some(".concat(S.show(ma.value), ")")); }
+}); };
+/**
+ * @example
+ * import { none, some, getEq } from 'fp-ts/Option'
+ * import * as N from 'fp-ts/number'
+ *
+ * const E = getEq(N.Eq)
+ * assert.strictEqual(E.equals(none, none), true)
+ * assert.strictEqual(E.equals(none, some(1)), false)
+ * assert.strictEqual(E.equals(some(1), none), false)
+ * assert.strictEqual(E.equals(some(1), some(2)), false)
+ * assert.strictEqual(E.equals(some(1), some(1)), true)
+ *
+ * @category instances
+ * @since 2.0.0
+ */
+var getEq = function (E) { return ({
+    equals: function (x, y) { return x === y || (isNone(x) ? isNone(y) : isNone(y) ? false : E.equals(x.value, y.value)); }
+}); };
+/**
+ * The `Ord` instance allows `Option` values to be compared with
+ * `compare`, whenever there is an `Ord` instance for
+ * the type the `Option` contains.
+ *
+ * `None` is considered to be less than any `Some` value.
+ *
+ *
+ * @example
+ * import { none, some, getOrd } from 'fp-ts/Option'
+ * import * as N from 'fp-ts/number'
+ *
+ * const O = getOrd(N.Ord)
+ * assert.strictEqual(O.compare(none, none), 0)
+ * assert.strictEqual(O.compare(none, some(1)), -1)
+ * assert.strictEqual(O.compare(some(1), none), 1)
+ * assert.strictEqual(O.compare(some(1), some(2)), -1)
+ * assert.strictEqual(O.compare(some(1), some(1)), 0)
+ *
+ * @category instances
+ * @since 2.0.0
+ */
+var getOrd = function (O) { return ({
+    equals: getEq(O).equals,
+    compare: function (x, y) { return (x === y ? 0 : isSome(x) ? (isSome(y) ? O.compare(x.value, y.value) : 1) : -1); }
+}); };
+/**
+ * Monoid returning the left-most non-`None` value. If both operands are `Some`s then the inner values are
+ * concatenated using the provided `Semigroup`
+ *
+ * | x       | y       | concat(x, y)       |
+ * | ------- | ------- | ------------------ |
+ * | none    | none    | none               |
+ * | some(a) | none    | some(a)            |
+ * | none    | some(b) | some(b)            |
+ * | some(a) | some(b) | some(concat(a, b)) |
+ *
+ * @example
+ * import { getMonoid, some, none } from 'fp-ts/Option'
+ * import { SemigroupSum } from 'fp-ts/number'
+ *
+ * const M = getMonoid(SemigroupSum)
+ * assert.deepStrictEqual(M.concat(none, none), none)
+ * assert.deepStrictEqual(M.concat(some(1), none), some(1))
+ * assert.deepStrictEqual(M.concat(none, some(1)), some(1))
+ * assert.deepStrictEqual(M.concat(some(1), some(2)), some(3))
+ *
+ * @category instances
+ * @since 2.0.0
+ */
+var getMonoid = function (S) { return ({
+    concat: function (x, y) { return (isNone(x) ? y : isNone(y) ? x : some(S.concat(x.value, y.value))); },
+    empty: none
+}); };
+/**
+ * @category mapping
+ * @since 2.0.0
+ */
+var map = function (f) { return function (fa) {
+    return isNone(fa) ? none : some(f(fa.value));
+}; };
+/**
+ * @category instances
+ * @since 2.7.0
+ */
+var Functor = {
+    URI: URI,
+    map: _map
+};
+/**
+ * @category constructors
+ * @since 2.7.0
+ */
+var of = some;
+/**
+ * @category instances
+ * @since 2.10.0
+ */
+var Pointed = {
+    URI: URI,
+    of: of
+};
+/**
+ * @since 2.0.0
+ */
+var ap = function (fa) { return function (fab) {
+    return isNone(fab) ? none : isNone(fa) ? none : some(fab.value(fa.value));
+}; };
+/**
+ * @category instances
+ * @since 2.10.0
+ */
+var Apply = {
+    URI: URI,
+    map: _map,
+    ap: _ap
+};
+/**
+ * @category instances
+ * @since 2.7.0
+ */
+var Applicative = {
+    URI: URI,
+    map: _map,
+    ap: _ap,
+    of: of
+};
+/**
+ * Composes computations in sequence, using the return value of one computation to determine the next computation.
+ *
+ * @category sequencing
+ * @since 2.0.0
+ */
+var chain = function (f) { return function (ma) {
+    return isNone(ma) ? none : f(ma.value);
+}; };
+/**
+ * @category instances
+ * @since 2.10.0
+ */
+var Chain = {
+    URI: URI,
+    map: _map,
+    ap: _ap,
+    chain: _chain
+};
+/**
+ * @category instances
+ * @since 2.7.0
+ */
+var Monad = {
+    URI: URI,
+    map: _map,
+    ap: _ap,
+    of: of,
+    chain: _chain
+};
+/**
+ * @category folding
+ * @since 2.0.0
+ */
+var reduce = function (b, f) { return function (fa) {
+    return isNone(fa) ? b : f(b, fa.value);
+}; };
+/**
+ * @category folding
+ * @since 2.0.0
+ */
+var foldMap = function (M) { return function (f) { return function (fa) {
+    return isNone(fa) ? M.empty : f(fa.value);
+}; }; };
+/**
+ * @category folding
+ * @since 2.0.0
+ */
+var reduceRight = function (b, f) { return function (fa) {
+    return isNone(fa) ? b : f(fa.value, b);
+}; };
+/**
+ * @category instances
+ * @since 2.7.0
+ */
+var Foldable = {
+    URI: URI,
+    reduce: _reduce,
+    foldMap: _foldMap,
+    reduceRight: _reduceRight
+};
+/**
+ * Less strict version of [`alt`](#alt).
+ *
+ * The `W` suffix (short for **W**idening) means that the return types will be merged.
+ *
+ * @category error handling
+ * @since 2.9.0
+ */
+var altW = function (that) { return function (fa) {
+    return isNone(fa) ? that() : fa;
+}; };
+/**
+ * Identifies an associative operation on a type constructor. It is similar to `Semigroup`, except that it applies to
+ * types of kind `* -> *`.
+ *
+ * In case of `Option` returns the left-most non-`None` value.
+ *
+ * | x       | y       | pipe(x, alt(() => y) |
+ * | ------- | ------- | -------------------- |
+ * | none    | none    | none                 |
+ * | some(a) | none    | some(a)              |
+ * | none    | some(b) | some(b)              |
+ * | some(a) | some(b) | some(a)              |
+ *
+ * @example
+ * import * as O from 'fp-ts/Option'
+ * import { pipe } from 'fp-ts/function'
+ *
+ * assert.deepStrictEqual(
+ *   pipe(
+ *     O.none,
+ *     O.alt(() => O.none)
+ *   ),
+ *   O.none
+ * )
+ * assert.deepStrictEqual(
+ *   pipe(
+ *     O.some('a'),
+ *     O.alt<string>(() => O.none)
+ *   ),
+ *   O.some('a')
+ * )
+ * assert.deepStrictEqual(
+ *   pipe(
+ *     O.none,
+ *     O.alt(() => O.some('b'))
+ *   ),
+ *   O.some('b')
+ * )
+ * assert.deepStrictEqual(
+ *   pipe(
+ *     O.some('a'),
+ *     O.alt(() => O.some('b'))
+ *   ),
+ *   O.some('a')
+ * )
+ *
+ * @category error handling
+ * @since 2.0.0
+ */
+var alt = altW;
+/**
+ * @category instances
+ * @since 2.7.0
+ */
+var Alt = {
+    URI: URI,
+    map: _map,
+    alt: _alt
+};
+/**
+ * @since 2.7.0
+ */
+var zero = function () { return none; };
+/**
+ * @category instances
+ * @since 2.11.0
+ */
+var Zero = {
+    URI: URI,
+    zero: zero
+};
+/**
+ * @category do notation
+ * @since 2.11.0
+ */
+var guard = /*#__PURE__*/ (0,_Zero__WEBPACK_IMPORTED_MODULE_2__.guard)(Zero, Pointed);
+/**
+ * @category instances
+ * @since 2.7.0
+ */
+var Alternative = {
+    URI: URI,
+    map: _map,
+    ap: _ap,
+    of: of,
+    alt: _alt,
+    zero: zero
+};
+/**
+ * @since 2.0.0
+ */
+var extend = function (f) { return function (wa) {
+    return isNone(wa) ? none : some(f(wa));
+}; };
+/**
+ * @category instances
+ * @since 2.7.0
+ */
+var Extend = {
+    URI: URI,
+    map: _map,
+    extend: _extend
+};
+/**
+ * @category filtering
+ * @since 2.0.0
+ */
+var compact = /*#__PURE__*/ chain(_function__WEBPACK_IMPORTED_MODULE_1__.identity);
+var defaultSeparated = /*#__PURE__*/ (0,_Separated__WEBPACK_IMPORTED_MODULE_3__.separated)(none, none);
+/**
+ * @category filtering
+ * @since 2.0.0
+ */
+var separate = function (ma) {
+    return isNone(ma) ? defaultSeparated : (0,_Separated__WEBPACK_IMPORTED_MODULE_3__.separated)(getLeft(ma.value), getRight(ma.value));
+};
+/**
+ * @category instances
+ * @since 2.7.0
+ */
+var Compactable = {
+    URI: URI,
+    compact: compact,
+    separate: separate
+};
+/**
+ * @category filtering
+ * @since 2.0.0
+ */
+var filter = function (predicate) {
+    return function (fa) {
+        return isNone(fa) ? none : predicate(fa.value) ? fa : none;
+    };
+};
+/**
+ * @category filtering
+ * @since 2.0.0
+ */
+var filterMap = function (f) { return function (fa) {
+    return isNone(fa) ? none : f(fa.value);
+}; };
+/**
+ * @category filtering
+ * @since 2.0.0
+ */
+var partition = function (predicate) {
+    return function (fa) {
+        return (0,_Separated__WEBPACK_IMPORTED_MODULE_3__.separated)(_filter(fa, (0,_Predicate__WEBPACK_IMPORTED_MODULE_4__.not)(predicate)), _filter(fa, predicate));
+    };
+};
+/**
+ * @category filtering
+ * @since 2.0.0
+ */
+var partitionMap = function (f) { return (0,_function__WEBPACK_IMPORTED_MODULE_1__.flow)(map(f), separate); };
+/**
+ * @category instances
+ * @since 2.7.0
+ */
+var Filterable = {
+    URI: URI,
+    map: _map,
+    compact: compact,
+    separate: separate,
+    filter: _filter,
+    filterMap: _filterMap,
+    partition: _partition,
+    partitionMap: _partitionMap
+};
+/**
+ * @category traversing
+ * @since 2.6.3
+ */
+var traverse = function (F) {
+    return function (f) {
+        return function (ta) {
+            return isNone(ta) ? F.of(none) : F.map(f(ta.value), some);
+        };
+    };
+};
+/**
+ * @category traversing
+ * @since 2.6.3
+ */
+var sequence = function (F) {
+    return function (ta) {
+        return isNone(ta) ? F.of(none) : F.map(ta.value, some);
+    };
+};
+/**
+ * @category instances
+ * @since 2.7.0
+ */
+var Traversable = {
+    URI: URI,
+    map: _map,
+    reduce: _reduce,
+    foldMap: _foldMap,
+    reduceRight: _reduceRight,
+    traverse: _traverse,
+    sequence: sequence
+};
+var _wither = /*#__PURE__*/ (0,_Witherable__WEBPACK_IMPORTED_MODULE_5__.witherDefault)(Traversable, Compactable);
+var _wilt = /*#__PURE__*/ (0,_Witherable__WEBPACK_IMPORTED_MODULE_5__.wiltDefault)(Traversable, Compactable);
+/**
+ * @category filtering
+ * @since 2.6.5
+ */
+var wither = function (F) {
+    var _witherF = _wither(F);
+    return function (f) { return function (fa) { return _witherF(fa, f); }; };
+};
+/**
+ * @category filtering
+ * @since 2.6.5
+ */
+var wilt = function (F) {
+    var _wiltF = _wilt(F);
+    return function (f) { return function (fa) { return _wiltF(fa, f); }; };
+};
+/**
+ * @category instances
+ * @since 2.7.0
+ */
+var Witherable = {
+    URI: URI,
+    map: _map,
+    reduce: _reduce,
+    foldMap: _foldMap,
+    reduceRight: _reduceRight,
+    traverse: _traverse,
+    sequence: sequence,
+    compact: compact,
+    separate: separate,
+    filter: _filter,
+    filterMap: _filterMap,
+    partition: _partition,
+    partitionMap: _partitionMap,
+    wither: _wither,
+    wilt: _wilt
+};
+/**
+ * @since 2.7.0
+ */
+var throwError = function () { return none; };
+/**
+ * @category instances
+ * @since 2.7.0
+ */
+var MonadThrow = {
+    URI: URI,
+    map: _map,
+    ap: _ap,
+    of: of,
+    chain: _chain,
+    throwError: throwError
+};
+/**
+ * Transforms an `Either` to an `Option` discarding the error.
+ *
+ * Alias of [getRight](#getright)
+ *
+ * @category conversions
+ * @since 2.0.0
+ */
+var fromEither = getRight;
+/**
+ * @category instances
+ * @since 2.11.0
+ */
+var FromEither = {
+    URI: URI,
+    fromEither: fromEither
+};
+// -------------------------------------------------------------------------------------
+// refinements
+// -------------------------------------------------------------------------------------
+/**
+ * Returns `true` if the option is an instance of `Some`, `false` otherwise.
+ *
+ * @example
+ * import { some, none, isSome } from 'fp-ts/Option'
+ *
+ * assert.strictEqual(isSome(some(1)), true)
+ * assert.strictEqual(isSome(none), false)
+ *
+ * @category refinements
+ * @since 2.0.0
+ */
+var isSome = _internal__WEBPACK_IMPORTED_MODULE_0__.isSome;
+/**
+ * Returns `true` if the option is `None`, `false` otherwise.
+ *
+ * @example
+ * import { some, none, isNone } from 'fp-ts/Option'
+ *
+ * assert.strictEqual(isNone(some(1)), false)
+ * assert.strictEqual(isNone(none), true)
+ *
+ * @category refinements
+ * @since 2.0.0
+ */
+var isNone = function (fa) { return fa._tag === 'None'; };
+/**
+ * Less strict version of [`match`](#match).
+ *
+ * The `W` suffix (short for **W**idening) means that the handler return types will be merged.
+ *
+ * @category pattern matching
+ * @since 2.10.0
+ */
+var matchW = function (onNone, onSome) {
+    return function (ma) {
+        return isNone(ma) ? onNone() : onSome(ma.value);
+    };
+};
+/**
+ * Alias of [`matchW`](#matchw).
+ *
+ * @category pattern matching
+ * @since 2.10.0
+ */
+var foldW = matchW;
+/**
+ * Takes a (lazy) default value, a function, and an `Option` value, if the `Option` value is `None` the default value is
+ * returned, otherwise the function is applied to the value inside the `Some` and the result is returned.
+ *
+ * @example
+ * import { some, none, match } from 'fp-ts/Option'
+ * import { pipe } from 'fp-ts/function'
+ *
+ * assert.strictEqual(
+ *   pipe(
+ *     some(1),
+ *     match(() => 'a none', a => `a some containing ${a}`)
+ *   ),
+ *   'a some containing 1'
+ * )
+ *
+ * assert.strictEqual(
+ *   pipe(
+ *     none,
+ *     match(() => 'a none', a => `a some containing ${a}`)
+ *   ),
+ *   'a none'
+ * )
+ *
+ * @category pattern matching
+ * @since 2.10.0
+ */
+var match = matchW;
+/**
+ * Alias of [`match`](#match).
+ *
+ * @category pattern matching
+ * @since 2.0.0
+ */
+var fold = match;
+/**
+ * Less strict version of [`getOrElse`](#getorelse).
+ *
+ * The `W` suffix (short for **W**idening) means that the handler return type will be merged.
+ *
+ * @category error handling
+ * @since 2.6.0
+ */
+var getOrElseW = function (onNone) {
+    return function (ma) {
+        return isNone(ma) ? onNone() : ma.value;
+    };
+};
+/**
+ * Extracts the value out of the structure, if it exists. Otherwise returns the given default value
+ *
+ * @example
+ * import { some, none, getOrElse } from 'fp-ts/Option'
+ * import { pipe } from 'fp-ts/function'
+ *
+ * assert.strictEqual(
+ *   pipe(
+ *     some(1),
+ *     getOrElse(() => 0)
+ *   ),
+ *   1
+ * )
+ * assert.strictEqual(
+ *   pipe(
+ *     none,
+ *     getOrElse(() => 0)
+ *   ),
+ *   0
+ * )
+ *
+ * @category error handling
+ * @since 2.0.0
+ */
+var getOrElse = getOrElseW;
+/**
+ * @category mapping
+ * @since 2.10.0
+ */
+var flap = /*#__PURE__*/ (0,_Functor__WEBPACK_IMPORTED_MODULE_6__.flap)(Functor);
+/**
+ * Combine two effectful actions, keeping only the result of the first.
+ *
+ * @since 2.0.0
+ */
+var apFirst = /*#__PURE__*/ (0,_Apply__WEBPACK_IMPORTED_MODULE_7__.apFirst)(Apply);
+/**
+ * Combine two effectful actions, keeping only the result of the second.
+ *
+ * @since 2.0.0
+ */
+var apSecond = /*#__PURE__*/ (0,_Apply__WEBPACK_IMPORTED_MODULE_7__.apSecond)(Apply);
+/**
+ * @category sequencing
+ * @since 2.0.0
+ */
+var flatten = compact;
+/**
+ * Composes computations in sequence, using the return value of one computation to determine the next computation and
+ * keeping only the result of the first.
+ *
+ * @category sequencing
+ * @since 2.0.0
+ */
+var chainFirst = 
+/*#__PURE__*/ (0,_Chain__WEBPACK_IMPORTED_MODULE_8__.chainFirst)(Chain);
+/**
+ * @since 2.0.0
+ */
+var duplicate = /*#__PURE__*/ extend(_function__WEBPACK_IMPORTED_MODULE_1__.identity);
+/**
+ * @category lifting
+ * @since 2.11.0
+ */
+var fromEitherK = /*#__PURE__*/ (0,_FromEither__WEBPACK_IMPORTED_MODULE_9__.fromEitherK)(FromEither);
+/**
+ * @category sequencing
+ * @since 2.11.0
+ */
+var chainEitherK = 
+/*#__PURE__*/ (0,_FromEither__WEBPACK_IMPORTED_MODULE_9__.chainEitherK)(FromEither, Chain);
+/**
+ * @category sequencing
+ * @since 2.12.0
+ */
+var chainFirstEitherK = 
+/*#__PURE__*/ (0,_FromEither__WEBPACK_IMPORTED_MODULE_9__.chainFirstEitherK)(FromEither, Chain);
+/**
+ * Constructs a new `Option` from a nullable type. If the value is `null` or `undefined`, returns `None`, otherwise
+ * returns the value wrapped in a `Some`.
+ *
+ * @example
+ * import { none, some, fromNullable } from 'fp-ts/Option'
+ *
+ * assert.deepStrictEqual(fromNullable(undefined), none)
+ * assert.deepStrictEqual(fromNullable(null), none)
+ * assert.deepStrictEqual(fromNullable(1), some(1))
+ *
+ * @category conversions
+ * @since 2.0.0
+ */
+var fromNullable = function (a) { return (a == null ? none : some(a)); };
+/**
+ * Transforms an exception into an `Option`. If `f` throws, returns `None`, otherwise returns the output wrapped in a
+ * `Some`.
+ *
+ * See also [`tryCatchK`](#trycatchk).
+ *
+ * @example
+ * import { none, some, tryCatch } from 'fp-ts/Option'
+ *
+ * assert.deepStrictEqual(
+ *   tryCatch(() => {
+ *     throw new Error()
+ *   }),
+ *   none
+ * )
+ * assert.deepStrictEqual(tryCatch(() => 1), some(1))
+ *
+ * @category interop
+ * @since 2.0.0
+ */
+var tryCatch = function (f) {
+    try {
+        return some(f());
+    }
+    catch (e) {
+        return none;
+    }
+};
+/**
+ * Converts a function that may throw to one returning a `Option`.
+ *
+ * @category interop
+ * @since 2.10.0
+ */
+var tryCatchK = function (f) {
+    return function () {
+        var a = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            a[_i] = arguments[_i];
+        }
+        return tryCatch(function () { return f.apply(void 0, a); });
+    };
+};
+/**
+ * Returns a *smart constructor* from a function that returns a nullable value.
+ *
+ * @example
+ * import { fromNullableK, none, some } from 'fp-ts/Option'
+ *
+ * const f = (s: string): number | undefined => {
+ *   const n = parseFloat(s)
+ *   return isNaN(n) ? undefined : n
+ * }
+ *
+ * const g = fromNullableK(f)
+ *
+ * assert.deepStrictEqual(g('1'), some(1))
+ * assert.deepStrictEqual(g('a'), none)
+ *
+ * @category lifting
+ * @since 2.9.0
+ */
+var fromNullableK = function (f) { return (0,_function__WEBPACK_IMPORTED_MODULE_1__.flow)(f, fromNullable); };
+/**
+ * This is `chain` + `fromNullable`, useful when working with optional values.
+ *
+ * @example
+ * import { some, none, fromNullable, chainNullableK } from 'fp-ts/Option'
+ * import { pipe } from 'fp-ts/function'
+ *
+ * interface Employee {
+ *   readonly company?: {
+ *     readonly address?: {
+ *       readonly street?: {
+ *         readonly name?: string
+ *       }
+ *     }
+ *   }
+ * }
+ *
+ * const employee1: Employee = { company: { address: { street: { name: 'high street' } } } }
+ *
+ * assert.deepStrictEqual(
+ *   pipe(
+ *     fromNullable(employee1.company),
+ *     chainNullableK(company => company.address),
+ *     chainNullableK(address => address.street),
+ *     chainNullableK(street => street.name)
+ *   ),
+ *   some('high street')
+ * )
+ *
+ * const employee2: Employee = { company: { address: { street: {} } } }
+ *
+ * assert.deepStrictEqual(
+ *   pipe(
+ *     fromNullable(employee2.company),
+ *     chainNullableK(company => company.address),
+ *     chainNullableK(address => address.street),
+ *     chainNullableK(street => street.name)
+ *   ),
+ *   none
+ * )
+ *
+ * @category sequencing
+ * @since 2.9.0
+ */
+var chainNullableK = function (f) {
+    return function (ma) {
+        return isNone(ma) ? none : fromNullable(f(ma.value));
+    };
+};
+/**
+ * Extracts the value out of the structure, if it exists. Otherwise returns `null`.
+ *
+ * @example
+ * import { some, none, toNullable } from 'fp-ts/Option'
+ * import { pipe } from 'fp-ts/function'
+ *
+ * assert.strictEqual(
+ *   pipe(
+ *     some(1),
+ *     toNullable
+ *   ),
+ *   1
+ * )
+ * assert.strictEqual(
+ *   pipe(
+ *     none,
+ *     toNullable
+ *   ),
+ *   null
+ * )
+ *
+ * @category conversions
+ * @since 2.0.0
+ */
+var toNullable = /*#__PURE__*/ match(_function__WEBPACK_IMPORTED_MODULE_1__.constNull, _function__WEBPACK_IMPORTED_MODULE_1__.identity);
+/**
+ * Extracts the value out of the structure, if it exists. Otherwise returns `undefined`.
+ *
+ * @example
+ * import { some, none, toUndefined } from 'fp-ts/Option'
+ * import { pipe } from 'fp-ts/function'
+ *
+ * assert.strictEqual(
+ *   pipe(
+ *     some(1),
+ *     toUndefined
+ *   ),
+ *   1
+ * )
+ * assert.strictEqual(
+ *   pipe(
+ *     none,
+ *     toUndefined
+ *   ),
+ *   undefined
+ * )
+ *
+ * @category conversions
+ * @since 2.0.0
+ */
+var toUndefined = /*#__PURE__*/ match(_function__WEBPACK_IMPORTED_MODULE_1__.constUndefined, _function__WEBPACK_IMPORTED_MODULE_1__.identity);
+function elem(E) {
+    return function (a, ma) {
+        if (ma === undefined) {
+            var elemE_1 = elem(E);
+            return function (ma) { return elemE_1(a, ma); };
+        }
+        return isNone(ma) ? false : E.equals(a, ma.value);
+    };
+}
+/**
+ * Returns `true` if the predicate is satisfied by the wrapped value
+ *
+ * @example
+ * import { some, none, exists } from 'fp-ts/Option'
+ * import { pipe } from 'fp-ts/function'
+ *
+ * assert.strictEqual(
+ *   pipe(
+ *     some(1),
+ *     exists(n => n > 0)
+ *   ),
+ *   true
+ * )
+ * assert.strictEqual(
+ *   pipe(
+ *     some(1),
+ *     exists(n => n > 1)
+ *   ),
+ *   false
+ * )
+ * assert.strictEqual(
+ *   pipe(
+ *     none,
+ *     exists(n => n > 0)
+ *   ),
+ *   false
+ * )
+ *
+ * @since 2.0.0
+ */
+var exists = function (predicate) {
+    return function (ma) {
+        return isNone(ma) ? false : predicate(ma.value);
+    };
+};
+// -------------------------------------------------------------------------------------
+// do notation
+// -------------------------------------------------------------------------------------
+/**
+ * @category do notation
+ * @since 2.9.0
+ */
+var Do = /*#__PURE__*/ of(_internal__WEBPACK_IMPORTED_MODULE_0__.emptyRecord);
+/**
+ * @category do notation
+ * @since 2.8.0
+ */
+var bindTo = /*#__PURE__*/ (0,_Functor__WEBPACK_IMPORTED_MODULE_6__.bindTo)(Functor);
+var let_ = /*#__PURE__*/ (0,_Functor__WEBPACK_IMPORTED_MODULE_6__["let"])(Functor);
+
+/**
+ * @category do notation
+ * @since 2.8.0
+ */
+var bind = /*#__PURE__*/ (0,_Chain__WEBPACK_IMPORTED_MODULE_8__.bind)(Chain);
+/**
+ * @category do notation
+ * @since 2.8.0
+ */
+var apS = /*#__PURE__*/ (0,_Apply__WEBPACK_IMPORTED_MODULE_7__.apS)(Apply);
+/**
+ * @since 2.11.0
+ */
+var ApT = /*#__PURE__*/ of(_internal__WEBPACK_IMPORTED_MODULE_0__.emptyReadonlyArray);
+// -------------------------------------------------------------------------------------
+// array utils
+// -------------------------------------------------------------------------------------
+/**
+ * Equivalent to `ReadonlyNonEmptyArray#traverseWithIndex(Applicative)`.
+ *
+ * @category traversing
+ * @since 2.11.0
+ */
+var traverseReadonlyNonEmptyArrayWithIndex = function (f) {
+    return function (as) {
+        var o = f(0, _internal__WEBPACK_IMPORTED_MODULE_0__.head(as));
+        if (isNone(o)) {
+            return none;
+        }
+        var out = [o.value];
+        for (var i = 1; i < as.length; i++) {
+            var o_1 = f(i, as[i]);
+            if (isNone(o_1)) {
+                return none;
+            }
+            out.push(o_1.value);
+        }
+        return some(out);
+    };
+};
+/**
+ * Equivalent to `ReadonlyArray#traverseWithIndex(Applicative)`.
+ *
+ * @category traversing
+ * @since 2.11.0
+ */
+var traverseReadonlyArrayWithIndex = function (f) {
+    var g = traverseReadonlyNonEmptyArrayWithIndex(f);
+    return function (as) { return (_internal__WEBPACK_IMPORTED_MODULE_0__.isNonEmpty(as) ? g(as) : ApT); };
+};
+/**
+ * Equivalent to `ReadonlyArray#traverseWithIndex(Applicative)`.
+ *
+ * @category traversing
+ * @since 2.9.0
+ */
+var traverseArrayWithIndex = traverseReadonlyArrayWithIndex;
+/**
+ * Equivalent to `ReadonlyArray#traverse(Applicative)`.
+ *
+ * @category traversing
+ * @since 2.9.0
+ */
+var traverseArray = function (f) {
+    return traverseReadonlyArrayWithIndex(function (_, a) { return f(a); });
+};
+/**
+ * Equivalent to `ReadonlyArray#sequence(Applicative)`.
+ *
+ * @category traversing
+ * @since 2.9.0
+ */
+var sequenceArray = 
+/*#__PURE__*/ traverseArray(_function__WEBPACK_IMPORTED_MODULE_1__.identity);
+// -------------------------------------------------------------------------------------
+// deprecated
+// -------------------------------------------------------------------------------------
+/**
+ * Use `Refinement` module instead.
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+function getRefinement(getOption) {
+    return function (a) { return isSome(getOption(a)); };
+}
+/**
+ * Use [`chainNullableK`](#chainnullablek) instead.
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var mapNullable = chainNullableK;
+/**
+ * This instance is deprecated, use small, specific instances instead.
+ * For example if a function needs a `Functor` instance, pass `O.Functor` instead of `O.option`
+ * (where `O` is from `import O from 'fp-ts/Option'`)
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var option = {
+    URI: URI,
+    map: _map,
+    of: of,
+    ap: _ap,
+    chain: _chain,
+    reduce: _reduce,
+    foldMap: _foldMap,
+    reduceRight: _reduceRight,
+    traverse: _traverse,
+    sequence: sequence,
+    zero: zero,
+    alt: _alt,
+    extend: _extend,
+    compact: compact,
+    separate: separate,
+    filter: _filter,
+    filterMap: _filterMap,
+    partition: _partition,
+    partitionMap: _partitionMap,
+    wither: _wither,
+    wilt: _wilt,
+    throwError: throwError
+};
+/**
+ * Use [`getApplySemigroup`](./Apply.ts.html#getapplysemigroup) instead.
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var getApplySemigroup = /*#__PURE__*/ (0,_Apply__WEBPACK_IMPORTED_MODULE_7__.getApplySemigroup)(Apply);
+/**
+ * Use [`getApplicativeMonoid`](./Applicative.ts.html#getapplicativemonoid) instead.
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var getApplyMonoid = /*#__PURE__*/ (0,_Applicative__WEBPACK_IMPORTED_MODULE_10__.getApplicativeMonoid)(Applicative);
+/**
+ * Use
+ *
+ * ```ts
+ * import { first } from 'fp-ts/Semigroup'
+ * import { getMonoid } from 'fp-ts/Option'
+ *
+ * getMonoid(first())
+ * ```
+ *
+ * instead.
+ *
+ * Monoid returning the left-most non-`None` value
+ *
+ * | x       | y       | concat(x, y) |
+ * | ------- | ------- | ------------ |
+ * | none    | none    | none         |
+ * | some(a) | none    | some(a)      |
+ * | none    | some(b) | some(b)      |
+ * | some(a) | some(b) | some(a)      |
+ *
+ * @example
+ * import { getFirstMonoid, some, none } from 'fp-ts/Option'
+ *
+ * const M = getFirstMonoid<number>()
+ * assert.deepStrictEqual(M.concat(none, none), none)
+ * assert.deepStrictEqual(M.concat(some(1), none), some(1))
+ * assert.deepStrictEqual(M.concat(none, some(2)), some(2))
+ * assert.deepStrictEqual(M.concat(some(1), some(2)), some(1))
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var getFirstMonoid = function () { return getMonoid((0,_Semigroup__WEBPACK_IMPORTED_MODULE_11__.first)()); };
+/**
+ * Use
+ *
+ * ```ts
+ * import { last } from 'fp-ts/Semigroup'
+ * import { getMonoid } from 'fp-ts/Option'
+ *
+ * getMonoid(last())
+ * ```
+ *
+ * instead.
+ *
+ * Monoid returning the right-most non-`None` value
+ *
+ * | x       | y       | concat(x, y) |
+ * | ------- | ------- | ------------ |
+ * | none    | none    | none         |
+ * | some(a) | none    | some(a)      |
+ * | none    | some(b) | some(b)      |
+ * | some(a) | some(b) | some(b)      |
+ *
+ * @example
+ * import { getLastMonoid, some, none } from 'fp-ts/Option'
+ *
+ * const M = getLastMonoid<number>()
+ * assert.deepStrictEqual(M.concat(none, none), none)
+ * assert.deepStrictEqual(M.concat(some(1), none), some(1))
+ * assert.deepStrictEqual(M.concat(none, some(2)), some(2))
+ * assert.deepStrictEqual(M.concat(some(1), some(2)), some(2))
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var getLastMonoid = function () { return getMonoid((0,_Semigroup__WEBPACK_IMPORTED_MODULE_11__.last)()); };
+
+
+/***/ }),
+
+/***/ "./node_modules/fp-ts/es6/Ord.js":
+/*!***************************************!*\
+  !*** ./node_modules/fp-ts/es6/Ord.js ***!
+  \***************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "Contravariant": () => (/* binding */ Contravariant),
+/* harmony export */   "URI": () => (/* binding */ URI),
+/* harmony export */   "between": () => (/* binding */ between),
+/* harmony export */   "clamp": () => (/* binding */ clamp),
+/* harmony export */   "contramap": () => (/* binding */ contramap),
+/* harmony export */   "equals": () => (/* binding */ equals),
+/* harmony export */   "equalsDefault": () => (/* binding */ equalsDefault),
+/* harmony export */   "fromCompare": () => (/* binding */ fromCompare),
+/* harmony export */   "geq": () => (/* binding */ geq),
+/* harmony export */   "getDualOrd": () => (/* binding */ getDualOrd),
+/* harmony export */   "getMonoid": () => (/* binding */ getMonoid),
+/* harmony export */   "getSemigroup": () => (/* binding */ getSemigroup),
+/* harmony export */   "getTupleOrd": () => (/* binding */ getTupleOrd),
+/* harmony export */   "gt": () => (/* binding */ gt),
+/* harmony export */   "leq": () => (/* binding */ leq),
+/* harmony export */   "lt": () => (/* binding */ lt),
+/* harmony export */   "max": () => (/* binding */ max),
+/* harmony export */   "min": () => (/* binding */ min),
+/* harmony export */   "ord": () => (/* binding */ ord),
+/* harmony export */   "ordBoolean": () => (/* binding */ ordBoolean),
+/* harmony export */   "ordDate": () => (/* binding */ ordDate),
+/* harmony export */   "ordNumber": () => (/* binding */ ordNumber),
+/* harmony export */   "ordString": () => (/* binding */ ordString),
+/* harmony export */   "reverse": () => (/* binding */ reverse),
+/* harmony export */   "trivial": () => (/* binding */ trivial),
+/* harmony export */   "tuple": () => (/* binding */ tuple)
+/* harmony export */ });
+/* harmony import */ var _Eq__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Eq */ "./node_modules/fp-ts/es6/Eq.js");
+/* harmony import */ var _function__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./function */ "./node_modules/fp-ts/es6/function.js");
+
+
+// -------------------------------------------------------------------------------------
+// defaults
+// -------------------------------------------------------------------------------------
+/**
+ * @category defaults
+ * @since 2.10.0
+ */
+var equalsDefault = function (compare) {
+    return function (first, second) {
+        return first === second || compare(first, second) === 0;
+    };
+};
+// -------------------------------------------------------------------------------------
+// constructors
+// -------------------------------------------------------------------------------------
+/**
+ * @category constructors
+ * @since 2.0.0
+ */
+var fromCompare = function (compare) { return ({
+    equals: equalsDefault(compare),
+    compare: function (first, second) { return (first === second ? 0 : compare(first, second)); }
+}); };
+// -------------------------------------------------------------------------------------
+// combinators
+// -------------------------------------------------------------------------------------
+/**
+ * Given a tuple of `Ord`s returns an `Ord` for the tuple.
+ *
+ * @example
+ * import { tuple } from 'fp-ts/Ord'
+ * import * as B from 'fp-ts/boolean'
+ * import * as S from 'fp-ts/string'
+ * import * as N from 'fp-ts/number'
+ *
+ * const O = tuple(S.Ord, N.Ord, B.Ord)
+ * assert.strictEqual(O.compare(['a', 1, true], ['b', 2, true]), -1)
+ * assert.strictEqual(O.compare(['a', 1, true], ['a', 2, true]), -1)
+ * assert.strictEqual(O.compare(['a', 1, true], ['a', 1, false]), 1)
+ *
+ * @since 2.10.0
+ */
+var tuple = function () {
+    var ords = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        ords[_i] = arguments[_i];
+    }
+    return fromCompare(function (first, second) {
+        var i = 0;
+        for (; i < ords.length - 1; i++) {
+            var r = ords[i].compare(first[i], second[i]);
+            if (r !== 0) {
+                return r;
+            }
+        }
+        return ords[i].compare(first[i], second[i]);
+    });
+};
+/**
+ * @since 2.10.0
+ */
+var reverse = function (O) { return fromCompare(function (first, second) { return O.compare(second, first); }); };
+/* istanbul ignore next */
+var contramap_ = function (fa, f) { return (0,_function__WEBPACK_IMPORTED_MODULE_0__.pipe)(fa, contramap(f)); };
+/**
+ * A typical use case for `contramap` would be like, given some `User` type, to construct an `Ord<User>`.
+ *
+ * We can do so with a function from `User -> X` where `X` is some value that we know how to compare
+ * for ordering (meaning we have an `Ord<X>`)
+ *
+ * For example, given the following `User` type, there are lots of possible choices for `X`,
+ * but let's say we want to sort a list of users by `lastName`.
+ *
+ * If we have a way of comparing `lastName`s for ordering (`ordLastName: Ord<string>`) and we know how to go from `User -> string`,
+ * using `contramap` we can do this
+ *
+ * @example
+ * import { pipe } from 'fp-ts/function'
+ * import { contramap, Ord } from 'fp-ts/Ord'
+ * import * as RA from 'fp-ts/ReadonlyArray'
+ * import * as S from 'fp-ts/string'
+ *
+ * interface User {
+ *   readonly firstName: string
+ *   readonly lastName: string
+ * }
+ *
+ * const ordLastName: Ord<string> = S.Ord
+ *
+ * const ordByLastName: Ord<User> = pipe(
+ *   ordLastName,
+ *   contramap((user) => user.lastName)
+ * )
+ *
+ * assert.deepStrictEqual(
+ *   RA.sort(ordByLastName)([
+ *     { firstName: 'a', lastName: 'd' },
+ *     { firstName: 'c', lastName: 'b' }
+ *   ]),
+ *   [
+ *     { firstName: 'c', lastName: 'b' },
+ *     { firstName: 'a', lastName: 'd' }
+ *   ]
+ * )
+ *
+ * @since 2.0.0
+ */
+var contramap = function (f) { return function (fa) {
+    return fromCompare(function (first, second) { return fa.compare(f(first), f(second)); });
+}; };
+/**
+ * @category type lambdas
+ * @since 2.0.0
+ */
+var URI = 'Ord';
+/**
+ * A typical use case for the `Semigroup` instance of `Ord` is merging two or more orderings.
+ *
+ * For example the following snippet builds an `Ord` for a type `User` which
+ * sorts by `created` date descending, and **then** `lastName`
+ *
+ * @example
+ * import * as D from 'fp-ts/Date'
+ * import { pipe } from 'fp-ts/function'
+ * import { contramap, getSemigroup, Ord, reverse } from 'fp-ts/Ord'
+ * import * as RA from 'fp-ts/ReadonlyArray'
+ * import * as S from 'fp-ts/string'
+ *
+ * interface User {
+ *   readonly id: string
+ *   readonly lastName: string
+ *   readonly created: Date
+ * }
+ *
+ * const ordByLastName: Ord<User> = pipe(
+ *   S.Ord,
+ *   contramap((user) => user.lastName)
+ * )
+ *
+ * const ordByCreated: Ord<User> = pipe(
+ *   D.Ord,
+ *   contramap((user) => user.created)
+ * )
+ *
+ * const ordUserByCreatedDescThenLastName = getSemigroup<User>().concat(
+ *   reverse(ordByCreated),
+ *   ordByLastName
+ * )
+ *
+ * assert.deepStrictEqual(
+ *   RA.sort(ordUserByCreatedDescThenLastName)([
+ *     { id: 'c', lastName: 'd', created: new Date(1973, 10, 30) },
+ *     { id: 'a', lastName: 'b', created: new Date(1973, 10, 30) },
+ *     { id: 'e', lastName: 'f', created: new Date(1980, 10, 30) }
+ *   ]),
+ *   [
+ *     { id: 'e', lastName: 'f', created: new Date(1980, 10, 30) },
+ *     { id: 'a', lastName: 'b', created: new Date(1973, 10, 30) },
+ *     { id: 'c', lastName: 'd', created: new Date(1973, 10, 30) }
+ *   ]
+ * )
+ *
+ * @category instances
+ * @since 2.0.0
+ */
+var getSemigroup = function () { return ({
+    concat: function (first, second) {
+        return fromCompare(function (a, b) {
+            var ox = first.compare(a, b);
+            return ox !== 0 ? ox : second.compare(a, b);
+        });
+    }
+}); };
+/**
+ * Returns a `Monoid` such that:
+ *
+ * - its `concat(ord1, ord2)` operation will order first by `ord1`, and then by `ord2`
+ * - its `empty` value is an `Ord` that always considers compared elements equal
+ *
+ * @example
+ * import { sort } from 'fp-ts/Array'
+ * import { contramap, reverse, getMonoid } from 'fp-ts/Ord'
+ * import * as S from 'fp-ts/string'
+ * import * as B from 'fp-ts/boolean'
+ * import { pipe } from 'fp-ts/function'
+ * import { concatAll } from 'fp-ts/Monoid'
+ * import * as N from 'fp-ts/number'
+ *
+ * interface User {
+ *   readonly id: number
+ *   readonly name: string
+ *   readonly age: number
+ *   readonly rememberMe: boolean
+ * }
+ *
+ * const byName = pipe(
+ *   S.Ord,
+ *   contramap((p: User) => p.name)
+ * )
+ *
+ * const byAge = pipe(
+ *   N.Ord,
+ *   contramap((p: User) => p.age)
+ * )
+ *
+ * const byRememberMe = pipe(
+ *   B.Ord,
+ *   contramap((p: User) => p.rememberMe)
+ * )
+ *
+ * const M = getMonoid<User>()
+ *
+ * const users: Array<User> = [
+ *   { id: 1, name: 'Guido', age: 47, rememberMe: false },
+ *   { id: 2, name: 'Guido', age: 46, rememberMe: true },
+ *   { id: 3, name: 'Giulio', age: 44, rememberMe: false },
+ *   { id: 4, name: 'Giulio', age: 44, rememberMe: true }
+ * ]
+ *
+ * // sort by name, then by age, then by `rememberMe`
+ * const O1 = concatAll(M)([byName, byAge, byRememberMe])
+ * assert.deepStrictEqual(sort(O1)(users), [
+ *   { id: 3, name: 'Giulio', age: 44, rememberMe: false },
+ *   { id: 4, name: 'Giulio', age: 44, rememberMe: true },
+ *   { id: 2, name: 'Guido', age: 46, rememberMe: true },
+ *   { id: 1, name: 'Guido', age: 47, rememberMe: false }
+ * ])
+ *
+ * // now `rememberMe = true` first, then by name, then by age
+ * const O2 = concatAll(M)([reverse(byRememberMe), byName, byAge])
+ * assert.deepStrictEqual(sort(O2)(users), [
+ *   { id: 4, name: 'Giulio', age: 44, rememberMe: true },
+ *   { id: 2, name: 'Guido', age: 46, rememberMe: true },
+ *   { id: 3, name: 'Giulio', age: 44, rememberMe: false },
+ *   { id: 1, name: 'Guido', age: 47, rememberMe: false }
+ * ])
+ *
+ * @category instances
+ * @since 2.4.0
+ */
+var getMonoid = function () { return ({
+    concat: getSemigroup().concat,
+    empty: fromCompare(function () { return 0; })
+}); };
+/**
+ * @category instances
+ * @since 2.7.0
+ */
+var Contravariant = {
+    URI: URI,
+    contramap: contramap_
+};
+// -------------------------------------------------------------------------------------
+// utils
+// -------------------------------------------------------------------------------------
+/**
+ * @since 2.11.0
+ */
+var trivial = {
+    equals: _function__WEBPACK_IMPORTED_MODULE_0__.constTrue,
+    compare: /*#__PURE__*/ (0,_function__WEBPACK_IMPORTED_MODULE_0__.constant)(0)
+};
+/**
+ * @since 2.11.0
+ */
+var equals = function (O) {
+    return function (second) {
+        return function (first) {
+            return first === second || O.compare(first, second) === 0;
+        };
+    };
+};
+// TODO: curry in v3
+/**
+ * Test whether one value is _strictly less than_ another
+ *
+ * @since 2.0.0
+ */
+var lt = function (O) {
+    return function (first, second) {
+        return O.compare(first, second) === -1;
+    };
+};
+// TODO: curry in v3
+/**
+ * Test whether one value is _strictly greater than_ another
+ *
+ * @since 2.0.0
+ */
+var gt = function (O) {
+    return function (first, second) {
+        return O.compare(first, second) === 1;
+    };
+};
+// TODO: curry in v3
+/**
+ * Test whether one value is _non-strictly less than_ another
+ *
+ * @since 2.0.0
+ */
+var leq = function (O) {
+    return function (first, second) {
+        return O.compare(first, second) !== 1;
+    };
+};
+// TODO: curry in v3
+/**
+ * Test whether one value is _non-strictly greater than_ another
+ *
+ * @since 2.0.0
+ */
+var geq = function (O) {
+    return function (first, second) {
+        return O.compare(first, second) !== -1;
+    };
+};
+// TODO: curry in v3
+/**
+ * Take the minimum of two values. If they are considered equal, the first argument is chosen
+ *
+ * @since 2.0.0
+ */
+var min = function (O) {
+    return function (first, second) {
+        return first === second || O.compare(first, second) < 1 ? first : second;
+    };
+};
+// TODO: curry in v3
+/**
+ * Take the maximum of two values. If they are considered equal, the first argument is chosen
+ *
+ * @since 2.0.0
+ */
+var max = function (O) {
+    return function (first, second) {
+        return first === second || O.compare(first, second) > -1 ? first : second;
+    };
+};
+/**
+ * Clamp a value between a minimum and a maximum
+ *
+ * @since 2.0.0
+ */
+var clamp = function (O) {
+    var minO = min(O);
+    var maxO = max(O);
+    return function (low, hi) { return function (a) { return maxO(minO(a, hi), low); }; };
+};
+/**
+ * Test whether a value is between a minimum and a maximum (inclusive)
+ *
+ * @since 2.0.0
+ */
+var between = function (O) {
+    var ltO = lt(O);
+    var gtO = gt(O);
+    return function (low, hi) { return function (a) { return ltO(a, low) || gtO(a, hi) ? false : true; }; };
+};
+// -------------------------------------------------------------------------------------
+// deprecated
+// -------------------------------------------------------------------------------------
+/**
+ * Use [`tuple`](#tuple) instead.
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var getTupleOrd = tuple;
+/**
+ * Use [`reverse`](#reverse) instead.
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var getDualOrd = reverse;
+/**
+ * Use [`Contravariant`](#contravariant) instead.
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var ord = Contravariant;
+// default compare for primitive types
+function compare(first, second) {
+    return first < second ? -1 : first > second ? 1 : 0;
+}
+var strictOrd = {
+    equals: _Eq__WEBPACK_IMPORTED_MODULE_1__.eqStrict.equals,
+    compare: compare
+};
+/**
+ * Use [`Ord`](./boolean.ts.html#ord) instead.
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var ordBoolean = strictOrd;
+/**
+ * Use [`Ord`](./string.ts.html#ord) instead.
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var ordString = strictOrd;
+/**
+ * Use [`Ord`](./number.ts.html#ord) instead.
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var ordNumber = strictOrd;
+/**
+ * Use [`Ord`](./Date.ts.html#ord) instead.
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var ordDate = /*#__PURE__*/ (0,_function__WEBPACK_IMPORTED_MODULE_0__.pipe)(ordNumber, 
+/*#__PURE__*/
+contramap(function (date) { return date.valueOf(); }));
+
+
+/***/ }),
+
+/***/ "./node_modules/fp-ts/es6/Predicate.js":
+/*!*********************************************!*\
+  !*** ./node_modules/fp-ts/es6/Predicate.js ***!
+  \*********************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "Contravariant": () => (/* binding */ Contravariant),
+/* harmony export */   "URI": () => (/* binding */ URI),
+/* harmony export */   "and": () => (/* binding */ and),
+/* harmony export */   "contramap": () => (/* binding */ contramap),
+/* harmony export */   "getMonoidAll": () => (/* binding */ getMonoidAll),
+/* harmony export */   "getMonoidAny": () => (/* binding */ getMonoidAny),
+/* harmony export */   "getSemigroupAll": () => (/* binding */ getSemigroupAll),
+/* harmony export */   "getSemigroupAny": () => (/* binding */ getSemigroupAny),
+/* harmony export */   "not": () => (/* binding */ not),
+/* harmony export */   "or": () => (/* binding */ or)
+/* harmony export */ });
+/* harmony import */ var _function__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./function */ "./node_modules/fp-ts/es6/function.js");
+
+var contramap_ = function (predicate, f) { return (0,_function__WEBPACK_IMPORTED_MODULE_0__.pipe)(predicate, contramap(f)); };
+/**
+ * @since 2.11.0
+ */
+var contramap = function (f) {
+    return function (predicate) {
+        return (0,_function__WEBPACK_IMPORTED_MODULE_0__.flow)(f, predicate);
+    };
+};
+/**
+ * @category type lambdas
+ * @since 2.11.0
+ */
+var URI = 'Predicate';
+/**
+ * @category instances
+ * @since 2.11.0
+ */
+var getSemigroupAny = function () { return ({
+    concat: function (first, second) { return (0,_function__WEBPACK_IMPORTED_MODULE_0__.pipe)(first, or(second)); }
+}); };
+/**
+ * @category instances
+ * @since 2.11.0
+ */
+var getMonoidAny = function () { return ({
+    concat: getSemigroupAny().concat,
+    empty: _function__WEBPACK_IMPORTED_MODULE_0__.constFalse
+}); };
+/**
+ * @category instances
+ * @since 2.11.0
+ */
+var getSemigroupAll = function () { return ({
+    concat: function (first, second) { return (0,_function__WEBPACK_IMPORTED_MODULE_0__.pipe)(first, and(second)); }
+}); };
+/**
+ * @category instances
+ * @since 2.11.0
+ */
+var getMonoidAll = function () { return ({
+    concat: getSemigroupAll().concat,
+    empty: _function__WEBPACK_IMPORTED_MODULE_0__.constTrue
+}); };
+/**
+ * @category instances
+ * @since 2.11.0
+ */
+var Contravariant = {
+    URI: URI,
+    contramap: contramap_
+};
+// -------------------------------------------------------------------------------------
+// utils
+// -------------------------------------------------------------------------------------
+/**
+ * @since 2.11.0
+ */
+var not = function (predicate) {
+    return function (a) {
+        return !predicate(a);
+    };
+};
+/**
+ * @since 2.11.0
+ */
+var or = function (second) {
+    return function (first) {
+        return function (a) {
+            return first(a) || second(a);
+        };
+    };
+};
+/**
+ * @since 2.11.0
+ */
+var and = function (second) {
+    return function (first) {
+        return function (a) {
+            return first(a) && second(a);
+        };
+    };
+};
+
+
+/***/ }),
+
+/***/ "./node_modules/fp-ts/es6/Semigroup.js":
+/*!*********************************************!*\
+  !*** ./node_modules/fp-ts/es6/Semigroup.js ***!
+  \*********************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "concatAll": () => (/* binding */ concatAll),
+/* harmony export */   "constant": () => (/* binding */ constant),
+/* harmony export */   "first": () => (/* binding */ first),
+/* harmony export */   "fold": () => (/* binding */ fold),
+/* harmony export */   "getDualSemigroup": () => (/* binding */ getDualSemigroup),
+/* harmony export */   "getFirstSemigroup": () => (/* binding */ getFirstSemigroup),
+/* harmony export */   "getFunctionSemigroup": () => (/* binding */ getFunctionSemigroup),
+/* harmony export */   "getIntercalateSemigroup": () => (/* binding */ getIntercalateSemigroup),
+/* harmony export */   "getJoinSemigroup": () => (/* binding */ getJoinSemigroup),
+/* harmony export */   "getLastSemigroup": () => (/* binding */ getLastSemigroup),
+/* harmony export */   "getMeetSemigroup": () => (/* binding */ getMeetSemigroup),
+/* harmony export */   "getObjectSemigroup": () => (/* binding */ getObjectSemigroup),
+/* harmony export */   "getStructSemigroup": () => (/* binding */ getStructSemigroup),
+/* harmony export */   "getTupleSemigroup": () => (/* binding */ getTupleSemigroup),
+/* harmony export */   "intercalate": () => (/* binding */ intercalate),
+/* harmony export */   "last": () => (/* binding */ last),
+/* harmony export */   "max": () => (/* binding */ max),
+/* harmony export */   "min": () => (/* binding */ min),
+/* harmony export */   "reverse": () => (/* binding */ reverse),
+/* harmony export */   "semigroupAll": () => (/* binding */ semigroupAll),
+/* harmony export */   "semigroupAny": () => (/* binding */ semigroupAny),
+/* harmony export */   "semigroupProduct": () => (/* binding */ semigroupProduct),
+/* harmony export */   "semigroupString": () => (/* binding */ semigroupString),
+/* harmony export */   "semigroupSum": () => (/* binding */ semigroupSum),
+/* harmony export */   "semigroupVoid": () => (/* binding */ semigroupVoid),
+/* harmony export */   "struct": () => (/* binding */ struct),
+/* harmony export */   "tuple": () => (/* binding */ tuple)
+/* harmony export */ });
+/* harmony import */ var _function__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./function */ "./node_modules/fp-ts/es6/function.js");
+/* harmony import */ var _internal__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./internal */ "./node_modules/fp-ts/es6/internal.js");
+/* harmony import */ var _Magma__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Magma */ "./node_modules/fp-ts/es6/Magma.js");
+/* harmony import */ var _Ord__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Ord */ "./node_modules/fp-ts/es6/Ord.js");
+/**
+ * If a type `A` can form a `Semigroup` it has an **associative** binary operation.
+ *
+ * ```ts
+ * interface Semigroup<A> {
+ *   readonly concat: (x: A, y: A) => A
+ * }
+ * ```
+ *
+ * Associativity means the following equality must hold for any choice of `x`, `y`, and `z`.
+ *
+ * ```ts
+ * concat(x, concat(y, z)) = concat(concat(x, y), z)
+ * ```
+ *
+ * A common example of a semigroup is the type `string` with the operation `+`.
+ *
+ * ```ts
+ * import { Semigroup } from 'fp-ts/Semigroup'
+ *
+ * const semigroupString: Semigroup<string> = {
+ *   concat: (x, y) => x + y
+ * }
+ *
+ * const x = 'x'
+ * const y = 'y'
+ * const z = 'z'
+ *
+ * semigroupString.concat(x, y) // 'xy'
+ *
+ * semigroupString.concat(x, semigroupString.concat(y, z)) // 'xyz'
+ *
+ * semigroupString.concat(semigroupString.concat(x, y), z) // 'xyz'
+ * ```
+ *
+ * *Adapted from https://typelevel.org/cats*
+ *
+ * @since 2.0.0
+ */
+
+
+
+
+// -------------------------------------------------------------------------------------
+// constructors
+// -------------------------------------------------------------------------------------
+/**
+ * Get a semigroup where `concat` will return the minimum, based on the provided order.
+ *
+ * @example
+ * import * as N from 'fp-ts/number'
+ * import * as S from 'fp-ts/Semigroup'
+ *
+ * const S1 = S.min(N.Ord)
+ *
+ * assert.deepStrictEqual(S1.concat(1, 2), 1)
+ *
+ * @category constructors
+ * @since 2.10.0
+ */
+var min = function (O) { return ({
+    concat: _Ord__WEBPACK_IMPORTED_MODULE_0__.min(O)
+}); };
+/**
+ * Get a semigroup where `concat` will return the maximum, based on the provided order.
+ *
+ * @example
+ * import * as N from 'fp-ts/number'
+ * import * as S from 'fp-ts/Semigroup'
+ *
+ * const S1 = S.max(N.Ord)
+ *
+ * assert.deepStrictEqual(S1.concat(1, 2), 2)
+ *
+ * @category constructors
+ * @since 2.10.0
+ */
+var max = function (O) { return ({
+    concat: _Ord__WEBPACK_IMPORTED_MODULE_0__.max(O)
+}); };
+/**
+ * @category constructors
+ * @since 2.10.0
+ */
+var constant = function (a) { return ({
+    concat: function () { return a; }
+}); };
+// -------------------------------------------------------------------------------------
+// combinators
+// -------------------------------------------------------------------------------------
+/**
+ * The dual of a `Semigroup`, obtained by swapping the arguments of `concat`.
+ *
+ * @example
+ * import { reverse } from 'fp-ts/Semigroup'
+ * import * as S from 'fp-ts/string'
+ *
+ * assert.deepStrictEqual(reverse(S.Semigroup).concat('a', 'b'), 'ba')
+ *
+ * @since 2.10.0
+ */
+var reverse = _Magma__WEBPACK_IMPORTED_MODULE_1__.reverse;
+/**
+ * Given a struct of semigroups returns a semigroup for the struct.
+ *
+ * @example
+ * import { struct } from 'fp-ts/Semigroup'
+ * import * as N from 'fp-ts/number'
+ *
+ * interface Point {
+ *   readonly x: number
+ *   readonly y: number
+ * }
+ *
+ * const S = struct<Point>({
+ *   x: N.SemigroupSum,
+ *   y: N.SemigroupSum
+ * })
+ *
+ * assert.deepStrictEqual(S.concat({ x: 1, y: 2 }, { x: 3, y: 4 }), { x: 4, y: 6 })
+ *
+ * @since 2.10.0
+ */
+var struct = function (semigroups) { return ({
+    concat: function (first, second) {
+        var r = {};
+        for (var k in semigroups) {
+            if (_internal__WEBPACK_IMPORTED_MODULE_2__.has.call(semigroups, k)) {
+                r[k] = semigroups[k].concat(first[k], second[k]);
+            }
+        }
+        return r;
+    }
+}); };
+/**
+ * Given a tuple of semigroups returns a semigroup for the tuple.
+ *
+ * @example
+ * import { tuple } from 'fp-ts/Semigroup'
+ * import * as B from 'fp-ts/boolean'
+ * import * as N from 'fp-ts/number'
+ * import * as S from 'fp-ts/string'
+ *
+ * const S1 = tuple(S.Semigroup, N.SemigroupSum)
+ * assert.deepStrictEqual(S1.concat(['a', 1], ['b', 2]), ['ab', 3])
+ *
+ * const S2 = tuple(S.Semigroup, N.SemigroupSum, B.SemigroupAll)
+ * assert.deepStrictEqual(S2.concat(['a', 1, true], ['b', 2, false]), ['ab', 3, false])
+ *
+ * @since 2.10.0
+ */
+var tuple = function () {
+    var semigroups = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        semigroups[_i] = arguments[_i];
+    }
+    return ({
+        concat: function (first, second) { return semigroups.map(function (s, i) { return s.concat(first[i], second[i]); }); }
+    });
+};
+/**
+ * Between each pair of elements insert `middle`.
+ *
+ * @example
+ * import { intercalate } from 'fp-ts/Semigroup'
+ * import * as S from 'fp-ts/string'
+ * import { pipe } from 'fp-ts/function'
+ *
+ * const S1 = pipe(S.Semigroup, intercalate(' + '))
+ *
+ * assert.strictEqual(S1.concat('a', 'b'), 'a + b')
+ *
+ * @since 2.10.0
+ */
+var intercalate = function (middle) {
+    return function (S) { return ({
+        concat: function (x, y) { return S.concat(x, S.concat(middle, y)); }
+    }); };
+};
+// -------------------------------------------------------------------------------------
+// instances
+// -------------------------------------------------------------------------------------
+/**
+ * Always return the first argument.
+ *
+ * @example
+ * import * as S from 'fp-ts/Semigroup'
+ *
+ * assert.deepStrictEqual(S.first<number>().concat(1, 2), 1)
+ *
+ * @category instances
+ * @since 2.10.0
+ */
+var first = function () { return ({ concat: _function__WEBPACK_IMPORTED_MODULE_3__.identity }); };
+/**
+ * Always return the last argument.
+ *
+ * @example
+ * import * as S from 'fp-ts/Semigroup'
+ *
+ * assert.deepStrictEqual(S.last<number>().concat(1, 2), 2)
+ *
+ * @category instances
+ * @since 2.10.0
+ */
+var last = function () { return ({ concat: function (_, y) { return y; } }); };
+// -------------------------------------------------------------------------------------
+// utils
+// -------------------------------------------------------------------------------------
+/**
+ * Given a sequence of `as`, concat them and return the total.
+ *
+ * If `as` is empty, return the provided `startWith` value.
+ *
+ * @example
+ * import { concatAll } from 'fp-ts/Semigroup'
+ * import * as N from 'fp-ts/number'
+ *
+ * const sum = concatAll(N.SemigroupSum)(0)
+ *
+ * assert.deepStrictEqual(sum([1, 2, 3]), 6)
+ * assert.deepStrictEqual(sum([]), 0)
+ *
+ * @since 2.10.0
+ */
+var concatAll = _Magma__WEBPACK_IMPORTED_MODULE_1__.concatAll;
+// -------------------------------------------------------------------------------------
+// deprecated
+// -------------------------------------------------------------------------------------
+/**
+ * Use `void` module instead.
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var semigroupVoid = constant(undefined);
+/**
+ * Use [`getAssignSemigroup`](./struct.ts.html#getAssignSemigroup) instead.
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var getObjectSemigroup = function () { return ({
+    concat: function (first, second) { return Object.assign({}, first, second); }
+}); };
+/**
+ * Use [`last`](#last) instead.
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var getLastSemigroup = last;
+/**
+ * Use [`first`](#first) instead.
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var getFirstSemigroup = first;
+/**
+ * Use [`tuple`](#tuple) instead.
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var getTupleSemigroup = tuple;
+/**
+ * Use [`struct`](#struct) instead.
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var getStructSemigroup = struct;
+/**
+ * Use [`reverse`](#reverse) instead.
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var getDualSemigroup = reverse;
+/**
+ * Use [`max`](#max) instead.
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var getJoinSemigroup = max;
+/**
+ * Use [`min`](#min) instead.
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var getMeetSemigroup = min;
+/**
+ * Use [`intercalate`](#intercalate) instead.
+ *
+ * @category zone of death
+ * @since 2.5.0
+ * @deprecated
+ */
+var getIntercalateSemigroup = intercalate;
+function fold(S) {
+    var concatAllS = concatAll(S);
+    return function (startWith, as) { return (as === undefined ? concatAllS(startWith) : concatAllS(startWith)(as)); };
+}
+/**
+ * Use [`SemigroupAll`](./boolean.ts.html#SemigroupAll) instead.
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var semigroupAll = {
+    concat: function (x, y) { return x && y; }
+};
+/**
+ * Use [`SemigroupAny`](./boolean.ts.html#SemigroupAny) instead.
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var semigroupAny = {
+    concat: function (x, y) { return x || y; }
+};
+/**
+ * Use [`getSemigroup`](./function.ts.html#getSemigroup) instead.
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var getFunctionSemigroup = _function__WEBPACK_IMPORTED_MODULE_3__.getSemigroup;
+/**
+ * Use [`Semigroup`](./string.ts.html#Semigroup) instead.
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var semigroupString = {
+    concat: function (x, y) { return x + y; }
+};
+/**
+ * Use [`SemigroupSum`](./number.ts.html#SemigroupSum) instead.
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var semigroupSum = {
+    concat: function (x, y) { return x + y; }
+};
+/**
+ * Use [`SemigroupProduct`](./number.ts.html#SemigroupProduct) instead.
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+var semigroupProduct = {
+    concat: function (x, y) { return x * y; }
+};
+
+
+/***/ }),
+
+/***/ "./node_modules/fp-ts/es6/Separated.js":
+/*!*********************************************!*\
+  !*** ./node_modules/fp-ts/es6/Separated.js ***!
+  \*********************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "Bifunctor": () => (/* binding */ Bifunctor),
+/* harmony export */   "Functor": () => (/* binding */ Functor),
+/* harmony export */   "URI": () => (/* binding */ URI),
+/* harmony export */   "bimap": () => (/* binding */ bimap),
+/* harmony export */   "flap": () => (/* binding */ flap),
+/* harmony export */   "left": () => (/* binding */ left),
+/* harmony export */   "map": () => (/* binding */ map),
+/* harmony export */   "mapLeft": () => (/* binding */ mapLeft),
+/* harmony export */   "right": () => (/* binding */ right),
+/* harmony export */   "separated": () => (/* binding */ separated)
+/* harmony export */ });
+/* harmony import */ var _function__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./function */ "./node_modules/fp-ts/es6/function.js");
+/* harmony import */ var _Functor__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Functor */ "./node_modules/fp-ts/es6/Functor.js");
+/**
+ * ```ts
+ * interface Separated<E, A> {
+ *    readonly left: E
+ *    readonly right: A
+ * }
+ * ```
+ *
+ * Represents a result of separating a whole into two parts.
+ *
+ * @since 2.10.0
+ */
+
+
+// -------------------------------------------------------------------------------------
+// constructors
+// -------------------------------------------------------------------------------------
+/**
+ * @category constructors
+ * @since 2.10.0
+ */
+var separated = function (left, right) { return ({ left: left, right: right }); };
+var _map = function (fa, f) { return (0,_function__WEBPACK_IMPORTED_MODULE_0__.pipe)(fa, map(f)); };
+var _mapLeft = function (fa, f) { return (0,_function__WEBPACK_IMPORTED_MODULE_0__.pipe)(fa, mapLeft(f)); };
+var _bimap = function (fa, g, f) { return (0,_function__WEBPACK_IMPORTED_MODULE_0__.pipe)(fa, bimap(g, f)); };
+/**
+ * `map` can be used to turn functions `(a: A) => B` into functions `(fa: F<A>) => F<B>` whose argument and return types
+ * use the type constructor `F` to represent some computational context.
+ *
+ * @category mapping
+ * @since 2.10.0
+ */
+var map = function (f) {
+    return function (fa) {
+        return separated(left(fa), f(right(fa)));
+    };
+};
+/**
+ * Map a function over the first type argument of a bifunctor.
+ *
+ * @category error handling
+ * @since 2.10.0
+ */
+var mapLeft = function (f) {
+    return function (fa) {
+        return separated(f(left(fa)), right(fa));
+    };
+};
+/**
+ * Map a pair of functions over the two type arguments of the bifunctor.
+ *
+ * @category mapping
+ * @since 2.10.0
+ */
+var bimap = function (f, g) {
+    return function (fa) {
+        return separated(f(left(fa)), g(right(fa)));
+    };
+};
+/**
+ * @category type lambdas
+ * @since 2.10.0
+ */
+var URI = 'Separated';
+/**
+ * @category instances
+ * @since 2.10.0
+ */
+var Bifunctor = {
+    URI: URI,
+    mapLeft: _mapLeft,
+    bimap: _bimap
+};
+/**
+ * @category instances
+ * @since 2.10.0
+ */
+var Functor = {
+    URI: URI,
+    map: _map
+};
+/**
+ * @category mapping
+ * @since 2.10.0
+ */
+var flap = /*#__PURE__*/ (0,_Functor__WEBPACK_IMPORTED_MODULE_1__.flap)(Functor);
+// -------------------------------------------------------------------------------------
+// utils
+// -------------------------------------------------------------------------------------
+/**
+ * @since 2.10.0
+ */
+var left = function (s) { return s.left; };
+/**
+ * @since 2.10.0
+ */
+var right = function (s) { return s.right; };
+
+
+/***/ }),
+
+/***/ "./node_modules/fp-ts/es6/Witherable.js":
+/*!**********************************************!*\
+  !*** ./node_modules/fp-ts/es6/Witherable.js ***!
+  \**********************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "filterE": () => (/* binding */ filterE),
+/* harmony export */   "wiltDefault": () => (/* binding */ wiltDefault),
+/* harmony export */   "witherDefault": () => (/* binding */ witherDefault)
+/* harmony export */ });
+/* harmony import */ var _internal__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./internal */ "./node_modules/fp-ts/es6/internal.js");
+
+function wiltDefault(T, C) {
+    return function (F) {
+        var traverseF = T.traverse(F);
+        return function (wa, f) { return F.map(traverseF(wa, f), C.separate); };
+    };
+}
+function witherDefault(T, C) {
+    return function (F) {
+        var traverseF = T.traverse(F);
+        return function (wa, f) { return F.map(traverseF(wa, f), C.compact); };
+    };
+}
+function filterE(W) {
+    return function (F) {
+        var witherF = W.wither(F);
+        return function (predicate) { return function (ga) { return witherF(ga, function (a) { return F.map(predicate(a), function (b) { return (b ? _internal__WEBPACK_IMPORTED_MODULE_0__.some(a) : _internal__WEBPACK_IMPORTED_MODULE_0__.none); }); }); }; };
+    };
+}
+
+
+/***/ }),
+
+/***/ "./node_modules/fp-ts/es6/Zero.js":
+/*!****************************************!*\
+  !*** ./node_modules/fp-ts/es6/Zero.js ***!
+  \****************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "guard": () => (/* binding */ guard)
+/* harmony export */ });
+function guard(F, P) {
+    return function (b) { return (b ? P.of(undefined) : F.zero()); };
+}
+
+
+/***/ }),
+
+/***/ "./node_modules/fp-ts/es6/function.js":
+/*!********************************************!*\
+  !*** ./node_modules/fp-ts/es6/function.js ***!
+  \********************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "SK": () => (/* binding */ SK),
+/* harmony export */   "absurd": () => (/* binding */ absurd),
+/* harmony export */   "apply": () => (/* binding */ apply),
+/* harmony export */   "constFalse": () => (/* binding */ constFalse),
+/* harmony export */   "constNull": () => (/* binding */ constNull),
+/* harmony export */   "constTrue": () => (/* binding */ constTrue),
+/* harmony export */   "constUndefined": () => (/* binding */ constUndefined),
+/* harmony export */   "constVoid": () => (/* binding */ constVoid),
+/* harmony export */   "constant": () => (/* binding */ constant),
+/* harmony export */   "decrement": () => (/* binding */ decrement),
+/* harmony export */   "flip": () => (/* binding */ flip),
+/* harmony export */   "flow": () => (/* binding */ flow),
+/* harmony export */   "getBooleanAlgebra": () => (/* binding */ getBooleanAlgebra),
+/* harmony export */   "getEndomorphismMonoid": () => (/* binding */ getEndomorphismMonoid),
+/* harmony export */   "getMonoid": () => (/* binding */ getMonoid),
+/* harmony export */   "getRing": () => (/* binding */ getRing),
+/* harmony export */   "getSemigroup": () => (/* binding */ getSemigroup),
+/* harmony export */   "getSemiring": () => (/* binding */ getSemiring),
+/* harmony export */   "hole": () => (/* binding */ hole),
+/* harmony export */   "identity": () => (/* binding */ identity),
+/* harmony export */   "increment": () => (/* binding */ increment),
+/* harmony export */   "not": () => (/* binding */ not),
+/* harmony export */   "pipe": () => (/* binding */ pipe),
+/* harmony export */   "tuple": () => (/* binding */ tuple),
+/* harmony export */   "tupled": () => (/* binding */ tupled),
+/* harmony export */   "unsafeCoerce": () => (/* binding */ unsafeCoerce),
+/* harmony export */   "untupled": () => (/* binding */ untupled)
+/* harmony export */ });
+// -------------------------------------------------------------------------------------
+// instances
+// -------------------------------------------------------------------------------------
+/**
+ * @category instances
+ * @since 2.10.0
+ */
+var getBooleanAlgebra = function (B) {
+    return function () { return ({
+        meet: function (x, y) { return function (a) { return B.meet(x(a), y(a)); }; },
+        join: function (x, y) { return function (a) { return B.join(x(a), y(a)); }; },
+        zero: function () { return B.zero; },
+        one: function () { return B.one; },
+        implies: function (x, y) { return function (a) { return B.implies(x(a), y(a)); }; },
+        not: function (x) { return function (a) { return B.not(x(a)); }; }
+    }); };
+};
+/**
+ * Unary functions form a semigroup as long as you can provide a semigroup for the codomain.
+ *
+ * @example
+ * import { Predicate, getSemigroup } from 'fp-ts/function'
+ * import * as B from 'fp-ts/boolean'
+ *
+ * const f: Predicate<number> = (n) => n <= 2
+ * const g: Predicate<number> = (n) => n >= 0
+ *
+ * const S1 = getSemigroup(B.SemigroupAll)<number>()
+ *
+ * assert.deepStrictEqual(S1.concat(f, g)(1), true)
+ * assert.deepStrictEqual(S1.concat(f, g)(3), false)
+ *
+ * const S2 = getSemigroup(B.SemigroupAny)<number>()
+ *
+ * assert.deepStrictEqual(S2.concat(f, g)(1), true)
+ * assert.deepStrictEqual(S2.concat(f, g)(3), true)
+ *
+ * @category instances
+ * @since 2.10.0
+ */
+var getSemigroup = function (S) {
+    return function () { return ({
+        concat: function (f, g) { return function (a) { return S.concat(f(a), g(a)); }; }
+    }); };
+};
+/**
+ * Unary functions form a monoid as long as you can provide a monoid for the codomain.
+ *
+ * @example
+ * import { Predicate } from 'fp-ts/Predicate'
+ * import { getMonoid } from 'fp-ts/function'
+ * import * as B from 'fp-ts/boolean'
+ *
+ * const f: Predicate<number> = (n) => n <= 2
+ * const g: Predicate<number> = (n) => n >= 0
+ *
+ * const M1 = getMonoid(B.MonoidAll)<number>()
+ *
+ * assert.deepStrictEqual(M1.concat(f, g)(1), true)
+ * assert.deepStrictEqual(M1.concat(f, g)(3), false)
+ *
+ * const M2 = getMonoid(B.MonoidAny)<number>()
+ *
+ * assert.deepStrictEqual(M2.concat(f, g)(1), true)
+ * assert.deepStrictEqual(M2.concat(f, g)(3), true)
+ *
+ * @category instances
+ * @since 2.10.0
+ */
+var getMonoid = function (M) {
+    var getSemigroupM = getSemigroup(M);
+    return function () { return ({
+        concat: getSemigroupM().concat,
+        empty: function () { return M.empty; }
+    }); };
+};
+/**
+ * @category instances
+ * @since 2.10.0
+ */
+var getSemiring = function (S) { return ({
+    add: function (f, g) { return function (x) { return S.add(f(x), g(x)); }; },
+    zero: function () { return S.zero; },
+    mul: function (f, g) { return function (x) { return S.mul(f(x), g(x)); }; },
+    one: function () { return S.one; }
+}); };
+/**
+ * @category instances
+ * @since 2.10.0
+ */
+var getRing = function (R) {
+    var S = getSemiring(R);
+    return {
+        add: S.add,
+        mul: S.mul,
+        one: S.one,
+        zero: S.zero,
+        sub: function (f, g) { return function (x) { return R.sub(f(x), g(x)); }; }
+    };
+};
+// -------------------------------------------------------------------------------------
+// utils
+// -------------------------------------------------------------------------------------
+/**
+ * @since 2.11.0
+ */
+var apply = function (a) {
+    return function (f) {
+        return f(a);
+    };
+};
+/**
+ * @since 2.0.0
+ */
+function identity(a) {
+    return a;
+}
+/**
+ * @since 2.0.0
+ */
+var unsafeCoerce = identity;
+/**
+ * @since 2.0.0
+ */
+function constant(a) {
+    return function () { return a; };
+}
+/**
+ * A thunk that returns always `true`.
+ *
+ * @since 2.0.0
+ */
+var constTrue = /*#__PURE__*/ constant(true);
+/**
+ * A thunk that returns always `false`.
+ *
+ * @since 2.0.0
+ */
+var constFalse = /*#__PURE__*/ constant(false);
+/**
+ * A thunk that returns always `null`.
+ *
+ * @since 2.0.0
+ */
+var constNull = /*#__PURE__*/ constant(null);
+/**
+ * A thunk that returns always `undefined`.
+ *
+ * @since 2.0.0
+ */
+var constUndefined = /*#__PURE__*/ constant(undefined);
+/**
+ * A thunk that returns always `void`.
+ *
+ * @since 2.0.0
+ */
+var constVoid = constUndefined;
+function flip(f) {
+    return function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        if (args.length > 1) {
+            return f(args[1], args[0]);
+        }
+        return function (a) { return f(a)(args[0]); };
+    };
+}
+function flow(ab, bc, cd, de, ef, fg, gh, hi, ij) {
+    switch (arguments.length) {
+        case 1:
+            return ab;
+        case 2:
+            return function () {
+                return bc(ab.apply(this, arguments));
+            };
+        case 3:
+            return function () {
+                return cd(bc(ab.apply(this, arguments)));
+            };
+        case 4:
+            return function () {
+                return de(cd(bc(ab.apply(this, arguments))));
+            };
+        case 5:
+            return function () {
+                return ef(de(cd(bc(ab.apply(this, arguments)))));
+            };
+        case 6:
+            return function () {
+                return fg(ef(de(cd(bc(ab.apply(this, arguments))))));
+            };
+        case 7:
+            return function () {
+                return gh(fg(ef(de(cd(bc(ab.apply(this, arguments)))))));
+            };
+        case 8:
+            return function () {
+                return hi(gh(fg(ef(de(cd(bc(ab.apply(this, arguments))))))));
+            };
+        case 9:
+            return function () {
+                return ij(hi(gh(fg(ef(de(cd(bc(ab.apply(this, arguments)))))))));
+            };
+    }
+    return;
+}
+/**
+ * @since 2.0.0
+ */
+function tuple() {
+    var t = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        t[_i] = arguments[_i];
+    }
+    return t;
+}
+/**
+ * @since 2.0.0
+ */
+function increment(n) {
+    return n + 1;
+}
+/**
+ * @since 2.0.0
+ */
+function decrement(n) {
+    return n - 1;
+}
+/**
+ * @since 2.0.0
+ */
+function absurd(_) {
+    throw new Error('Called `absurd` function which should be uncallable');
+}
+/**
+ * Creates a tupled version of this function: instead of `n` arguments, it accepts a single tuple argument.
+ *
+ * @example
+ * import { tupled } from 'fp-ts/function'
+ *
+ * const add = tupled((x: number, y: number): number => x + y)
+ *
+ * assert.strictEqual(add([1, 2]), 3)
+ *
+ * @since 2.4.0
+ */
+function tupled(f) {
+    return function (a) { return f.apply(void 0, a); };
+}
+/**
+ * Inverse function of `tupled`
+ *
+ * @since 2.4.0
+ */
+function untupled(f) {
+    return function () {
+        var a = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            a[_i] = arguments[_i];
+        }
+        return f(a);
+    };
+}
+function pipe(a, ab, bc, cd, de, ef, fg, gh, hi) {
+    switch (arguments.length) {
+        case 1:
+            return a;
+        case 2:
+            return ab(a);
+        case 3:
+            return bc(ab(a));
+        case 4:
+            return cd(bc(ab(a)));
+        case 5:
+            return de(cd(bc(ab(a))));
+        case 6:
+            return ef(de(cd(bc(ab(a)))));
+        case 7:
+            return fg(ef(de(cd(bc(ab(a))))));
+        case 8:
+            return gh(fg(ef(de(cd(bc(ab(a)))))));
+        case 9:
+            return hi(gh(fg(ef(de(cd(bc(ab(a))))))));
+        default: {
+            var ret = arguments[0];
+            for (var i = 1; i < arguments.length; i++) {
+                ret = arguments[i](ret);
+            }
+            return ret;
+        }
+    }
+}
+/**
+ * Type hole simulation
+ *
+ * @since 2.7.0
+ */
+var hole = absurd;
+/**
+ * @since 2.11.0
+ */
+var SK = function (_, b) { return b; };
+/**
+ * Use `Predicate` module instead.
+ *
+ * @category zone of death
+ * @since 2.0.0
+ * @deprecated
+ */
+function not(predicate) {
+    return function (a) { return !predicate(a); };
+}
+/**
+ * Use `Endomorphism` module instead.
+ *
+ * @category zone of death
+ * @since 2.10.0
+ * @deprecated
+ */
+var getEndomorphismMonoid = function () { return ({
+    concat: function (first, second) { return flow(first, second); },
+    empty: identity
+}); };
+
+
+/***/ }),
+
+/***/ "./node_modules/fp-ts/es6/internal.js":
+/*!********************************************!*\
+  !*** ./node_modules/fp-ts/es6/internal.js ***!
+  \********************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "emptyReadonlyArray": () => (/* binding */ emptyReadonlyArray),
+/* harmony export */   "emptyRecord": () => (/* binding */ emptyRecord),
+/* harmony export */   "fromReadonlyNonEmptyArray": () => (/* binding */ fromReadonlyNonEmptyArray),
+/* harmony export */   "has": () => (/* binding */ has),
+/* harmony export */   "head": () => (/* binding */ head),
+/* harmony export */   "isLeft": () => (/* binding */ isLeft),
+/* harmony export */   "isNonEmpty": () => (/* binding */ isNonEmpty),
+/* harmony export */   "isNone": () => (/* binding */ isNone),
+/* harmony export */   "isRight": () => (/* binding */ isRight),
+/* harmony export */   "isSome": () => (/* binding */ isSome),
+/* harmony export */   "left": () => (/* binding */ left),
+/* harmony export */   "none": () => (/* binding */ none),
+/* harmony export */   "right": () => (/* binding */ right),
+/* harmony export */   "singleton": () => (/* binding */ singleton),
+/* harmony export */   "some": () => (/* binding */ some),
+/* harmony export */   "tail": () => (/* binding */ tail)
+/* harmony export */ });
+var __spreadArray = (undefined && undefined.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
+};
+// -------------------------------------------------------------------------------------
+// Option
+// -------------------------------------------------------------------------------------
+/** @internal */
+var isNone = function (fa) { return fa._tag === 'None'; };
+/** @internal */
+var isSome = function (fa) { return fa._tag === 'Some'; };
+/** @internal */
+var none = { _tag: 'None' };
+/** @internal */
+var some = function (a) { return ({ _tag: 'Some', value: a }); };
+// -------------------------------------------------------------------------------------
+// Either
+// -------------------------------------------------------------------------------------
+/** @internal */
+var isLeft = function (ma) { return ma._tag === 'Left'; };
+/** @internal */
+var isRight = function (ma) { return ma._tag === 'Right'; };
+/** @internal */
+var left = function (e) { return ({ _tag: 'Left', left: e }); };
+/** @internal */
+var right = function (a) { return ({ _tag: 'Right', right: a }); };
+// -------------------------------------------------------------------------------------
+// ReadonlyNonEmptyArray
+// -------------------------------------------------------------------------------------
+/** @internal */
+var singleton = function (a) { return [a]; };
+/** @internal */
+var isNonEmpty = function (as) { return as.length > 0; };
+/** @internal */
+var head = function (as) { return as[0]; };
+/** @internal */
+var tail = function (as) { return as.slice(1); };
+// -------------------------------------------------------------------------------------
+// empty
+// -------------------------------------------------------------------------------------
+/** @internal */
+var emptyReadonlyArray = [];
+/** @internal */
+var emptyRecord = {};
+// -------------------------------------------------------------------------------------
+// Record
+// -------------------------------------------------------------------------------------
+/** @internal */
+var has = Object.prototype.hasOwnProperty;
+// -------------------------------------------------------------------------------------
+// NonEmptyArray
+// -------------------------------------------------------------------------------------
+/** @internal */
+var fromReadonlyNonEmptyArray = function (as) { return __spreadArray([as[0]], as.slice(1), true); };
+
+
+/***/ }),
+
+/***/ "./src/fstools.ts":
+/*!************************!*\
+  !*** ./src/fstools.ts ***!
+  \************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __generator = (this && this.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
+var __asyncValues = (this && this.__asyncValues) || function (o) {
+    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+    var m = o[Symbol.asyncIterator], i;
+    return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
+    function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
+    function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.findFSHandle = exports.getFSHandle = void 0;
+var function_1 = __webpack_require__(/*! fp-ts/function */ "./node_modules/fp-ts/es6/function.js");
+var O = __importStar(__webpack_require__(/*! fp-ts/Option */ "./node_modules/fp-ts/es6/Option.js"));
+function splitPath(pathName) {
+    return (0, function_1.pipe)(pathName.split('/'), function (pathList) { return pathList.length > 0 ? O.some(pathList) : O.none; }, O.map(function (pathList) { return pathList.at(0) === '' ? pathList.slice(1) : pathList; }), O.chain(function (pathList) { return pathList.length > 0 ? O.some(pathList) : O.none; }), O.map(function (pathList) { return pathList.at(-1) === '' ? pathList.slice(0, -1) : pathList; }), O.chain(function (pathList) { return pathList.length > 0 ? O.some(pathList) : O.none; }), O.getOrElse(function () { return []; }));
+}
+function getHandleInDirectory(dirHandle, pred) {
+    var _a, e_1, _b, _c;
+    return __awaiter(this, void 0, void 0, function () {
+        var _d, _e, _f, key, handle, e_1_1;
+        return __generator(this, function (_g) {
+            switch (_g.label) {
+                case 0:
+                    _g.trys.push([0, 5, 6, 11]);
+                    _d = true, _e = __asyncValues(dirHandle.entries());
+                    _g.label = 1;
+                case 1: return [4 /*yield*/, _e.next()];
+                case 2:
+                    if (!(_f = _g.sent(), _a = _f.done, !_a)) return [3 /*break*/, 4];
+                    _c = _f.value;
+                    _d = false;
+                    try {
+                        key = _c[0], handle = _c[1];
+                        if (pred(key)) {
+                            return [2 /*return*/, handle];
+                        }
+                    }
+                    finally {
+                        _d = true;
+                    }
+                    _g.label = 3;
+                case 3: return [3 /*break*/, 1];
+                case 4: return [3 /*break*/, 11];
+                case 5:
+                    e_1_1 = _g.sent();
+                    e_1 = { error: e_1_1 };
+                    return [3 /*break*/, 11];
+                case 6:
+                    _g.trys.push([6, , 9, 10]);
+                    if (!(!_d && !_a && (_b = _e.return))) return [3 /*break*/, 8];
+                    return [4 /*yield*/, _b.call(_e)];
+                case 7:
+                    _g.sent();
+                    _g.label = 8;
+                case 8: return [3 /*break*/, 10];
+                case 9:
+                    if (e_1) throw e_1.error;
+                    return [7 /*endfinally*/];
+                case 10: return [7 /*endfinally*/];
+                case 11: return [2 /*return*/, undefined];
+            }
+        });
+    });
+}
+function findFSHandle(dirHandle, pred) {
+    var _a, e_2, _b, _c;
+    return __awaiter(this, void 0, void 0, function () {
+        var result, _d, _e, _f, key, handle, e_2_1;
+        return __generator(this, function (_g) {
+            switch (_g.label) {
+                case 0:
+                    console.log('findFSHandle');
+                    result = [];
+                    _g.label = 1;
+                case 1:
+                    _g.trys.push([1, 6, 7, 12]);
+                    _d = true, _e = __asyncValues(dirHandle.entries());
+                    _g.label = 2;
+                case 2: return [4 /*yield*/, _e.next()];
+                case 3:
+                    if (!(_f = _g.sent(), _a = _f.done, !_a)) return [3 /*break*/, 5];
+                    _c = _f.value;
+                    _d = false;
+                    try {
+                        key = _c[0], handle = _c[1];
+                        if (pred(key)) {
+                            result.push([key, handle]);
+                        }
+                    }
+                    finally {
+                        _d = true;
+                    }
+                    _g.label = 4;
+                case 4: return [3 /*break*/, 2];
+                case 5: return [3 /*break*/, 12];
+                case 6:
+                    e_2_1 = _g.sent();
+                    e_2 = { error: e_2_1 };
+                    return [3 /*break*/, 12];
+                case 7:
+                    _g.trys.push([7, , 10, 11]);
+                    if (!(!_d && !_a && (_b = _e.return))) return [3 /*break*/, 9];
+                    return [4 /*yield*/, _b.call(_e)];
+                case 8:
+                    _g.sent();
+                    _g.label = 9;
+                case 9: return [3 /*break*/, 11];
+                case 10:
+                    if (e_2) throw e_2.error;
+                    return [7 /*endfinally*/];
+                case 11: return [7 /*endfinally*/];
+                case 12: return [2 /*return*/, result];
+            }
+        });
+    });
+}
+exports.findFSHandle = findFSHandle;
+function getFileSystemHandleRecur(dirHandle, pathList) {
+    return __awaiter(this, void 0, void 0, function () {
+        var handle;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    if (pathList.length == 0) {
+                        return [2 /*return*/, dirHandle];
+                    }
+                    return [4 /*yield*/, getHandleInDirectory(dirHandle, function (key) { return pathList[0] === key; })];
+                case 1:
+                    handle = _a.sent();
+                    if (pathList.length == 1) {
+                        return [2 /*return*/, handle];
+                    }
+                    else if ((handle === undefined) || (handle.kind !== 'directory')) {
+                        return [2 /*return*/, undefined];
+                    }
+                    else {
+                        return [2 /*return*/, getFileSystemHandleRecur(handle, pathList.slice(1))];
+                    }
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+function getFSHandle(dirHandle, pathName) {
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, getFileSystemHandleRecur(dirHandle, splitPath(pathName))];
+                case 1: return [2 /*return*/, _a.sent()];
+            }
+        });
+    });
+}
+exports.getFSHandle = getFSHandle;
+
+
+/***/ }),
+
 /***/ "./src/index.ts":
 /*!**********************!*\
   !*** ./src/index.ts ***!
@@ -1205,12 +5098,49 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __generator = (this && this.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 var marked_1 = __webpack_require__(/*! marked */ "./node_modules/marked/lib/marked.cjs");
 var highlight_js_1 = __importDefault(__webpack_require__(/*! highlight.js */ "./node_modules/highlight.js/lib/index.js"));
+var fstools_1 = __webpack_require__(/*! ./fstools */ "./src/fstools.ts");
 var MARKDOWN_BLOCK_ID = "markdown";
 var HTML_BLOCK_ID = "html";
 var FADE_LAYER_ID = "fadeLayer";
@@ -1292,16 +5222,68 @@ var render = function (text) {
         title: myRenderer.title || "No title"
     };
 };
+var rootHandle;
 function onFileDropped(elem, ev) {
     var _a;
-    if (!(ev instanceof DragEvent)) {
-        return;
-    }
-    var files = (_a = ev.dataTransfer) === null || _a === void 0 ? void 0 : _a.files;
-    if ((files === undefined) || (files.length == 0)) {
-        return;
-    }
-    render_markdown_blog(elem, files[0]);
+    return __awaiter(this, void 0, void 0, function () {
+        var items, item, handle, _b, _c, hf, _d, _e;
+        return __generator(this, function (_f) {
+            switch (_f.label) {
+                case 0:
+                    if (!(ev instanceof DragEvent)) {
+                        return [2 /*return*/];
+                    }
+                    items = (_a = ev.dataTransfer) === null || _a === void 0 ? void 0 : _a.items;
+                    if (items === undefined) {
+                        alert("No dropped item found");
+                        return [2 /*return*/];
+                    }
+                    if (items.length > 1) {
+                        alert("Multiple items were dropped");
+                        return [2 /*return*/];
+                    }
+                    item = items[0];
+                    if (!(item.kind === 'file')) return [3 /*break*/, 7];
+                    return [4 /*yield*/, item.getAsFileSystemHandle()
+                        // console.log(`handle is ${Object.prototype.toString.call(handle)}`)
+                        // console.log(handle.name)
+                    ];
+                case 1:
+                    handle = _f.sent();
+                    if (!(handle.kind === 'file')) return [3 /*break*/, 3];
+                    _b = render_markdown_blob;
+                    _c = [elem];
+                    return [4 /*yield*/, handle.getFile()];
+                case 2:
+                    _b.apply(void 0, _c.concat([_f.sent()]));
+                    return [3 /*break*/, 6];
+                case 3:
+                    if (!(handle.kind === 'directory')) return [3 /*break*/, 6];
+                    console.log('directory');
+                    rootHandle = handle;
+                    return [4 /*yield*/, (0, fstools_1.findFSHandle)(handle, function (name) { return name.split('.').pop() === 'md'; })];
+                case 4:
+                    hf = _f.sent();
+                    _d = render_markdown_blob;
+                    _e = [elem];
+                    return [4 /*yield*/, hf[0][1].getFile()];
+                case 5:
+                    _d.apply(void 0, _e.concat([_f.sent()]));
+                    _f.label = 6;
+                case 6: return [3 /*break*/, 8];
+                case 7:
+                    if (item.kind === 'string') {
+                        console.log('string was dropped');
+                        item.getAsString(function (msg) { return console.log(msg); });
+                    }
+                    else {
+                        console.log("unknown object was dropped");
+                    }
+                    _f.label = 8;
+                case 8: return [2 /*return*/];
+            }
+        });
+    });
 }
 function render_markdown(elem, markdown) {
     var converted = render(markdown);
@@ -1310,16 +5292,20 @@ function render_markdown(elem, markdown) {
         document.title = converted.title;
     }
 }
-function render_markdown_blog(elem, blob) {
+function render_markdown_blob(elem, blob) {
     var reader = new FileReader();
     reader.onload = function (e) {
+        console.log('reader.onload');
         if ((e.target !== null) && (e.target.result !== null) && (typeof e.target.result == 'string')) {
+            console.log('call render_markdown');
+            console.log(reader.result);
             render_markdown(elem, e.target.result);
         }
     };
     reader.readAsText(blob, "utf-8");
 }
 window.onload = function () {
+    var _this = this;
     // Find 'body' element    
     var bodyElems = document.getElementsByTagName('body');
     if (bodyElems.length == 0) {
@@ -1369,19 +5355,32 @@ window.onload = function () {
             }
             onFileDropped(htmlElem, e);
         }, false);
-        _open_markdown = function (fileName) {
-            var url = new URL(document.location.href);
-            if (url.protocol.toLowerCase() == "file:") {
-                //@ts-ignore
-                window.showOpenFilePicker({
-                    mode: "read",
-                    startIn: url.pathname.replace(/(.*)\/.*/, '$1')
+        var url = new URL(document.location.href);
+        if (url.protocol.toLowerCase() == "file:") {
+            _open_markdown = function (fileName) { return __awaiter(_this, void 0, void 0, function () {
+                var handle, _a, _b;
+                return __generator(this, function (_c) {
+                    switch (_c.label) {
+                        case 0: return [4 /*yield*/, (0, fstools_1.getFSHandle)(rootHandle, fileName)];
+                        case 1:
+                            handle = _c.sent();
+                            if (!((handle !== undefined) && (handle.kind === 'file'))) return [3 /*break*/, 3];
+                            _a = render_markdown_blob;
+                            _b = [htmlElem];
+                            return [4 /*yield*/, handle.getFile()];
+                        case 2:
+                            _a.apply(void 0, _b.concat([_c.sent()]));
+                            _c.label = 3;
+                        case 3: return [2 /*return*/];
+                    }
                 });
-            }
-            else {
-                fetch(fileName).then(function (response) { return response.blob(); }).then(function (blob) { return render_markdown_blog(htmlElem, blob); });
-            }
-        };
+            }); };
+        }
+        else {
+            _open_markdown = function (fileName) {
+                fetch(fileName).then(function (response) { return response.blob(); }).then(function (blob) { return render_markdown_blob(htmlElem, blob); });
+            };
+        }
     }
 };
 
@@ -63255,6 +67254,35 @@ exports.walkTokens = walkTokens;
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;
 /******/ 	}
+/******/ 	
+/************************************************************************/
+/******/ 	/* webpack/runtime/define property getters */
+/******/ 	(() => {
+/******/ 		// define getter functions for harmony exports
+/******/ 		__webpack_require__.d = (exports, definition) => {
+/******/ 			for(var key in definition) {
+/******/ 				if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
+/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 				}
+/******/ 			}
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
+/******/ 	(() => {
+/******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/make namespace object */
+/******/ 	(() => {
+/******/ 		// define __esModule on exports
+/******/ 		__webpack_require__.r = (exports) => {
+/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 			}
+/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 		};
+/******/ 	})();
 /******/ 	
 /************************************************************************/
 /******/ 	
