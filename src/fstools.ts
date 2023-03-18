@@ -23,8 +23,7 @@ async function getHandleInDirectory(dirHandle:FileSystemDirectoryHandle, pred:(k
     return undefined
 }
 
-async function findFSHandle(dirHandle:FileSystemDirectoryHandle, pred:(key:string)=>boolean):Promise<[string, FileSystemHandle][]> {
-    console.log('findFSHandle')
+async function findFSHandle(dirHandle:FileSystemDirectoryHandle, pred:(key:string)=>boolean):Promise<[string, FileSystemHandle][]> {    
     let result:[string, FileSystemHandle][] = []
     for await (const [key, handle] of dirHandle.entries()) {
         if (pred(key)) {

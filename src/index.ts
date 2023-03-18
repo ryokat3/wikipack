@@ -102,10 +102,11 @@ const render = (text: string): { html: string, title: string } => {
 
 var rootHandle:FileSystemDirectoryHandle
 
-async function onFileDropped(elem: HTMLElement, ev: Event) {
+async function onFileDropped(elem: HTMLElement, ev: Event) {    
     if (!(ev instanceof DragEvent)) {
         return
     }
+
     const items = ev.dataTransfer?.items
     if (items === undefined) {
         alert("No dropped item found")
@@ -115,25 +116,31 @@ async function onFileDropped(elem: HTMLElement, ev: Event) {
         alert("Multiple items were dropped")
         return
     }
- 
+    
     const item = items[0]
-    if (item.kind === 'file') {
+    if (!('kind' in item)) {        
+        console.log("item doesn't have kind property")        
+    }
+    else if (item.kind === 'file') {
         const handle: FileSystemHandle = await item.getAsFileSystemHandle()
-        // console.log(`handle is ${Object.prototype.toString.call(handle)}`)
-        // console.log(handle.name)
-        if (handle.kind === 'file') {
+
+        if (!('kind' in handle)) {
+            console.log("handle doesn't have kind property")
+        }
+        else if (handle.kind === 'file') {
             render_markdown_blob(elem, await (handle as FileSystemFileHandle).getFile())
         }
-        else if (handle.kind === 'directory') {
-            console.log('directory')
+        else if (handle.kind === 'directory') {            
             rootHandle = handle as FileSystemDirectoryHandle
             const hf = await findFSHandle(handle as FileSystemDirectoryHandle, (name: string) => name.split('.').pop() === 'md')
             render_markdown_blob(elem, await (hf[0][1] as FileSystemFileHandle).getFile())
         }
     }
-    else if (item.kind === 'string') {
-        console.log('string was dropped')
-        item.getAsString((msg:string)=>console.log(msg))        
+    else if (item.kind === 'string') {        
+        item.getAsString((msg:string)=> {
+            console.log(`string "${msg}" was dropped`)
+            alert(`"${msg}" was dropped as string. Try again.`)
+        })        
     }
     else {
         console.log("unknown object was dropped")
@@ -150,11 +157,8 @@ function render_markdown(elem: HTMLElement, markdown: string): void {
 
 function render_markdown_blob(elem: HTMLElement, blob: Blob): void {
     const reader = new FileReader()
-    reader.onload = (e: ProgressEvent<FileReader>) => {
-        console.log('reader.onload')
-        if ((e.target !== null) && (e.target.result !== null) && (typeof e.target.result == 'string')) {
-            console.log('call render_markdown')
-            console.log(reader.result)
+    reader.onload = (e: ProgressEvent<FileReader>) => {        
+        if ((e.target !== null) && (e.target.result !== null) && (typeof e.target.result == 'string')) {                        
             render_markdown(elem, e.target.result)
         }
     }

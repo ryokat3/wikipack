@@ -4988,7 +4988,6 @@ function findFSHandle(dirHandle, pred) {
         return __generator(this, function (_g) {
             switch (_g.label) {
                 case 0:
-                    console.log('findFSHandle');
                     result = [];
                     _g.label = 1;
                 case 1:
@@ -5243,44 +5242,50 @@ function onFileDropped(elem, ev) {
                         return [2 /*return*/];
                     }
                     item = items[0];
-                    if (!(item.kind === 'file')) return [3 /*break*/, 7];
-                    return [4 /*yield*/, item.getAsFileSystemHandle()
-                        // console.log(`handle is ${Object.prototype.toString.call(handle)}`)
-                        // console.log(handle.name)
-                    ];
+                    if (!!('kind' in item)) return [3 /*break*/, 1];
+                    console.log("item doesn't have kind property");
+                    return [3 /*break*/, 10];
                 case 1:
+                    if (!(item.kind === 'file')) return [3 /*break*/, 9];
+                    return [4 /*yield*/, item.getAsFileSystemHandle()];
+                case 2:
                     handle = _f.sent();
-                    if (!(handle.kind === 'file')) return [3 /*break*/, 3];
+                    if (!!('kind' in handle)) return [3 /*break*/, 3];
+                    console.log("handle doesn't have kind property");
+                    return [3 /*break*/, 8];
+                case 3:
+                    if (!(handle.kind === 'file')) return [3 /*break*/, 5];
                     _b = render_markdown_blob;
                     _c = [elem];
                     return [4 /*yield*/, handle.getFile()];
-                case 2:
+                case 4:
                     _b.apply(void 0, _c.concat([_f.sent()]));
-                    return [3 /*break*/, 6];
-                case 3:
-                    if (!(handle.kind === 'directory')) return [3 /*break*/, 6];
-                    console.log('directory');
+                    return [3 /*break*/, 8];
+                case 5:
+                    if (!(handle.kind === 'directory')) return [3 /*break*/, 8];
                     rootHandle = handle;
                     return [4 /*yield*/, (0, fstools_1.findFSHandle)(handle, function (name) { return name.split('.').pop() === 'md'; })];
-                case 4:
+                case 6:
                     hf = _f.sent();
                     _d = render_markdown_blob;
                     _e = [elem];
                     return [4 /*yield*/, hf[0][1].getFile()];
-                case 5:
-                    _d.apply(void 0, _e.concat([_f.sent()]));
-                    _f.label = 6;
-                case 6: return [3 /*break*/, 8];
                 case 7:
+                    _d.apply(void 0, _e.concat([_f.sent()]));
+                    _f.label = 8;
+                case 8: return [3 /*break*/, 10];
+                case 9:
                     if (item.kind === 'string') {
-                        console.log('string was dropped');
-                        item.getAsString(function (msg) { return console.log(msg); });
+                        item.getAsString(function (msg) {
+                            console.log("string \"".concat(msg, "\" was dropped"));
+                            alert("\"".concat(msg, "\" was dropped as string. Try again."));
+                        });
                     }
                     else {
                         console.log("unknown object was dropped");
                     }
-                    _f.label = 8;
-                case 8: return [2 /*return*/];
+                    _f.label = 10;
+                case 10: return [2 /*return*/];
             }
         });
     });
@@ -5295,10 +5300,7 @@ function render_markdown(elem, markdown) {
 function render_markdown_blob(elem, blob) {
     var reader = new FileReader();
     reader.onload = function (e) {
-        console.log('reader.onload');
         if ((e.target !== null) && (e.target.result !== null) && (typeof e.target.result == 'string')) {
-            console.log('call render_markdown');
-            console.log(reader.result);
             render_markdown(elem, e.target.result);
         }
     };
