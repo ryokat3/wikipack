@@ -100,7 +100,7 @@ const render = (text: string): { html: string, title: string } => {
     }
 }
 
-var rootHandle:FileSystemDirectoryHandle
+var rootHandle:FileSystemDirectoryHandle|undefined = undefined
 
 async function onFileDropped(elem: HTMLElement, ev: Event) {    
     if (!(ev instanceof DragEvent)) {
@@ -122,12 +122,15 @@ async function onFileDropped(elem: HTMLElement, ev: Event) {
         console.log("item doesn't have kind property")        
     }
     else if (item.kind === 'file') {
-        const handle: FileSystemHandle = await item.getAsFileSystemHandle()
+        const handle = await item.getAsFileSystemHandle()
 
-        if (!('kind' in handle)) {
+        if (handle === null) {
+            console.log("handle is null")
+        }
+        else if (!('kind' in handle)) {
             console.log("handle doesn't have kind property")
         }
-        else if (handle.kind === 'file') {
+        else if (handle.kind === 'file') {                       
             render_markdown_blob(elem, await (handle as FileSystemFileHandle).getFile())
         }
         else if (handle.kind === 'directory') {            
@@ -223,6 +226,9 @@ window.onload = function () {
         const url = new URL(document.location.href)
         if (url.protocol.toLowerCase() == "file:") {
             _open_markdown = async (fileName: string) => {
+                if (rootHandle === undefined) {
+                    rootHandle = await window.showDirectoryPicker() 
+                }
                 const handle = await getFSHandle(rootHandle, fileName)
                 if ((handle !== undefined) && (handle.kind === 'file')) {
                     render_markdown_blob(htmlElem, await (handle as FileSystemFileHandle).getFile())

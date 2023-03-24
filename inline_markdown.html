@@ -5221,7 +5221,7 @@ var render = function (text) {
         title: myRenderer.title || "No title"
     };
 };
-var rootHandle;
+var rootHandle = undefined;
 function onFileDropped(elem, ev) {
     var _a;
     return __awaiter(this, void 0, void 0, function () {
@@ -5244,37 +5244,41 @@ function onFileDropped(elem, ev) {
                     item = items[0];
                     if (!!('kind' in item)) return [3 /*break*/, 1];
                     console.log("item doesn't have kind property");
-                    return [3 /*break*/, 10];
+                    return [3 /*break*/, 11];
                 case 1:
-                    if (!(item.kind === 'file')) return [3 /*break*/, 9];
+                    if (!(item.kind === 'file')) return [3 /*break*/, 10];
                     return [4 /*yield*/, item.getAsFileSystemHandle()];
                 case 2:
                     handle = _f.sent();
-                    if (!!('kind' in handle)) return [3 /*break*/, 3];
-                    console.log("handle doesn't have kind property");
-                    return [3 /*break*/, 8];
+                    if (!(handle === null)) return [3 /*break*/, 3];
+                    console.log("handle is null");
+                    return [3 /*break*/, 9];
                 case 3:
-                    if (!(handle.kind === 'file')) return [3 /*break*/, 5];
+                    if (!!('kind' in handle)) return [3 /*break*/, 4];
+                    console.log("handle doesn't have kind property");
+                    return [3 /*break*/, 9];
+                case 4:
+                    if (!(handle.kind === 'file')) return [3 /*break*/, 6];
                     _b = render_markdown_blob;
                     _c = [elem];
                     return [4 /*yield*/, handle.getFile()];
-                case 4:
-                    _b.apply(void 0, _c.concat([_f.sent()]));
-                    return [3 /*break*/, 8];
                 case 5:
-                    if (!(handle.kind === 'directory')) return [3 /*break*/, 8];
+                    _b.apply(void 0, _c.concat([_f.sent()]));
+                    return [3 /*break*/, 9];
+                case 6:
+                    if (!(handle.kind === 'directory')) return [3 /*break*/, 9];
                     rootHandle = handle;
                     return [4 /*yield*/, (0, fstools_1.findFSHandle)(handle, function (name) { return name.split('.').pop() === 'md'; })];
-                case 6:
+                case 7:
                     hf = _f.sent();
                     _d = render_markdown_blob;
                     _e = [elem];
                     return [4 /*yield*/, hf[0][1].getFile()];
-                case 7:
+                case 8:
                     _d.apply(void 0, _e.concat([_f.sent()]));
-                    _f.label = 8;
-                case 8: return [3 /*break*/, 10];
-                case 9:
+                    _f.label = 9;
+                case 9: return [3 /*break*/, 11];
+                case 10:
                     if (item.kind === 'string') {
                         item.getAsString(function (msg) {
                             console.log("string \"".concat(msg, "\" was dropped"));
@@ -5284,8 +5288,8 @@ function onFileDropped(elem, ev) {
                     else {
                         console.log("unknown object was dropped");
                     }
-                    _f.label = 10;
-                case 10: return [2 /*return*/];
+                    _f.label = 11;
+                case 11: return [2 /*return*/];
             }
         });
     });
@@ -5363,17 +5367,23 @@ window.onload = function () {
                 var handle, _a, _b;
                 return __generator(this, function (_c) {
                     switch (_c.label) {
-                        case 0: return [4 /*yield*/, (0, fstools_1.getFSHandle)(rootHandle, fileName)];
+                        case 0:
+                            if (!(rootHandle === undefined)) return [3 /*break*/, 2];
+                            return [4 /*yield*/, window.showDirectoryPicker()];
                         case 1:
+                            rootHandle = _c.sent();
+                            _c.label = 2;
+                        case 2: return [4 /*yield*/, (0, fstools_1.getFSHandle)(rootHandle, fileName)];
+                        case 3:
                             handle = _c.sent();
-                            if (!((handle !== undefined) && (handle.kind === 'file'))) return [3 /*break*/, 3];
+                            if (!((handle !== undefined) && (handle.kind === 'file'))) return [3 /*break*/, 5];
                             _a = render_markdown_blob;
                             _b = [htmlElem];
                             return [4 /*yield*/, handle.getFile()];
-                        case 2:
+                        case 4:
                             _a.apply(void 0, _b.concat([_c.sent()]));
-                            _c.label = 3;
-                        case 3: return [2 /*return*/];
+                            _c.label = 5;
+                        case 5: return [2 /*return*/];
                     }
                 });
             }); };

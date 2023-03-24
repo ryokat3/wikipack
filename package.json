@@ -1,6 +1,6 @@
 {
   "name": "inline_markdown",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "description": "A customizable HTML template to self-render the inlined Markdown text",
   "main": "index.js",
   "scripts": {
@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@types/marked": "^4.0.8",
+    "@types/wicg-file-system-access": "^2020.9.5",
     "fp-ts": "^2.13.1",
     "github-markdown-css": "^5.2.0",
     "highlight.js": "^11.7.0",
