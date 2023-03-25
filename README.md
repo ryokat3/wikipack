@@ -1,10 +1,10 @@
-# Inline Markdown
+# Markdown All-in-One HTML
 
 A portable HTML file to render the embedded Markdown without any preview applications/plugins.
 
 ## Usage
 
-Copy the inline_markdown.html file, and edit the Markdown
+Copy the markdown-all-in-one.html file, and edit the Markdown
 between `<script type="text/template" id="markdown">`
 and `</screen>` at the top.
 

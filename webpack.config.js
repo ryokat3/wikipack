@@ -16,9 +16,9 @@ function newInlineSourcePlugin (assetFileName, rootPath, template, target) {
 module.exports = {
   entry: './src/index.ts',
   output: {
-    filename: 'inline_markdown.js',
+    filename: 'markdown_all_in_one.js',
     path: path.join(__dirname, 'dist'),
-    library: 'inline_markdown',
+    library: 'markdown_all_in_one',
     libraryTarget: 'umd'
   },
   devtool: "source-map",
@@ -33,6 +33,6 @@ module.exports = {
     ]
   },
   plugins: [
-    newInlineSourcePlugin('inline_markdown.js', 'html', 'html/template.html', './inline_markdown.html')
+    newInlineSourcePlugin('markdown_all_in_one.js', 'html', 'html/template.html', './markdown-all-in-one.html')
   ]
 }
