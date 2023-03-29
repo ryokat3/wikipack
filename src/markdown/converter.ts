@@ -1,6 +1,6 @@
 import { marked, Slugger } from 'marked'
 import hljs from 'highlight.js'
-import { findFSHandle, getFSHandle } from './fstools'
+import { findFSHandle, getFSHandle } from '../fs/localFileFS'
 
 const MARKDOWN_BLOCK_ID = "markdown"
 const HTML_BLOCK_ID = "html"
@@ -47,13 +47,14 @@ function decodeUriOrEcho(uri: string) {
     }
 }
 
-const render = (text: string): { html: string, title: string } => {
+export const render = (text: string): { html: string, title: string } => {
     // hljs.highlightAll()
 
     const myRenderer = new MyRenderer
     marked.setOptions({
         renderer: myRenderer,
-        highlight: (code: string, _lang: string, callback?: (error: any, code: string) => void) => {
+        // highlight: (code: string, _lang: string, callback?: (error: any, code: string) => void) => {
+        highlight: (code: string, _lang: string) => {
             // NOTE: to avoid space character in lang
             //    
             const lang = decodeUriOrEcho(_lang)
@@ -168,7 +169,7 @@ function render_markdown_blob(elem: HTMLElement, blob: Blob): void {
     reader.readAsText(blob, "utf-8")
 }
 
-window.onload = function () {
+export function onload () {
 
     // Find 'body' element    
     const bodyElems = document.getElementsByTagName('body')

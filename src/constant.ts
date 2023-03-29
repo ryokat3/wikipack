@@ -1,0 +1,1 @@
+export const MARKDOWN_BLOCK_ID = "markdown"

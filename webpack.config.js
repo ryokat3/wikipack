@@ -14,7 +14,7 @@ function newInlineSourcePlugin (assetFileName, rootPath, template, target) {
 }
 
 module.exports = {
-  entry: './src/index.ts',
+  entry: './src/index.tsx',
   output: {
     filename: 'markdown_all_in_one.js',
     path: path.join(__dirname, 'dist'),
