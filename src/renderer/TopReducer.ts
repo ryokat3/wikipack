@@ -1,26 +1,37 @@
 import { Reducer } from "../utils/FdtFlux"
-import { AppConfig, defaultAppConfig } from "../AppConfig"
 import { TopFdt } from "./TopFdt"
+import { getEmbeddedFile } from "../fs/embeddedFileFS"
+import { CONFIG_ID } from "../constant"
 
-export type GripType = "left" | "right" | "none"
+type ConfigType = {
+    topMarkdown?: string
+}
 
-export const initialTopState = {
-    appConfig: defaultAppConfig,
+export type TopStateType = {    
+    topMarkdown?: string
+    fileName?: string
+    markdown?: string    
+}
+
+export const initialTopState:TopStateType = {
+    topMarkdown: undefined,
+    fileName: undefined,
     markdown: undefined
 }
 
-export type TopStateType = {
-    appConfig: AppConfig,
-    markdown?: string    
+const embedded = getEmbeddedFile(CONFIG_ID)
+if (embedded !== undefined) {
+    const config:ConfigType = JSON.parse(embedded)
+    initialTopState.topMarkdown = config.topMarkdown
 }
-// typeof initialTopState
-
 
 export const topReducer = new Reducer<TopFdt, TopStateType>()
-    .add("markdownUpdate", (state, markdown)=>{
+    .add("currentPageUpdate", (state, pageInfo)=>{
+        console.log("currentPageUpdate")
         return {
             ...state,
-            markdown: markdown
+            fileName: pageInfo.fileName,
+            markdown: pageInfo.markdown
         }
     })
     .build()

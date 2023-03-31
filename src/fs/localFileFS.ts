@@ -23,7 +23,7 @@ async function getHandleInDirectory(dirHandle:FileSystemDirectoryHandle, pred:(k
     return undefined
 }
 
-async function findFSHandle(dirHandle:FileSystemDirectoryHandle, pred:(key:string)=>boolean):Promise<[string, FileSystemHandle][]> {    
+export async function findFSHandle(dirHandle:FileSystemDirectoryHandle, pred:(key:string)=>boolean):Promise<[string, FileSystemHandle][]> {    
     let result:[string, FileSystemHandle][] = []
     for await (const [key, handle] of dirHandle.entries()) {
         if (pred(key)) {
@@ -49,11 +49,29 @@ async function getFileSystemHandleRecur(dirHandle:FileSystemDirectoryHandle, pat
     }
 }
 
-async function getFSHandle(dirHandle:FileSystemDirectoryHandle, pathName:string):Promise<FileSystemHandle|undefined> {
+export async function getFSHandle(dirHandle:FileSystemDirectoryHandle, pathName:string):Promise<FileSystemHandle|undefined> {
     return await getFileSystemHandleRecur(dirHandle, splitPath(pathName))
 }
 
-export {
-    getFSHandle,
-    findFSHandle
+export async function getNewFileHandle() {
+    return await window.showSaveFilePicker({
+        types: [
+            {
+                description: "HTML file",
+                accept: {
+                    "text/html": [ ".html" ]
+                }
+            }
+        ]
+    })
 }
+
+export async function saveThisDocument() {
+    const handle = await getNewFileHandle()
+    const writable = await handle.createWritable()
+
+    await writable.write('<!DOCTYPE html>\n' + document.documentElement.outerHTML)
+    await writable.close()
+    
+}
+

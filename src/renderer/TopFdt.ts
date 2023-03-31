@@ -1,3 +1,6 @@
 export type TopFdt = {
-    markdownUpdate: string | undefined
+    currentPageUpdate: {
+        fileName: string,
+        markdown: string
+    }
 }
