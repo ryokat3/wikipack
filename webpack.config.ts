@@ -1,12 +1,13 @@
-const fs = require('fs')
-const path = require('path')
-const { inlineSource } = require('inline-source')
+import * as fs from "fs"
+import * as path from "path"
+import { Compiler /*, AssetEmittedInfo */ } from "webpack"
+import { inlineSource } from "inline-source"
 
-function newInlineSourcePlugin (assetFileName, rootPath, template, target) {
-    return (compiler) => {
-        compiler.hooks.assetEmitted.tap('Inline Source', async (fileName, info) => {
+function newInlineSourcePlugin (assetFileName:string, rootPath:string, template:string, target:string) {
+    return (compiler:Compiler) => {
+        compiler.hooks.assetEmitted.tap('Inline Source', async (fileName:string/*, info:AssetEmittedInfo*/) => {
             if (assetFileName === fileName) {
-                html = await inlineSource(template, { rootpath: rootPath, compress: false })                
+                const html = await inlineSource(template, { rootpath: rootPath, compress: false })                
                 fs.writeFileSync(target, html)
             }
         })
