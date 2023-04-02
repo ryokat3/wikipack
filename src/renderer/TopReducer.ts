@@ -10,13 +10,15 @@ type ConfigType = {
 export type TopStateType = {    
     topMarkdown?: string
     fileName?: string
-    markdown?: string    
+    markdown?: string
+    rootHandle?: FileSystemDirectoryHandle  
 }
 
 export const initialTopState:TopStateType = {
     topMarkdown: undefined,
     fileName: undefined,
-    markdown: undefined
+    markdown: undefined,
+    rootHandle: undefined
 }
 
 const embedded = getEmbeddedFile(CONFIG_ID)
@@ -26,12 +28,17 @@ if (embedded !== undefined) {
 }
 
 export const topReducer = new Reducer<TopFdt, TopStateType>()
-    .add("currentPageUpdate", (state, pageInfo)=>{
-        console.log("currentPageUpdate")
+    .add("currentPageUpdate", (state, pageInfo)=>{        
         return {
             ...state,
             fileName: pageInfo.fileName,
             markdown: pageInfo.markdown
+        }
+    })
+    .add("rootHandleUpdate", (state, rootHandle)=>{
+        return {
+            ...state,
+            rootHandle: rootHandle
         }
     })
     .build()

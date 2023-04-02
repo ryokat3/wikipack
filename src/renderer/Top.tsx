@@ -5,6 +5,7 @@ import { topReducer, initialTopState } from "./TopReducer"
 import { MarkdownView } from "./MarkdownView"
 import { SearchAppBar } from "./SearchAppBar"
 import { getEmbeddedFile} from "../fs/embeddedFileFS"
+import { setupDragAndDrop } from "../fs/dragAndDrop"
 
 
 export interface TopContextType {
@@ -17,8 +18,7 @@ export const Top: React.FunctionComponent<{}> = () => {
     const [state, dispatch] = React.useReducer(topReducer, initialTopState)
     const dispatcher = topDispatcher.build(dispatch)    
         
-    useEffect(() => {
-        console.log("useEffect")
+    useEffect(() => {        
         const fileName = state.fileName || state.topMarkdown
         if (fileName !== undefined) {
             console.log("fileName not null")
@@ -33,7 +33,11 @@ export const Top: React.FunctionComponent<{}> = () => {
             return
         }
         // No top markdown file
-        // TODO: show something                
+        // TODO: show something          
+    }, [])
+
+    useEffect(() => {
+        setupDragAndDrop(dispatcher)
     }, [])
 
     const context = {
