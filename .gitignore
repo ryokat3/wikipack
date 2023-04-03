@@ -6,3 +6,4 @@ example*.md
 dist
 node_modules
 package-lock.json
+src/tmp
