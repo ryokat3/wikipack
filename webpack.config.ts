@@ -32,12 +32,12 @@ const commonConfig:Configuration = {
   }
 }
 
-const fileFetchConfig:Configuration = {  
+const fileWorkerConfig:Configuration = {  
   ...commonConfig,
-  name: 'fileFetch',
-  entry: './src/fileFetch/index.ts',      
+  name: 'fileWorker',
+  entry: './src/fileWorker/index.ts',      
   output: {
-    filename: 'fileFetch.bundle.js.asdata',
+    filename: 'fileWorker.bundle.js.asdata',
     path: path.join(__dirname, 'src/tmp'),
     publicPath: ''
   }
@@ -53,10 +53,10 @@ const mainConfig:Configuration = {
     libraryTarget: 'umd',
     publicPath: ''
   },
-  dependencies: [ 'fileFetch'],
+  dependencies: [ 'fileWorker' ],
   plugins: [
     newInlineSourcePlugin('markdown_all_in_one.js', 'html', 'html/template.html', './markdown-all-in-one.html')
   ]
 }
 
-module.exports = [ fileFetchConfig, mainConfig ]
+module.exports = [ fileWorkerConfig, mainConfig ]

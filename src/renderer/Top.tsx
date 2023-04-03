@@ -6,15 +6,21 @@ import { MarkdownView } from "./MarkdownView"
 import { SearchAppBar } from "./SearchAppBar"
 import { getEmbeddedFile} from "../fs/embeddedFileFS"
 import { setupDragAndDrop } from "../fs/dragAndDrop"
+import { FileWorkerResponseType, GetFileWorkerResponseType } from "../fileWorker/message"
 
 
 export interface TopContextType {
-    dispatcher: TopDispatcherType        
+    dispatcher: TopDispatcherType,
+    fileWorker: Worker        
 }
 
 export const TopContext = createContext<TopContextType>(Object.create(null))
 
-export const Top: React.FunctionComponent<{}> = () => {
+export interface TopProps {
+    fileWorker: Worker
+}
+
+export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
     const [state, dispatch] = React.useReducer(topReducer, initialTopState)
     const dispatcher = topDispatcher.build(dispatch)    
         
@@ -37,11 +43,25 @@ export const Top: React.FunctionComponent<{}> = () => {
     }, [])
 
     useEffect(() => {
-        setupDragAndDrop(dispatcher)
+        setupDragAndDrop(dispatcher, props.fileWorker)
     }, [])
 
+    useEffect(() => {
+        props.fileWorker.onmessage = function (e:MessageEvent<FileWorkerResponseType>) {
+            if (e.data.type === "markdownFile") {
+                const response = e.data as GetFileWorkerResponseType<"markdownFile">
+                dispatcher.currentPageUpdate({
+                    fileName: response.payload.fileName,
+                    markdown: response.payload.markdown
+                })
+            }
+        }
+    }, [])
+    
+
     const context = {
-        dispatcher        
+        dispatcher: dispatcher,
+        fileWorker: props.fileWorker      
     }
 
     return <TopContext.Provider value={context}>

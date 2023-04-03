@@ -1,3 +1,4 @@
+import { GetFileWorkerMessageType } from "../fileWorker/message"
 import { TopDispatcherType } from "../renderer/TopDispatcher"
 import { findFSHandle } from "./localFileFS"
 
@@ -14,7 +15,7 @@ function readBlob(dispatcher:TopDispatcherType, blob: Blob): void {
     reader.readAsText(blob, "utf-8")
 }
 
-async function ondropped(dispatcher:TopDispatcherType, ev: Event) {    
+async function ondropped(dispatcher:TopDispatcherType, fileWorker:Worker, ev: Event) {    
     if (!(ev instanceof DragEvent)) {
         return
     }
@@ -42,8 +43,14 @@ async function ondropped(dispatcher:TopDispatcherType, ev: Event) {
         else if (!('kind' in handle)) {
             console.log("handle doesn't have kind property")
         }
-        else if (handle.kind === 'file') {                       
-            readBlob(dispatcher, await (handle as FileSystemFileHandle).getFile())
+        else if (handle.kind === 'file') {             
+            const msg:GetFileWorkerMessageType<"openFile"> = {
+                type: "openFile",
+                payload: {
+                    handle: handle as FileSystemFileHandle
+                }
+            }
+            fileWorker.postMessage(msg)            
         }
         else if (handle.kind === 'directory') {            
             const rootHandle = handle as FileSystemDirectoryHandle
@@ -63,7 +70,7 @@ async function ondropped(dispatcher:TopDispatcherType, ev: Event) {
     }
 }
 
-export function setupDragAndDrop(dispatcher:TopDispatcherType) {
+export function setupDragAndDrop(dispatcher:TopDispatcherType, fileWorker:Worker) {
     window.addEventListener('dragenter', function (e: Event) {
         e.stopPropagation()
         e.preventDefault()
@@ -79,6 +86,6 @@ export function setupDragAndDrop(dispatcher:TopDispatcherType) {
     window.addEventListener("drop", (e: Event) => {
         e.stopPropagation()
         e.preventDefault()
-        ondropped(dispatcher, e)
+        ondropped(dispatcher, fileWorker, e)
     }, false)   
 }

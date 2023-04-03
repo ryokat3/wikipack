@@ -2,22 +2,23 @@ import React from "react"
 import { createRoot } from "react-dom/client"
 import { Top } from "./renderer/Top"
 
-import fileFetch from "./tmp/fileFetch.bundle.js.asdata"
+import fileWorkerJS from "./tmp/fileWorker.bundle.js.asdata"
 
 window.onload = function () {
+    const fileWorkerBlob = new Blob([fileWorkerJS], { type: 'application/javascript'})
+    const fileWorker = new Worker(URL.createObjectURL(fileWorkerBlob))
+
     const container = document.getElementById('top')
 
     if (container !== null) {     
         const root = createRoot(container)
-        root.render(<Top />)
+        root.render(<Top fileWorker={fileWorker} />)
     }
     else {
         // TODO: do something like : body.innerHTML = ...
     }
 
-    console.log(fileFetch)
+    // console.log(fileWorker)
 
-    const blob = new Blob([fileFetch], { type: 'application/javascript'})
-    const worker = new Worker(URL.createObjectURL(blob))
-    worker.postMessage("Hello, worker")
+    // worker.postMessage("Hello, worker")
 }
