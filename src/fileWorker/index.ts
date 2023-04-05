@@ -1,16 +1,18 @@
-import { FileWorkerMessageType, GetFileWorkerMessageType, GetFileWorkerResponseType } from "./message"
+import { GetResponseMessageType, GetRequestMessageType } from "../utils/WorkerInvoke"
+import { FileWorkerMessageMap } from "../fileWorker/FileWorkerInvoke"
 
-self.onmessage = async (e: MessageEvent<FileWorkerMessageType> ) => {
+self.onmessage = async (e: MessageEvent<GetRequestMessageType<FileWorkerMessageMap, keyof FileWorkerMessageMap>> ) => {
     if (e.data.type === "openFile") {
-        const data = e.data as GetFileWorkerMessageType<"openFile">
-        const blob = await data.payload.handle.getFile()
+        const data = e.data as GetRequestMessageType<FileWorkerMessageMap, "openFile">
+        const blob = await data.data.handle.getFile()
 
         const reader = new FileReader()
         reader.onload = (e2: ProgressEvent<FileReader>) => {        
             if ((e2.target !== null) && (e2.target.result !== null) && (typeof e2.target.result == 'string')) {
-                const response:GetFileWorkerResponseType<"markdownFile"> = {
-                    type: "markdownFile",
-                    payload: {
+                const response:GetResponseMessageType<FileWorkerMessageMap, "openFile"> = {
+                    id: data.id,
+                    type: data.type,
+                    data: {
                         fileName: blob.name,
                         markdown: e2.target.result                        
                     }

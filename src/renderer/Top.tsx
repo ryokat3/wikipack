@@ -6,18 +6,18 @@ import { MarkdownView } from "./MarkdownView"
 import { SearchAppBar } from "./SearchAppBar"
 import { getEmbeddedFile} from "../fs/embeddedFileFS"
 import { setupDragAndDrop } from "../fs/dragAndDrop"
-import { FileWorkerResponseType, GetFileWorkerResponseType } from "../fileWorker/message"
-
+import { WorkerInvoke } from "../utils/WorkerInvoke"
+import { FileWorkerMessageMap } from "../fileWorker/FileWorkerInvoke"
 
 export interface TopContextType {
     dispatcher: TopDispatcherType,
-    fileWorker: Worker        
+    fileWorker: WorkerInvoke<FileWorkerMessageMap>       
 }
 
 export const TopContext = createContext<TopContextType>(Object.create(null))
 
 export interface TopProps {
-    fileWorker: Worker
+    fileWorker: WorkerInvoke<FileWorkerMessageMap>
 }
 
 export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
@@ -45,20 +45,7 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
     useEffect(() => {
         setupDragAndDrop(dispatcher, props.fileWorker)
     }, [])
-
-    useEffect(() => {
-        props.fileWorker.onmessage = function (e:MessageEvent<FileWorkerResponseType>) {
-            if (e.data.type === "markdownFile") {
-                const response = e.data as GetFileWorkerResponseType<"markdownFile">
-                dispatcher.currentPageUpdate({
-                    fileName: response.payload.fileName,
-                    markdown: response.payload.markdown
-                })
-            }
-        }
-    }, [])
     
-
     const context = {
         dispatcher: dispatcher,
         fileWorker: props.fileWorker      

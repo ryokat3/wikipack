@@ -1,4 +1,5 @@
-import { GetFileWorkerMessageType } from "../fileWorker/message"
+import { WorkerInvoke } from "../utils/WorkerInvoke"
+import { FileWorkerMessageMap } from "../fileWorker/FileWorkerInvoke"
 import { TopDispatcherType } from "../renderer/TopDispatcher"
 import { findFSHandle } from "./localFileFS"
 
@@ -15,7 +16,7 @@ function readBlob(dispatcher:TopDispatcherType, blob: Blob): void {
     reader.readAsText(blob, "utf-8")
 }
 
-async function ondropped(dispatcher:TopDispatcherType, fileWorker:Worker, ev: Event) {    
+async function ondropped(dispatcher:TopDispatcherType, fileWorker:WorkerInvoke<FileWorkerMessageMap>, ev: Event) {    
     if (!(ev instanceof DragEvent)) {
         return
     }
@@ -43,14 +44,10 @@ async function ondropped(dispatcher:TopDispatcherType, fileWorker:Worker, ev: Ev
         else if (!('kind' in handle)) {
             console.log("handle doesn't have kind property")
         }
-        else if (handle.kind === 'file') {             
-            const msg:GetFileWorkerMessageType<"openFile"> = {
-                type: "openFile",
-                payload: {
-                    handle: handle as FileSystemFileHandle
-                }
-            }
-            fileWorker.postMessage(msg)            
+        else if (handle.kind === 'file') {
+            const result = await fileWorker.invoke("openFile", { handle: handle as FileSystemFileHandle })
+            dispatcher.currentPageUpdate(result)   
+           
         }
         else if (handle.kind === 'directory') {            
             const rootHandle = handle as FileSystemDirectoryHandle
@@ -70,7 +67,7 @@ async function ondropped(dispatcher:TopDispatcherType, fileWorker:Worker, ev: Ev
     }
 }
 
-export function setupDragAndDrop(dispatcher:TopDispatcherType, fileWorker:Worker) {
+export function setupDragAndDrop(dispatcher:TopDispatcherType, fileWorker:WorkerInvoke<FileWorkerMessageMap>) {
     window.addEventListener('dragenter', function (e: Event) {
         e.stopPropagation()
         e.preventDefault()
