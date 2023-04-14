@@ -43,6 +43,7 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
     }, [])
 
     useEffect(() => {
+        props.fileWorker.addEventHandler("updateMarkdown", (payload)=>dispatcher.currentPageUpdate(payload))
         setupDragAndDrop(dispatcher, props.fileWorker)
     }, [])
     

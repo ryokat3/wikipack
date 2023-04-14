@@ -45,9 +45,7 @@ async function ondropped(dispatcher:TopDispatcherType, fileWorker:WorkerInvoke<F
             console.log("handle doesn't have kind property")
         }
         else if (handle.kind === 'file') {
-            const result = await fileWorker.call("openFile", { handle: handle as FileSystemFileHandle })
-            dispatcher.currentPageUpdate(result)   
-           
+            fileWorker.request("openFile", { handle: handle as FileSystemFileHandle })                       
         }
         else if (handle.kind === 'directory') {            
             const rootHandle = handle as FileSystemDirectoryHandle

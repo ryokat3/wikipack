@@ -2,10 +2,6 @@ export type FileWorkerMessageMap = {
     openFile : {
         request: {
             handle: FileSystemFileHandle
-        },
-        response: {
-            fileName: string,
-            markdown: string            
         }
     },
     openDirectory: {
@@ -13,5 +9,11 @@ export type FileWorkerMessageMap = {
             handle: FileSystemDirectoryHandle
         },
         response: void
+    },
+    updateMarkdown: {
+        response: {
+            fileName: string,
+            markdown: string
+        }
     }
 }

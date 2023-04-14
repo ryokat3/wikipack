@@ -9,7 +9,6 @@ import fileWorkerJS from "./tmp/fileWorker.bundle.js.asdata"
 window.onload = function () {
     const fileWorkerBlob = new Blob([fileWorkerJS], { type: 'application/javascript'})
     const fileWorker = new WorkerInvoke<FileWorkerMessageMap>(new Worker(URL.createObjectURL(fileWorkerBlob)))
-
     const container = document.getElementById('top')
 
     if (container !== null) {     
@@ -19,8 +18,4 @@ window.onload = function () {
     else {
         // TODO: do something like : body.innerHTML = ...
     }
-
-    // console.log(fileWorker)
-
-    // worker.postMessage("Hello, worker")
 }

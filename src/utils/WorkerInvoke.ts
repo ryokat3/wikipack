@@ -36,7 +36,7 @@ export class WorkerInvoke<T extends WorkerMessageMap> {
         this.worker = worker
         this.id = 0
         this.callMap = Object.create(null)
-        this.eventHandler = Object.create(null)
+        this.eventHandler = Object.create(null)        
 
         worker.onmessage = (e:MessageEvent<{ id:number, payload:CallDataType<T>['response']} | { type:keyof ResponseMap<T>, payload:ResponseDataType<T>['response']}>)=>{
             if ("id" in e.data) {
@@ -75,42 +75,50 @@ export class WorkerInvoke<T extends WorkerMessageMap> {
     public addEventHandler<Key extends keyof ResponseMap<T>>(key:Key, callback:(payload: ResponseDataType<T, Key>['response'])=>void) {
         this.eventHandler[key] = callback
     }
+}
 
+
+class PostEvent<T extends WorkerMessageMap> {
+    public send<Key extends keyof ResponseMap<T>>(key:Key, payload:ResponseDataType<T, Key>['response']):void {
+         self.postMessage({ type:key, payload:payload})
+    }
 }
 
 export class WorkerThreadHandler<T extends WorkerMessageMap> {
     constructor(        
-        private readonly callHandler: { [Key in keyof CallMap<T>]: (payload: CallDataType<T, Key>['request']) => CallDataType<T, Key>['response'] } = Object.create(null),
-        private readonly requestHandler: { [Key in keyof RequestMap<T>]: (payload: RequestDataType<T, Key>['request'])=>void } = Object.create(null),
+        private readonly callHandler: { [Key in keyof CallMap<T>]: (payload: CallDataType<T, Key>['request'], postEvent: PostEvent<T>) => CallDataType<T, Key>['response'] } = Object.create(null),
+        private readonly requestHandler: { [Key in keyof RequestMap<T>]: (payload: RequestDataType<T, Key>['request'], postEvent: PostEvent<T>)=>void } = Object.create(null),
     ) {}
 
-    public addCallHandler<Key extends keyof CallMap<T>>(key:Key, callback:(payload: CallDataType<T, Key>['request']) => Promise<CallDataType<T, Key>['response']>) {
+    public addCallHandler<Key extends keyof CallMap<T>>(key:Key, callback:(payload: CallDataType<T, Key>['request'], postEvent:PostEvent<T>) => Promise<CallDataType<T, Key>['response']>) {
         return new WorkerThreadHandler({
             ...this.callHandler,
             [key]:callback
         }, this.requestHandler)
     }
 
-    public addRequestHandler<Key extends keyof RequestMap<T>>(key:Key, callback:(payload: RequestDataType<T, Key>['request'])=>void) {
+    public addRequestHandler<Key extends keyof RequestMap<T>>(key:Key, callback:(payload: RequestDataType<T, Key>['request'], postEvent:PostEvent<T>)=>void) {
         return new WorkerThreadHandler(this.callHandler, {
             ...this.requestHandler,
             [key]:callback      
         })
     }
 
-    public build(postMessage:(msg:any)=>void) {
+    public build() {        
+        const postEvent = new PostEvent<T>()
+
         return async (e:MessageEvent<{type:keyof CallMap<T>, id:number, payload:CallDataType<T>['request']} | {type:keyof RequestMap<T>, payload:RequestDataType<T>['request']}>) => {
             if ('id' in e.data) {
                 const callback = this.callHandler[e.data.type]
-                postMessage({
+                self.postMessage({
                     type: e.data.type,
                     id: e.data.id,
-                    payload: await callback(e.data.payload)
+                    payload: await callback(e.data.payload, postEvent)
                 })
             }
             else {
                 const callback = this.requestHandler[e.data.type]
-                callback(e.data.payload)                
+                callback(e.data.payload, postEvent)
             }
         }
     }
