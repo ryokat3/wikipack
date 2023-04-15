@@ -1,8 +1,8 @@
 import { WorkerInvoke } from "../utils/WorkerInvoke"
 import { FileWorkerMessageMap } from "../fileWorker/FileWorkerInvoke"
-import { TopDispatcherType } from "../renderer/TopDispatcher"
-import { findFSHandle } from "./localFileFS"
+// import { TopDispatcherType } from "../renderer/TopDispatcher"
 
+/*
 function readBlob(dispatcher:TopDispatcherType, blob: Blob): void {
     const reader = new FileReader()
     reader.onload = (e: ProgressEvent<FileReader>) => {        
@@ -15,8 +15,9 @@ function readBlob(dispatcher:TopDispatcherType, blob: Blob): void {
     }
     reader.readAsText(blob, "utf-8")
 }
+*/
 
-async function ondropped(dispatcher:TopDispatcherType, fileWorker:WorkerInvoke<FileWorkerMessageMap>, ev: Event) {    
+async function ondropped(fileWorker:WorkerInvoke<FileWorkerMessageMap>, ev: Event) {    
     if (!(ev instanceof DragEvent)) {
         return
     }
@@ -49,9 +50,11 @@ async function ondropped(dispatcher:TopDispatcherType, fileWorker:WorkerInvoke<F
         }
         else if (handle.kind === 'directory') {            
             const rootHandle = handle as FileSystemDirectoryHandle
-            dispatcher.rootHandleUpdate(rootHandle)
+            fileWorker.request("openDirectory", { handle: rootHandle})
+            /*
             const hf = await findFSHandle(rootHandle, (name: string) => name.split('.').pop() === 'md')
             readBlob(dispatcher, await (hf[0][1] as FileSystemFileHandle).getFile())
+            */
         }
     }
     else if (item.kind === 'string') {        
@@ -65,7 +68,7 @@ async function ondropped(dispatcher:TopDispatcherType, fileWorker:WorkerInvoke<F
     }
 }
 
-export function setupDragAndDrop(dispatcher:TopDispatcherType, fileWorker:WorkerInvoke<FileWorkerMessageMap>) {
+export function setupDragAndDrop(fileWorker:WorkerInvoke<FileWorkerMessageMap>) {
     window.addEventListener('dragenter', function (e: Event) {
         e.stopPropagation()
         e.preventDefault()
@@ -81,6 +84,6 @@ export function setupDragAndDrop(dispatcher:TopDispatcherType, fileWorker:Worker
     window.addEventListener("drop", (e: Event) => {
         e.stopPropagation()
         e.preventDefault()
-        ondropped(dispatcher, fileWorker, e)
+        ondropped(fileWorker, e)
     }, false)   
 }

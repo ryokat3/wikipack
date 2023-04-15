@@ -1,7 +1,15 @@
+import { Folder } from "../markdown/FileTree"
+
 export type TopFdt = {
-    currentPageUpdate: {
+    updateMarkdownFile: {
         fileName: string,
         markdown: string
     },
-    rootHandleUpdate: FileSystemDirectoryHandle
+    updateDataFile: {
+        fileName: string,
+        data: ArrayBuffer
+    },
+    updateRootFolder: {
+        rootFolder: Folder
+    }
 }
