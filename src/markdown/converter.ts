@@ -2,11 +2,12 @@ import { marked, Slugger } from 'marked'
 import hljs from 'highlight.js'
 import { MarkdownFile, Folder, getFile } from "./FileTree"
 
-export function getMarkdownFile(markdown:string):MarkdownFile {
+export function getMarkdownFile(markdown:string, timestamp:number):MarkdownFile {
 
     const result:MarkdownFile = {
         type: "markdown",
         markdown: markdown,
+        timestamp: timestamp,
         imageList: [],
         linkList: []
     }

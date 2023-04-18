@@ -1,11 +1,13 @@
 export type DataFile = {
     type: "data",
-    dataUrl: string
+    dataUrl: string,
+    timestamp: number
 }
 
 export type MarkdownFile = {
     type: "markdown",
     markdown: string,
+    timestamp: number,
     imageList: string[],
     linkList: string[]
 }
@@ -56,20 +58,21 @@ export function updateMarkdownFile(folder:Folder, pathName:string|string[], mark
     }
 }
 
-export function updateDataFile(folder:Folder, pathName:string|string[], data:string):void {
+export function updateDataFile(folder:Folder, pathName:string|string[], timestamp:number, data:string):void {
     if (typeof pathName === 'string') {
-        return updateDataFile(folder, splitPath(pathName), data)
+        return updateDataFile(folder, splitPath(pathName), timestamp, data)
     }
     else if (pathName.length == 1) {
         // const dataUrl = Buffer.from(Array.from(new Uint8Array(data), (e)=>String.fromCharCode(e)).join(""), "base64url").toString()
         const dataFile:DataFile = {
-            type: "data",                        
+            type: "data",
+            timestamp: timestamp,
             dataUrl: data
         }
         folder.children[pathName[0]] = dataFile
     }
     else {
-        return updateDataFile(getOrCreateFolder(folder, pathName[0]), pathName.slice(1), data)
+        return updateDataFile(getOrCreateFolder(folder, pathName[0]), pathName.slice(1), timestamp, data)
     }
 }
 

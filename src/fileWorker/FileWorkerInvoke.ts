@@ -15,12 +15,14 @@ export type FileWorkerMessageMap = {
     updateMarkdownFile: {
         response: {
             fileName: string,
+            timestamp: number,
             markdownFile: MarkdownFile
         }
     },
     updateDataFile: {
         response: {
             fileName: string,
+            timestamp: number,
             data: string
         }
     },

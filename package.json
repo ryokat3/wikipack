@@ -1,6 +1,6 @@
 {
   "name": "markdown-all-in-one-html",
-  "version": "0.9.5",
+  "version": "0.9.6",
   "description": "A HTML to pack all markdown files and assets in a single HTML with viewer",
   "main": "index.js",
   "scripts": {

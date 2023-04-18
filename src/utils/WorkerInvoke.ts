@@ -78,7 +78,7 @@ export class WorkerInvoke<T extends WorkerMessageMap> {
 }
 
 
-class PostEvent<T extends WorkerMessageMap> {
+export class PostEvent<T extends WorkerMessageMap> {
     public send<Key extends keyof ResponseMap<T>>(key:Key, payload:ResponseDataType<T, Key>['response'], transferable:Transferable[]|undefined = undefined):void {
         //@ts-ignore
         self.postMessage({ type:key, payload:payload}, transferable)

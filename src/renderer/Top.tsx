@@ -37,15 +37,15 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
         fileWorker: props.fileWorker      
     }
 
+    // Call only once
     useEffect(() => {
+        props.fileWorker.addEventHandler("updateMarkdownFile", (payload)=>dispatcher.updateMarkdownFile(payload))
+        props.fileWorker.addEventHandler("updateDataFile", (payload)=>dispatcher.updateDataFile(payload))
+        setupDragAndDrop(props.fileWorker, dispatcher, props.config)
+        _open_markdown = function(name:string) {
+            dispatcher.updateCurrentPage({ name:name })
+        }
     }, [])
-
-    props.fileWorker.addEventHandler("updateMarkdownFile", (payload)=>dispatcher.updateMarkdownFile(payload))
-    props.fileWorker.addEventHandler("updateDataFile", (payload)=>dispatcher.updateDataFile(payload))
-    setupDragAndDrop(props.fileWorker, dispatcher, props.config)
-    _open_markdown = function(name:string) {
-        dispatcher.updateCurrentPage({ name:name })
-    }
 
     const currentFile = getFile(state.rootFolder, state.currentPage)    
     
