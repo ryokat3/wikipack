@@ -1,4 +1,4 @@
-import { Folder } from "../markdown/FileTree"
+import { MarkdownFile } from "../markdown/FileTree"
 
 export type FileWorkerMessageMap = {
     openFile : {
@@ -8,18 +8,20 @@ export type FileWorkerMessageMap = {
     },
     openDirectory: {
         request: {
-            handle: FileSystemDirectoryHandle
+            handle: FileSystemDirectoryHandle,
+            markdownFileRegex: string[]
         }
     },
     updateMarkdownFile: {
         response: {
             fileName: string,
-            markdown: string
+            markdownFile: MarkdownFile
         }
     },
-    updateRootFolder: {
+    updateDataFile: {
         response: {
-            rootFolder: Folder
+            fileName: string,
+            data: string
         }
-    }
+    },
 }

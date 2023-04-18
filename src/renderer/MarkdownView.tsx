@@ -1,17 +1,13 @@
 import React from "react"
-import { render } from "../markdown/converter"
+import { getRenderer } from "../markdown/converter"
+import { Folder } from "../markdown/FileTree"
 
 export interface MarkdownViewProps {
-    markdownData?: string
+    markdownData: string,
+    rootFolder: Folder    
 }
 
 export const MarkdownView: React.FunctionComponent<MarkdownViewProps> = (props: MarkdownViewProps) => {    
-    if (props.markdownData === undefined) {
-        // TODO: prompt to input markdown 
-        return <div>No Markdown found</div>
-    }
-    else {
-        const result = render(props.markdownData)
-        return <div dangerouslySetInnerHTML={{__html: result.html}}></div>
-    }
+    const result = getRenderer(props.rootFolder)(props.markdownData)
+    return <div dangerouslySetInnerHTML={{__html: result.html}}></div>
 }

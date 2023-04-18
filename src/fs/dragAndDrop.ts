@@ -1,23 +1,9 @@
 import { WorkerInvoke } from "../utils/WorkerInvoke"
 import { FileWorkerMessageMap } from "../fileWorker/FileWorkerInvoke"
-// import { TopDispatcherType } from "../renderer/TopDispatcher"
+import { ConfigType } from "../config"
+import { TopDispatcherType } from "../renderer/TopDispatcher"
 
-/*
-function readBlob(dispatcher:TopDispatcherType, blob: Blob): void {
-    const reader = new FileReader()
-    reader.onload = (e: ProgressEvent<FileReader>) => {        
-        if ((e.target !== null) && (e.target.result !== null) && (typeof e.target.result == 'string')) {
-            dispatcher.currentPageUpdate({
-                fileName: blob.name,
-                markdown: e.target.result
-            })            
-        }
-    }
-    reader.readAsText(blob, "utf-8")
-}
-*/
-
-async function ondropped(fileWorker:WorkerInvoke<FileWorkerMessageMap>, ev: Event) {    
+async function ondropped(fileWorker:WorkerInvoke<FileWorkerMessageMap>, dispatcher:TopDispatcherType, config:ConfigType, ev: Event) {    
     if (!(ev instanceof DragEvent)) {
         return
     }
@@ -45,16 +31,17 @@ async function ondropped(fileWorker:WorkerInvoke<FileWorkerMessageMap>, ev: Even
         else if (!('kind' in handle)) {
             console.log("handle doesn't have kind property")
         }
-        else if (handle.kind === 'file') {
-            fileWorker.request("openFile", { handle: handle as FileSystemFileHandle })                       
+        else if (handle.kind === 'file') {            
+            dispatcher.resetRootFolder()
+            fileWorker.request("openFile", { handle: handle as FileSystemFileHandle })   
         }
         else if (handle.kind === 'directory') {            
             const rootHandle = handle as FileSystemDirectoryHandle
-            fileWorker.request("openDirectory", { handle: rootHandle})
-            /*
-            const hf = await findFSHandle(rootHandle, (name: string) => name.split('.').pop() === 'md')
-            readBlob(dispatcher, await (hf[0][1] as FileSystemFileHandle).getFile())
-            */
+            dispatcher.resetRootFolder()
+            fileWorker.request("openDirectory", { 
+                handle: rootHandle,
+                markdownFileRegex: config.markdownFileRegex
+            })
         }
     }
     else if (item.kind === 'string') {        
@@ -68,7 +55,7 @@ async function ondropped(fileWorker:WorkerInvoke<FileWorkerMessageMap>, ev: Even
     }
 }
 
-export function setupDragAndDrop(fileWorker:WorkerInvoke<FileWorkerMessageMap>) {
+export function setupDragAndDrop(fileWorker:WorkerInvoke<FileWorkerMessageMap>, dispatcher:TopDispatcherType, config:ConfigType) {
     window.addEventListener('dragenter', function (e: Event) {
         e.stopPropagation()
         e.preventDefault()
@@ -84,6 +71,6 @@ export function setupDragAndDrop(fileWorker:WorkerInvoke<FileWorkerMessageMap>) 
     window.addEventListener("drop", (e: Event) => {
         e.stopPropagation()
         e.preventDefault()
-        ondropped(fileWorker, e)
+        ondropped(fileWorker, dispatcher, config, e)
     }, false)   
 }

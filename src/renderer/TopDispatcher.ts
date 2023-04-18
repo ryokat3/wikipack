@@ -5,7 +5,8 @@ import { TopFdt } from "./TopFdt"
 export const topDispatcher = new Dispatcher<TopFdt>()
     .addParameterAction("updateMarkdownFile")    
     .addParameterAction("updateDataFile")
-    .addParameterAction("updateRootFolder")
+    .addParameterAction("updateCurrentPage")
+    .addAction("resetRootFolder")
 
 export type TopDispatcherType = DispatcherType<typeof topDispatcher>
 

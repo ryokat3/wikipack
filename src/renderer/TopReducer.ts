@@ -1,57 +1,48 @@
 import { Reducer } from "../utils/FdtFlux"
 import { TopFdt } from "./TopFdt"
-import { getEmbeddedFile } from "../fs/embeddedFileFS"
-import { createRootFolder, getOrCreateDataFile, getOrCreateMarkdownFile, getFile, getAnyMarkdownFile } from "../markdown/FileTree"
-import { CONFIG_ID } from "../constant"
+import { getFile, updateDataFile, updateMarkdownFile, Folder, createRootFolder } from "../markdown/FileTree"
+import { ConfigType } from "../config"
 
-const defaultConfig = {
-    extension: [ ".md", ".markdown" ],
-    topPage: "index.md"
+
+export type TopStateType = {
+    config: ConfigType
+    rootFolder: Folder
+    currentPage: string,
+    seq: number
 }
-
-type ConfigType = typeof defaultConfig
-
-const embedded = getEmbeddedFile(CONFIG_ID)
-const config:ConfigType = (embedded !== undefined) ? JSON.parse(embedded) : defaultConfig
-
-// TODO: validate config 
-
-export const initialTopState = {
-    config: config,
-    rootFolder: createRootFolder(),
-    currentPage: config.topPage,
-    seq: 0
-}
-
-export type TopStateType = typeof initialTopState
-
 
 export const topReducer = new Reducer<TopFdt, TopStateType>()
     .add("updateMarkdownFile", (state, payload)=>{
-        getOrCreateMarkdownFile(state.rootFolder, payload.fileName).markdown = payload.markdown
-        return (payload.fileName === state.currentPage) ? {
-            ...state,
-            seq: state.seq + 1
-        } : state
-    })
-    .add("updateDataFile", (state, payload)=>{
-        getOrCreateDataFile(state.rootFolder, payload.fileName).data = payload.data
-        return state                
-    })
-    .add("updateRootFolder", (state, payload)=>{
-        if (getFile(payload.rootFolder, state.currentPage) === undefined) {
-            const result = getAnyMarkdownFile(payload.rootFolder)
-            if (result !== undefined) {
-                return {
-                    ...state,
-                    currentPage: result[0],
-                    rootFolder: payload.rootFolder
-                }
-            }
-        }
+        updateMarkdownFile(state.rootFolder, payload.fileName, payload.markdownFile)        
         return {
             ...state,
-            rootFolder: payload.rootFolder
+            currentPage: getFile(state.rootFolder, state.currentPage) === undefined ? payload.fileName : state.currentPage,
+            seq: state.seq + 1
+        }
+    })
+    .add("updateDataFile", (state, payload)=>{        
+        updateDataFile(state.rootFolder, payload.fileName, payload.data)        
+        const markdownFile = getFile(state.rootFolder, state.currentPage)
+        if ((markdownFile !== undefined) && (markdownFile.type === "markdown") && (markdownFile.imageList.includes(payload.fileName) || markdownFile.linkList.includes(payload.fileName))) {            
+            return {
+                ...state,
+                seq: state.seq + 1
+            }
+        }
+        else {            
+            return state
+        }
+    })
+    .add("updateCurrentPage", (state, payload)=>{        
+        return {
+            ...state,
+            currentPage: payload.name,            
+        }
+    })
+    .add("resetRootFolder", (state) => {
+        return {
+            ...state,
+            rootFolder: createRootFolder()
         }
     })
     .build()

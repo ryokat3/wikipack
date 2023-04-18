@@ -1,9 +1,8 @@
 import { pipe } from 'fp-ts/function'
 import * as O from 'fp-ts/Option'
-// import { TopDispatcherType } from "../renderer/TopDispatcher"
 
 
-function splitPath(pathName:string):string[] {
+export function splitPath(pathName:string):string[] {
     return pipe(
         pathName.split('/'),
         (pathList:string[]) => pathList.length > 0 ? O.some(pathList) : O.none,
@@ -14,44 +13,43 @@ function splitPath(pathName:string):string[] {
         O.getOrElse(()=>[] as string[])
     )
 }
-
-async function getHandleInDirectory(dirHandle:FileSystemDirectoryHandle, pred:(key:string)=>boolean):Promise<FileSystemHandle|undefined> {
-    for await (const [key, handle] of dirHandle.entries()) {
-        if (pred(key)) {
-            return handle
-        }
-    }
-    return undefined
-}
-
-export async function findFSHandle(dirHandle:FileSystemDirectoryHandle, pred:(key:string)=>boolean):Promise<[string, FileSystemHandle][]> {    
-    let result:[string, FileSystemHandle][] = []
-    for await (const [key, handle] of dirHandle.entries()) {
-        if (pred(key)) {
-            result.push([key, handle])
-        }
-    }    
-    return result
-}
-
-async function getFileSystemHandleRecur(dirHandle:FileSystemDirectoryHandle, pathList:string[]):Promise<FileSystemHandle|undefined> {
-    if (pathList.length == 0) {
-        return dirHandle
-    }
-    const handle = await getHandleInDirectory(dirHandle, (key:string)=>pathList[0] === key)
-    if (pathList.length == 1) {
-        return handle
-    }
-    else if ((handle === undefined) || (handle.kind !== 'directory')) {
-        return undefined
+export async function getHandle(dirHandle:FileSystemDirectoryHandle, pathName:string[]|string):Promise<FileSystemHandle|undefined> {
+    if (typeof pathName === 'string') {
+        return getHandle(dirHandle, splitPath(pathName))        
     }
     else {
-        return getFileSystemHandleRecur(handle as FileSystemDirectoryHandle, pathList.slice(1))
+        
+        for await (const [name, handle] of dirHandle.entries()) {
+            if (name === pathName[0]) {
+                if (pathName.length == 1) {
+                    return handle
+                }
+                else if (handle.kind == "directory") {
+                    if (pathName.length > 1) {
+                        return getHandle(handle, pathName.slice(1))
+                    }
+                }
+                return undefined
+            }
+        }
+        return undefined
     }
-}
 
-export async function getFSHandle(dirHandle:FileSystemDirectoryHandle, pathName:string):Promise<FileSystemHandle|undefined> {
-    return await getFileSystemHandleRecur(dirHandle, splitPath(pathName))
+}
+export async function collectFiles(dirHandle:FileSystemDirectoryHandle, pred:(fileName:string)=>boolean) {
+    
+    const result = Object.create(null) as { [name:string]: FileSystemFileHandle }
+    for await (const [name, handle] of dirHandle.entries()) {
+        if (pred(name) && (handle.kind === 'file')) {
+            result[name] = handle
+        }
+        else if (handle.kind === 'directory') {
+            Object.entries((await collectFiles(handle, pred))).forEach(([name1, handle1])=>{
+                result[name + "/" + name1] = handle1
+            })
+        }
+    }
+    return result
 }
 
 export async function getNewFileHandle() {
@@ -75,25 +73,3 @@ export async function saveThisDocument() {
     await writable.close()
     
 }
-
-/*
-export function setupOpenMarkdownFile(dispatcher:TopDispatcherType, rootHandle?:FileSystemDirectoryHandle) {
-    const url = new URL(document.location.href)
-    if ((rootHandle !== undefined) || (url.protocol.toLowerCase() == "file:")) {
-        _open_markdown = async (fileName: string) => {
-            if (rootHandle === undefined) {
-                rootHandle = await window.showDirectoryPicker() 
-            }
-            const handle = await getFSHandle(rootHandle, fileName)
-            if ((handle !== undefined) && (handle.kind === 'file')) {
-                render_markdown_blob(htmlElem, await (handle as FileSystemFileHandle).getFile())
-            }
-        }
-    }
-    else {
-        _open_markdown = (fileName: string) => {
-            fetch(fileName).then(response => response.blob()).then(blob => render_markdown_blob(htmlElem, blob))
-        }
-    }
-}
-*/

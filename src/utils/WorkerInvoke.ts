@@ -79,8 +79,9 @@ export class WorkerInvoke<T extends WorkerMessageMap> {
 
 
 class PostEvent<T extends WorkerMessageMap> {
-    public send<Key extends keyof ResponseMap<T>>(key:Key, payload:ResponseDataType<T, Key>['response']):void {
-         self.postMessage({ type:key, payload:payload})
+    public send<Key extends keyof ResponseMap<T>>(key:Key, payload:ResponseDataType<T, Key>['response'], transferable:Transferable[]|undefined = undefined):void {
+        //@ts-ignore
+        self.postMessage({ type:key, payload:payload}, transferable)
     }
 }
 
@@ -91,14 +92,14 @@ export class WorkerThreadHandler<T extends WorkerMessageMap> {
     ) {}
 
     public addCallHandler<Key extends keyof CallMap<T>>(key:Key, callback:(payload: CallDataType<T, Key>['request'], postEvent:PostEvent<T>) => Promise<CallDataType<T, Key>['response']>) {
-        return new WorkerThreadHandler({
+        return new WorkerThreadHandler<T>({
             ...this.callHandler,
             [key]:callback
         }, this.requestHandler)
     }
 
     public addRequestHandler<Key extends keyof RequestMap<T>>(key:Key, callback:(payload: RequestDataType<T, Key>['request'], postEvent:PostEvent<T>)=>void) {
-        return new WorkerThreadHandler(this.callHandler, {
+        return new WorkerThreadHandler<T>(this.callHandler, {
             ...this.requestHandler,
             [key]:callback      
         })

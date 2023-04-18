@@ -1,11 +1,11 @@
 export type DataFile = {
     type: "data",
-    data: ArrayBuffer | undefined
+    dataUrl: string
 }
 
 export type MarkdownFile = {
     type: "markdown",
-    markdown: string | undefined,
+    markdown: string,
     imageList: string[],
     linkList: string[]
 }
@@ -21,7 +21,7 @@ export type Folder = {
 export type FileType = Folder | MarkdownFile | DataFile
 
 function splitPath(pathName:string):string[] {
-    return pathName.split('/').filter((name:string)=>name !== '')
+    return pathName.split('/').filter((name:string)=>(name !== '') && (name !== '.'))
 }
 
 export function createRootFolder():Folder {
@@ -44,45 +44,32 @@ function getOrCreateFolder(folder:Folder, name:string):Folder {
     return folder.children[name] as Folder
 }
 
-export function getOrCreateMarkdownFile(folder:Folder, pathName:string|string[]):MarkdownFile {
+export function updateMarkdownFile(folder:Folder, pathName:string|string[], markdownFile:MarkdownFile):void {
     if (typeof pathName === 'string') {
-        return getOrCreateMarkdownFile(folder, splitPath(pathName))
-    }
-    else if ((pathName.length == 1) && (pathName[0] in folder.children) && (folder.children[pathName[0]].type === "markdown")) {
-        return folder.children[pathName[0]] as MarkdownFile
+        updateMarkdownFile(folder, splitPath(pathName), markdownFile)
     }
     else if (pathName.length == 1) {
-        const markdownFile:MarkdownFile = {
-            type: "markdown",
-            markdown: undefined,
-            imageList: [],
-            linkList: []
-        }
-        folder.children[pathName[0]] = markdownFile
-        return markdownFile
+        folder.children[pathName[0]] = markdownFile        
     }
     else {
-        return getOrCreateMarkdownFile(getOrCreateFolder(folder, pathName[0]), pathName.slice(1))
+        updateMarkdownFile(getOrCreateFolder(folder, pathName[0]), pathName.slice(1), markdownFile)
     }
 }
 
-export function getOrCreateDataFile(folder:Folder, pathName:string|string[]):DataFile {
+export function updateDataFile(folder:Folder, pathName:string|string[], data:string):void {
     if (typeof pathName === 'string') {
-        return getOrCreateDataFile(folder, splitPath(pathName))
-    }
-    else if ((pathName.length == 1) && (pathName[0] in folder.children) && (folder.children[pathName[0]].type === "data")) {
-        return folder.children[pathName[0]] as DataFile
+        return updateDataFile(folder, splitPath(pathName), data)
     }
     else if (pathName.length == 1) {
+        // const dataUrl = Buffer.from(Array.from(new Uint8Array(data), (e)=>String.fromCharCode(e)).join(""), "base64url").toString()
         const dataFile:DataFile = {
             type: "data",                        
-            data: undefined
+            dataUrl: data
         }
         folder.children[pathName[0]] = dataFile
-        return dataFile
     }
     else {
-        return getOrCreateDataFile(getOrCreateFolder(folder, pathName[0]), pathName.slice(1))
+        return updateDataFile(getOrCreateFolder(folder, pathName[0]), pathName.slice(1), data)
     }
 }
 
