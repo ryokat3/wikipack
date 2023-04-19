@@ -23,7 +23,8 @@ export type FileWorkerMessageMap = {
         response: {
             fileName: string,
             timestamp: number,
-            data: string
+            mime: string,
+            data: ArrayBuffer
         }
     },
 }

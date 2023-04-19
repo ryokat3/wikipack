@@ -9,7 +9,8 @@ export type TopFdt = {
     updateDataFile: {
         fileName: string,
         timestamp: number,
-        data: string
+        mime: string,
+        data: ArrayBuffer
     },
     updateCurrentPage: {
         name: string

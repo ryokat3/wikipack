@@ -55,7 +55,7 @@ class MyRenderer extends marked.Renderer {
     public image(href:string, title:string, text:string) {      
         const imageFile = getFile(this.rootFolder, href)
         if ((imageFile !== undefined) && (imageFile.type === 'data')) {
-            return super.image(imageFile.dataUrl, title, text)
+            return super.image(imageFile.dataRef, title, text)
         }
         return super.image(href, title, text)
     }

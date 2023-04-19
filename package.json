@@ -1,6 +1,6 @@
 {
   "name": "markdown-all-in-one-html",
-  "version": "0.9.6",
+  "version": "0.9.7",
   "description": "A HTML to pack all markdown files and assets in a single HTML with viewer",
   "main": "index.js",
   "scripts": {
@@ -11,6 +11,7 @@
   "license": "MIT",
   "devDependencies": {
     "@types/marked": "^4.0.8",
+    "@types/mime-db": "^1.43.1",
     "@types/react": "^18.0.29",
     "@types/react-dom": "^18.0.11",
     "@types/webpack": "^5.28.1",
