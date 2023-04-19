@@ -10,6 +10,7 @@ import { WorkerInvoke } from "../utils/WorkerInvoke"
 import { FileWorkerMessageMap } from "../fileWorker/FileWorkerInvoke"
 import { getFile, createRootFolder } from "../markdown/FileTree"
 import { ConfigType } from "../config"
+import { saveThisDocument } from "../fs/localFileFS"
 
 export interface TopContextType {
     dispatcher: TopDispatcherType,
@@ -37,7 +38,7 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
         fileWorker: props.fileWorker      
     }
 
-    // Call only once
+    // Call once
     useEffect(() => {
         props.fileWorker.addEventHandler("updateMarkdownFile", (payload)=>dispatcher.updateMarkdownFile(payload))
         props.fileWorker.addEventHandler("updateDataFile", (payload)=>dispatcher.updateDataFile(payload))
@@ -50,9 +51,12 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
     const currentFile = getFile(state.rootFolder, state.currentPage)    
     
     return <TopContext.Provider value={context}>
-        <SearchAppBar topMarkdown={(currentFile !== undefined) && (currentFile.type === "markdown") ? state.currentPage : "Markdown not found   "}></SearchAppBar>
+        <SearchAppBar
+            topMarkdown={(currentFile !== undefined) && (currentFile.type === "markdown") ? state.currentPage : "Markdown not found   "}
+            saveDocument={async ()=> saveThisDocument(state)}
+        ></SearchAppBar>
         <MarkdownView
-            markdownData={(currentFile !== undefined) && (currentFile.type === "markdown") ? currentFile.markdown : getEmbeddedFile("") || "# 503: Markdown not found"}
+            markdownData={(currentFile !== undefined) && (currentFile.type === "markdown") ? currentFile.markdown : getEmbeddedFile(state.config.topPage) || "# 503: Markdown not found"}
             rootFolder={state.rootFolder}            
         ></MarkdownView>
     </TopContext.Provider>

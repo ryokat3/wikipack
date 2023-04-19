@@ -1,5 +1,7 @@
 import { pipe } from 'fp-ts/function'
 import * as O from 'fp-ts/Option'
+import { TopStateType } from "../renderer/TopReducer"
+import { EMBEDDED_FILE_CLASS, EMBEDDED_FILE_ID_PREFIX, EMBEDDED_FILE_HEAD_ID, APPLICATION_DATA_MIME_TYPE, CONFIG_ID } from "../constant"
 
 
 export function splitPath(pathName:string):string[] {
@@ -65,11 +67,48 @@ export async function getNewFileHandle() {
     })
 }
 
-export async function saveThisDocument() {
+export async function saveThisDocument(state:TopStateType) {
     const handle = await getNewFileHandle()
     const writable = await handle.createWritable()
+/*
+    const parser = new DOMParser()
+    const htmlData = parser.parseFromString(document.documentElement.outerHTML, 'text/html')
+    const serializer = new XMLSerializer()
+*/
+    const elemList = document.getElementsByClassName(EMBEDDED_FILE_CLASS)
+    for (let i = 0; i < elemList.length; i++) {
+        elemList.item(i)?.remove()
+    }
+
+    const headElem = document.getElementById(EMBEDDED_FILE_HEAD_ID)
+
+    if (headElem !== null) {
+        for (const [fileName, info] of Object.entries(state.rootFolder.children)) {
+            const elem = document.createElement('script')
+            elem.setAttribute('id', `${EMBEDDED_FILE_ID_PREFIX}${fileName}`)
+            elem.setAttribute('class', EMBEDDED_FILE_CLASS)
+            elem.setAttribute('type', APPLICATION_DATA_MIME_TYPE)
+
+            if (info.type === "markdown") {
+                elem.innerHTML = info.markdown
+            }
+            headElem.insertAdjacentElement("afterend", elem)                        
+        }
+
+        const config = {
+            ...state.config
+        }
+        config.topPage = state.currentPage
+        const elem = document.createElement('script')
+        elem.setAttribute('id', `${EMBEDDED_FILE_ID_PREFIX}${CONFIG_ID}`)
+        elem.setAttribute('class', EMBEDDED_FILE_CLASS)
+        elem.setAttribute('type', APPLICATION_DATA_MIME_TYPE)
+        elem.innerHTML = JSON.stringify(config)
+        headElem.insertAdjacentElement("afterend", elem)                        
+    }
 
     await writable.write('<!DOCTYPE html>\n' + document.documentElement.outerHTML)
+    // await writable.write('<!DOCTYPE html>\n' + serializer.serializeToString(htmlData))
     await writable.close()
     
 }

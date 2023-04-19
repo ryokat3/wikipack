@@ -1,17 +1,8 @@
-import { MarkdownFile } from "../markdown/FileTree"
+import { FileWorkerMessageMap } from "../fileWorker/FileWorkerInvoke"
 
 export type TopFdt = {
-    updateMarkdownFile: {
-        fileName: string,
-        timestamp: number,
-        markdownFile: MarkdownFile
-    },
-    updateDataFile: {
-        fileName: string,
-        timestamp: number,
-        mime: string,
-        data: ArrayBuffer
-    },
+    updateMarkdownFile: FileWorkerMessageMap["updateMarkdownFile"]['response'],
+    updateDataFile: FileWorkerMessageMap['updateDataFile']['response'],
     updateCurrentPage: {
         name: string
     },

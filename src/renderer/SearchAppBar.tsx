@@ -11,7 +11,6 @@ import MenuItem from '@mui/material/MenuItem';
 import MenuIcon from '@mui/icons-material/Menu';
 import SearchIcon from '@mui/icons-material/Search';
 import { TopContext } from "./Top"
-import { saveThisDocument } from "../fs/localFileFS"
 
 const Search = styled('div')(({ theme }) => ({
     position: 'relative',
@@ -56,7 +55,8 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 }));
 
 export interface SearchAppBarProps {
-    topMarkdown: string
+    topMarkdown: string,
+    saveDocument: ()=>Promise<void>
 }
 
 export const SearchAppBar: React.FunctionComponent<SearchAppBarProps> = (props: SearchAppBarProps) => {
@@ -70,7 +70,7 @@ export const SearchAppBar: React.FunctionComponent<SearchAppBarProps> = (props: 
     }
     const handleSaveAs = async () => {
         setAnchorEl(null)
-        await saveThisDocument()        
+        await props.saveDocument()     
     }
 
     // TODO: temporary
