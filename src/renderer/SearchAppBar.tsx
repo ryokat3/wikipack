@@ -55,7 +55,7 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 }));
 
 export interface SearchAppBarProps {
-    topMarkdown: string,
+    title: string,
     saveDocument: ()=>Promise<void>
 }
 
@@ -111,7 +111,7 @@ export const SearchAppBar: React.FunctionComponent<SearchAppBarProps> = (props: 
                         component="div"
                         sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' } }}
                     >
-                        {props.topMarkdown}
+                        {props.title}
                     </Typography>
                     <Search>
                         <SearchIconWrapper>

@@ -1,5 +1,4 @@
 {
     "topPage": "index.md",
-    "markdownFileRegex": [ ".*\\.(md|markdown)" ]
-    
+    "markdownFileRegex": [ ".*\\.(md|markdown)" ]    
 }

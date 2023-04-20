@@ -25,7 +25,7 @@ const commonConfig:Configuration = {
       { test: /\.tsx?$/, loader: "ts-loader" },      
       { enforce: "pre", test: /\.js\.map$/, loader: "source-map-loader" },
       {
-        test: /\.(asdata)$/i,
+        test: /\.(asdata|md)$/i,
         type: 'asset/source'
       },
     ]

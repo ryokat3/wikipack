@@ -26,12 +26,6 @@ export type Folder = {
 
 export type FileType = Folder | MarkdownFile | DataFile
 
-/*
-function splitPath(pathName:string):string[] {
-    return pathName.split('/').filter((name:string)=>(name !== '') && (name !== '.'))
-}
-*/
-
 export function makeMarkdownFileRegexChecker(regexList:string[]):(name:string)=>boolean {
     return function (name:string) {
         for (const regex of regexList.map((re:string)=>new RegExp(re, "i"))) {
