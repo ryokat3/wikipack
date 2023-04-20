@@ -1,22 +1,27 @@
 {
   "name": "markdown-all-in-one-html",
-  "version": "0.9.8",
+  "version": "0.9.9",
   "description": "A HTML to pack all markdown files and assets in a single HTML with viewer",
   "main": "index.js",
   "scripts": {
     "build": "NODE_OPTIONS='--openssl-legacy-provider' webpack-cli",
+    "test": "mocha --exit -r ts-node/register test/**/*.ts",
     "clean": "shx rm -rf dist markdown-all-in-one.html src/tmp"
   },
   "author": "https://github.com/ryokat3",
   "license": "MIT",
   "devDependencies": {
+    "@types/chai": "^4.3.4",
     "@types/marked": "^4.0.8",
     "@types/mime-db": "^1.43.1",
+    "@types/mocha": "^10.0.1",
     "@types/react": "^18.0.29",
     "@types/react-dom": "^18.0.11",
     "@types/webpack": "^5.28.1",
     "@types/wicg-file-system-access": "^2020.9.5",
+    "chai": "^4.3.7",
     "inline-source": "^8.0.2",
+    "mocha": "^10.2.0",
     "shx": "^0.3.4",
     "ts-loader": "^9.4.2",
     "ts-node": "^10.9.1",

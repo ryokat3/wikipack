@@ -8,7 +8,7 @@ import { getEmbeddedFile} from "../fs/embeddedFileFS"
 import { setupDragAndDrop } from "../fs/dragAndDrop"
 import { WorkerInvoke } from "../utils/WorkerInvoke"
 import { FileWorkerMessageMap } from "../fileWorker/FileWorkerInvoke"
-import { getFile, createRootFolder } from "../markdown/FileTree"
+import { getFile, createRootFolder, makeMarkdownFileRegexChecker } from "../markdown/FileTree"
 import { ConfigType } from "../config"
 import { saveThisDocument } from "../fs/localFileFS"
 
@@ -48,8 +48,8 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
         }
     }, [])
 
-    const currentFile = getFile(state.rootFolder, state.currentPage)    
-    
+    const currentFile = getFile(state.rootFolder, state.currentPage)
+            
     return <TopContext.Provider value={context}>
         <SearchAppBar
             topMarkdown={(currentFile !== undefined) && (currentFile.type === "markdown") ? state.currentPage : "Markdown not found   "}
@@ -57,7 +57,8 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
         ></SearchAppBar>
         <MarkdownView
             markdownData={(currentFile !== undefined) && (currentFile.type === "markdown") ? currentFile.markdown : getEmbeddedFile(state.config.topPage) || "# 503: Markdown not found"}
-            rootFolder={state.rootFolder}            
+            rootFolder={state.rootFolder}      
+            isMarkdown={makeMarkdownFileRegexChecker(state.config.markdownFileRegex)}      
         ></MarkdownView>
     </TopContext.Provider>
 }

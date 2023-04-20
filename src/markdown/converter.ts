@@ -1,8 +1,18 @@
 import { marked, Slugger } from 'marked'
 import hljs from 'highlight.js'
 import { MarkdownFile, Folder, getFile } from "./FileTree"
+import { splitPath } from "../fs/localFileFS"
 
-export function getMarkdownFile(markdown:string, timestamp:number):MarkdownFile {
+function isURL(url:string):boolean {
+    try {
+        new URL(url);
+        return true;
+    } catch (err) {
+        return false;
+    }   
+}
+
+export function getMarkdownFile(markdown:string, fileName:string, timestamp:number):MarkdownFile {
 
     const result:MarkdownFile = {
         type: "markdown",
@@ -11,13 +21,18 @@ export function getMarkdownFile(markdown:string, timestamp:number):MarkdownFile 
         imageList: [],
         linkList: []
     }
-
+    const dirPath = splitPath(fileName).slice(0,-1).join('/')
+    
     const warlkTokens = (token:marked.Token) => {
-        if (token.type === "image") {
-            result.imageList.push(token.href)
+        if (token.type === "image") {            
+            if (! isURL(token.href)) {                
+                result.imageList.push(splitPath(`${dirPath}/${token.href}`).join('/'))
+            }
         }
-        else if (token.type === "link") {
-            result.linkList.push(token.href)
+        else if (token.type === "link") {                        
+            if (! isURL(token.href)) {                
+                result.linkList.push(splitPath(`${dirPath}/${token.href}`).join('/'))
+            }
         }
     }
     marked.use({ walkTokens: warlkTokens })
@@ -32,7 +47,9 @@ class MyRenderer extends marked.Renderer {
 
     public title: string | undefined = undefined
 
-    public constructor(private readonly rootFolder:Folder) {
+    public constructor(
+        private readonly rootFolder:Folder,
+        private readonly isMarkdown:(fileName:string)=>boolean) {
         super()
     }
 
@@ -44,7 +61,8 @@ class MyRenderer extends marked.Renderer {
     }
 
     public link(href: string, title: string, text: string) {
-        if (href.toLowerCase().match(/\.(md|mkd|markdown)$/)) {
+        //if (href.toLowerCase().match(/\.(md|mkd|markdown)$/)) {
+        if (this.isMarkdown(href)) {
             return super.link(`javascript:_open_markdown('${href}')`, title, text)
         }
         else {
@@ -76,11 +94,11 @@ function decodeUriOrEcho(uri: string) {
     }
 }
 
-export function getRenderer(rootFolder: Folder) {
+export function getRenderer(rootFolder: Folder,  isMarkdown:(fileName:string)=>boolean) {
     return (text: string): { html: string, title: string } => {
         // hljs.highlightAll()
 
-        const myRenderer = new MyRenderer(rootFolder)
+        const myRenderer = new MyRenderer(rootFolder, isMarkdown)
         marked.setOptions({
             renderer: myRenderer,
             // highlight: (code: string, _lang: string, callback?: (error: any, code: string) => void) => {

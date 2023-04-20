@@ -2,6 +2,7 @@ import { FileWorkerMessageMap } from "../fileWorker/FileWorkerInvoke"
 import { WorkerThreadHandler } from "../utils/WorkerInvoke"
 import { getMarkdownFile} from "../markdown/converter"
 import { collectFiles, getHandle } from "../fs/localFileFS"
+import { makeMarkdownFileRegexChecker } from "../markdown/FileTree"
 
 
 // Not used now...
@@ -18,16 +19,7 @@ export function getMimeType(fileName:string, typeName:string="image") {
 */
 
 
-function makeMarkdownFileRegexChecker(regexList:string[]):(name:string)=>boolean {
-    return function (name:string) {
-        for (const regex of regexList.map((re:string)=>new RegExp(re, "i"))) {
-            if (name.match(regex)) {
-                return true
-            }
-        }
-        return false
-    }
-}
+
 
 async function updateMarkdownFile(handle: FileSystemFileHandle, fileName: string|undefined = undefined ): Promise<FileWorkerMessageMap["updateMarkdownFile"]["response"]> {
     return await new Promise<FileWorkerMessageMap["updateMarkdownFile"]["response"]>(async (resolve) => {
@@ -36,9 +28,10 @@ async function updateMarkdownFile(handle: FileSystemFileHandle, fileName: string
         const reader = new FileReader()
         reader.onload = (e: ProgressEvent<FileReader>) => {
             if ((e.target !== null) && (e.target.result !== null) && (typeof e.target.result == 'string')) {
-                const markdownFile = getMarkdownFile(e.target.result, blob.lastModified)
+                const markdownFileName = (fileName !== undefined) ? fileName : blob.name
+                const markdownFile = getMarkdownFile(e.target.result, markdownFileName, blob.lastModified)
                 resolve({
-                    fileName: (fileName !== undefined) ? fileName : blob.name,
+                    fileName: markdownFileName,
                     timestamp: blob.lastModified,
                     markdownFile: markdownFile
                 })                
@@ -67,6 +60,7 @@ async function updateDataFile(handle: FileSystemFileHandle, fileName: string): P
     })
 }
 
+
 self.onmessage = new WorkerThreadHandler<FileWorkerMessageMap>()
     .addRequestHandler("openFile", async (payload, postEvent) => {
         const result = await updateMarkdownFile(payload.handle)
@@ -75,11 +69,13 @@ self.onmessage = new WorkerThreadHandler<FileWorkerMessageMap>()
     .addRequestHandler("openDirectory", async (payload, postEvent)=>{                
         for (const [name, handle] of Object.entries(await collectFiles(payload.handle, makeMarkdownFileRegexChecker(payload.markdownFileRegex)))) {
             const result = await updateMarkdownFile(handle, name)
+            console.log(name)
+            console.log(result.markdownFile.markdown)
             postEvent.send("updateMarkdownFile", result)
 
             for (const name of result.markdownFile.imageList) {
                 const handle = await getHandle(payload.handle, name)
-                if ((handle !== undefined) && (handle.kind === "file")) {
+                if ((handle !== undefined) && (handle.kind === "file")) {                    
                     const dataFile = await updateDataFile(handle as FileSystemFileHandle, name)
                     postEvent.send("updateDataFile", await updateDataFile(handle as FileSystemFileHandle, name), [ dataFile.data ])
                 }

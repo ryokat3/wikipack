@@ -3,15 +3,32 @@ import * as O from 'fp-ts/Option'
 import { TopStateType } from "../renderer/TopReducer"
 import { EMBEDDED_FILE_CLASS, EMBEDDED_FILE_ID_PREFIX, EMBEDDED_FILE_HEAD_ID, APPLICATION_DATA_MIME_TYPE, CONFIG_ID } from "../constant"
 
+function removeParentDir(pathName:string[]):string[] {
+    const result:string[] = []
+    for (let i = 0; i < pathName.length; i++) {
+        if (i == pathName.length - 1) {
+            result.push(pathName[i])
+        }
+        else if (pathName[i] !== ".." && pathName[i+1] === "..") {
+            ++i
+        }
+        else {
+            result.push(pathName[i])
+        }
+    }    
+    return result
+}
 
 export function splitPath(pathName:string):string[] {
     return pipe(
         pathName.split('/'),
         (pathList:string[]) => pathList.length > 0 ? O.some(pathList) : O.none,
-        O.map((pathList:string[])=> pathList.at(0) === '' ? pathList.slice(1) :  pathList),
-        O.chain((pathList:string[]) => pathList.length > 0 ? O.some(pathList) : O.none),
-        O.map((pathList:string[])=> pathList.at(-1) === '' ? pathList.slice(0,-1) :  pathList),
-        O.chain((pathList:string[]) => pathList.length > 0 ? O.some(pathList) : O.none),
+//        O.map((pathList:string[])=> pathList.at(0) === '' ? pathList.slice(1) :  pathList),
+//        O.chain((pathList:string[]) => pathList.length > 0 ? O.some(pathList) : O.none),
+//        O.map((pathList:string[])=> pathList.at(-1) === '' ? pathList.slice(0,-1) :  pathList),
+//        O.chain((pathList:string[]) => pathList.length > 0 ? O.some(pathList) : O.none),       
+        O.map((pathList:string[])=> pathList.filter((name:string)=>name !== "." && name !== '')), 
+        O.map((pathList:string[])=> removeParentDir(pathList)), 
         O.getOrElse(()=>[] as string[])
     )
 }
@@ -47,7 +64,7 @@ export async function collectFiles(dirHandle:FileSystemDirectoryHandle, pred:(fi
         }
         else if (handle.kind === 'directory') {
             Object.entries((await collectFiles(handle, pred))).forEach(([name1, handle1])=>{
-                result[name + "/" + name1] = handle1
+                result[splitPath(name + "/" + name1).join("/")] = handle1
             })
         }
     }
