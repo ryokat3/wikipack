@@ -3,7 +3,7 @@ import { splitPath } from "../fs/localFileFS"
 export type DataFile = {
     type: "data",
     dataRef: string,
-    buffer: ArrayBuffer | undefined,
+    buffer: ArrayBuffer | string,
     timestamp: number,
     mime: string
 }
@@ -69,23 +69,15 @@ export function updateMarkdownFile(folder:Folder, pathName:string|string[], mark
     }
 }
 
-export function updateDataFile(folder:Folder, pathName:string|string[], timestamp:number, mime:string, dataRef:string, buffer:ArrayBuffer|undefined):void {
+export function updateDataFile(folder:Folder, pathName:string|string[], dataFile:DataFile):void {
     if (typeof pathName === 'string') {
-        return updateDataFile(folder, splitPath(pathName), timestamp, mime, dataRef, buffer)
+        return updateDataFile(folder, splitPath(pathName), dataFile)
     }
     else if (pathName.length == 1) {
-        // const dataUrl = Buffer.from(Array.from(new Uint8Array(data), (e)=>String.fromCharCode(e)).join(""), "base64url").toString()
-        const dataFile:DataFile = {
-            type: "data",
-            timestamp: timestamp,
-            mime: mime,
-            dataRef: dataRef,
-            buffer: buffer
-        }
         folder.children[pathName[0]] = dataFile
     }
     else {
-        return updateDataFile(getOrCreateFolder(folder, pathName[0]), pathName.slice(1), timestamp, mime, dataRef, buffer)
+        return updateDataFile(getOrCreateFolder(folder, pathName[0]), pathName.slice(1), dataFile)
     }
 }
 

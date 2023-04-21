@@ -26,7 +26,14 @@ export const topReducer = new Reducer<TopFdt, TopStateType>()
         const fileName = normalizePath(payload.fileName)
         const blob = new Blob( [payload.data], { type: payload.mime })
         const dataRef = URL.createObjectURL(blob)
-        updateDataFile(state.rootFolder, fileName, payload.timestamp, payload.mime, dataRef, payload.data)
+        // updateDataFile(state.rootFolder, fileName, payload.timestamp, payload.mime, dataRef, payload.data)
+        updateDataFile(state.rootFolder, fileName, {
+            type: "data",
+            dataRef: dataRef,
+            buffer: payload.data,
+            mime: payload.mime,
+            timestamp: payload.timestamp
+        })
         const markdownFile = getFile(state.rootFolder, state.currentPage)
         if ((markdownFile !== undefined) && (markdownFile.type === "markdown") && (markdownFile.imageList.includes(fileName) || markdownFile.linkList.includes(fileName))) {            
             return {

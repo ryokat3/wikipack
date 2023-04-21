@@ -1,9 +1,10 @@
 import { pipe } from 'fp-ts/function'
 import * as O from 'fp-ts/Option'
 import { TopStateType } from "../renderer/TopReducer"
-import { EMBEDDED_FILE_CLASS, EMBEDDED_FILE_ID_PREFIX, EMBEDDED_FILE_HEAD_ID, APPLICATION_DATA_MIME_TYPE, CONFIG_ID } from "../constant"
+import { EMBEDDED_MARKDOWN_FILE_CLASS, EMBEDDED_DATA_FILE_CLASS, EMBEDDED_FILE_ID_PREFIX, EMBEDDED_FILE_HEAD_ID, APPLICATION_DATA_MIME_TYPE, CONFIG_ID } from "../constant"
 import { MarkdownFile, DataFile, Folder } from '../markdown/FileTree'
 import { dataUrlEncode } from '../utils/browserUtils'
+import { getFileElement } from "./embeddedFileFS"
 
 function removeParentDir(pathName:string[]):string[] {
     const result:string[] = []
@@ -103,7 +104,7 @@ function createSaveFileElement(fileName:string, timestamp:number):HTMLScriptElem
 
     const elem = document.createElement('script')
     elem.setAttribute('id', `${EMBEDDED_FILE_ID_PREFIX}${fileName}`)
-    elem.setAttribute('class', EMBEDDED_FILE_CLASS)
+    
     elem.setAttribute('type', APPLICATION_DATA_MIME_TYPE)
     elem.setAttribute('timestamp', timestamp.toString())    
 
@@ -114,6 +115,7 @@ async function createMarkdownFileElement(fileName:string, markdownFile:MarkdownF
     const dataUrl = await dataUrlEncode(markdownFile.markdown, 'text/plain')    
     if (dataUrl !== null) {
         const elem = createSaveFileElement(fileName, markdownFile.timestamp)        
+        elem.setAttribute('class', EMBEDDED_MARKDOWN_FILE_CLASS)
         elem.innerHTML = dataUrl                
         return elem
     }
@@ -123,15 +125,26 @@ async function createMarkdownFileElement(fileName:string, markdownFile:MarkdownF
 }
 
 async function createDataFileElement(fileName:string, dataFile:DataFile):Promise<HTMLScriptElement|undefined> {
-    if (dataFile.buffer !== undefined) {
+    if (typeof dataFile.buffer !== 'string') {
         const dataUrl = await dataUrlEncode(dataFile.buffer, dataFile.mime)        
         if (dataUrl !== null) {            
             const elem = createSaveFileElement(fileName, dataFile.timestamp)
+            elem.setAttribute('class', EMBEDDED_DATA_FILE_CLASS)
+            elem.setAttribute('mime', dataFile.mime)
             elem.innerHTML = dataUrl                        
             return elem
         }
+        else {
+            return undefined
+        }
     }    
-    return undefined    
+    else {
+        const elem = createSaveFileElement(fileName, dataFile.timestamp)
+        elem.setAttribute('class', EMBEDDED_DATA_FILE_CLASS)
+        elem.setAttribute('mime', dataFile.mime)
+        elem.innerHTML = dataFile.buffer
+        return elem
+    }
 }
 
 function createJsonElement(fileName:string, data:Object, timestamp:number) {
@@ -162,14 +175,23 @@ async function saveFolder(headElem:HTMLElement, folder:Folder, pathName:string) 
     }
 }
 
+function removeElem(elemList:HTMLCollectionOf<Element>):void {
+    for (let i = 0; i < elemList.length; i++) {
+        elemList.item(i)?.remove()
+    }    
+}
+
 
 export async function saveThisDocument(state:TopStateType) {
     const handle = await getNewFileHandle()
     const writable = await handle.createWritable()
 
-    const elemList = document.getElementsByClassName(EMBEDDED_FILE_CLASS)
-    for (let i = 0; i < elemList.length; i++) {
-        elemList.item(i)?.remove()
+
+    removeElem(document.getElementsByClassName(EMBEDDED_MARKDOWN_FILE_CLASS))
+    removeElem(document.getElementsByClassName(EMBEDDED_DATA_FILE_CLASS))
+    const configElement = getFileElement(CONFIG_ID)
+    if (configElement !== null) {
+        configElement.remove()
     }
 
     const headElem = document.getElementById(EMBEDDED_FILE_HEAD_ID)
@@ -180,12 +202,11 @@ export async function saveThisDocument(state:TopStateType) {
 
         headElem.insertAdjacentElement("afterend", createJsonElement(CONFIG_ID, {
             ...state.config,
-            topPage: state.currentPage
+            topPage: state.currentPage,
+            initialConfig: false
         }, 0))
     }
 
-    await writable.write('<!DOCTYPE html>\n' + document.documentElement.outerHTML)
-    // await writable.write('<!DOCTYPE html>\n' + serializer.serializeToString(htmlData))
-    await writable.close()
-    
+    await writable.write('<!DOCTYPE html>\n' + document.documentElement.outerHTML)    
+    await writable.close()    
 }

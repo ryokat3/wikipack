@@ -45,8 +45,10 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
     }, [])
 
     const currentFile = getFile(state.rootFolder, state.currentPage)
+
     const [title, markdown] = ((currentFile !== undefined) && (currentFile.type === "markdown")) ? [ state.currentPage, currentFile.markdown] : [ "ERROR", `${state.currentPage} not found`]
-            
+
+
     return <TopContext.Provider value={context}>
         <SearchAppBar
             title={title}            
