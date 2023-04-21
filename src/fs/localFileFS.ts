@@ -2,6 +2,8 @@ import { pipe } from 'fp-ts/function'
 import * as O from 'fp-ts/Option'
 import { TopStateType } from "../renderer/TopReducer"
 import { EMBEDDED_FILE_CLASS, EMBEDDED_FILE_ID_PREFIX, EMBEDDED_FILE_HEAD_ID, APPLICATION_DATA_MIME_TYPE, CONFIG_ID } from "../constant"
+import { MarkdownFile, DataFile, Folder } from '../markdown/FileTree'
+import { dataUrlEncode } from '../utils/browserUtils'
 
 function removeParentDir(pathName:string[]):string[] {
     const result:string[] = []
@@ -32,6 +34,19 @@ export function splitPath(pathName:string):string[] {
         O.getOrElse(()=>[] as string[])
     )
 }
+
+export function addPath(dirName:string, fileName:string):string {
+    return splitPath(`${dirName}/${fileName}`).join("/")
+}
+
+export function normalizePath(fileName:string):string {
+    return splitPath(fileName).join("/")
+}
+
+export function getDir(fileName:string):string {
+    return splitPath(fileName).slice(0,-1).join('/')
+}
+
 export async function getHandle(dirHandle:FileSystemDirectoryHandle, pathName:string[]|string):Promise<FileSystemHandle|undefined> {
     if (typeof pathName === 'string') {
         return getHandle(dirHandle, splitPath(pathName))        
@@ -84,14 +99,74 @@ export async function getNewFileHandle() {
     })
 }
 
+function createSaveFileElement(fileName:string, timestamp:number):HTMLScriptElement {
+
+    const elem = document.createElement('script')
+    elem.setAttribute('id', `${EMBEDDED_FILE_ID_PREFIX}${fileName}`)
+    elem.setAttribute('class', EMBEDDED_FILE_CLASS)
+    elem.setAttribute('type', APPLICATION_DATA_MIME_TYPE)
+    elem.setAttribute('timestamp', timestamp.toString())    
+
+    return elem
+}
+
+async function createMarkdownFileElement(fileName:string, markdownFile:MarkdownFile):Promise<HTMLScriptElement|undefined> {
+    const dataUrl = await dataUrlEncode(markdownFile.markdown, 'text/plain')    
+    if (dataUrl !== null) {
+        const elem = createSaveFileElement(fileName, markdownFile.timestamp)        
+        elem.innerHTML = dataUrl                
+        return elem
+    }
+    else {
+        return undefined
+    }
+}
+
+async function createDataFileElement(fileName:string, dataFile:DataFile):Promise<HTMLScriptElement|undefined> {
+    if (dataFile.buffer !== undefined) {
+        const dataUrl = await dataUrlEncode(dataFile.buffer, dataFile.mime)        
+        if (dataUrl !== null) {            
+            const elem = createSaveFileElement(fileName, dataFile.timestamp)
+            elem.innerHTML = dataUrl                        
+            return elem
+        }
+    }    
+    return undefined    
+}
+
+function createJsonElement(fileName:string, data:Object, timestamp:number) {
+    const elem = createSaveFileElement(fileName, timestamp)
+    elem.innerHTML = JSON.stringify(data)
+    return elem
+}
+
+
+async function saveFolder(headElem:HTMLElement, folder:Folder, pathName:string) {
+    for (const [fileName, info] of Object.entries(folder.children)) {
+        const filePath = addPath(pathName, fileName)
+        if (info.type === "markdown") {
+            const elem = await createMarkdownFileElement(filePath, info)            
+            if (elem !== undefined) {                
+                headElem.insertAdjacentElement("afterend", elem)
+            }
+        }
+        else if (info.type === "data") {
+            const elem = await createDataFileElement(filePath, info)            
+            if (elem !== undefined) {                
+                headElem.insertAdjacentElement("afterend", elem)
+            }
+        }
+        else {
+            await saveFolder(headElem, info, filePath)
+        }
+    }
+}
+
+
 export async function saveThisDocument(state:TopStateType) {
     const handle = await getNewFileHandle()
     const writable = await handle.createWritable()
-/*
-    const parser = new DOMParser()
-    const htmlData = parser.parseFromString(document.documentElement.outerHTML, 'text/html')
-    const serializer = new XMLSerializer()
-*/
+
     const elemList = document.getElementsByClassName(EMBEDDED_FILE_CLASS)
     for (let i = 0; i < elemList.length; i++) {
         elemList.item(i)?.remove()
@@ -100,28 +175,13 @@ export async function saveThisDocument(state:TopStateType) {
     const headElem = document.getElementById(EMBEDDED_FILE_HEAD_ID)
 
     if (headElem !== null) {
-        for (const [fileName, info] of Object.entries(state.rootFolder.children)) {
-            const elem = document.createElement('script')
-            elem.setAttribute('id', `${EMBEDDED_FILE_ID_PREFIX}${fileName}`)
-            elem.setAttribute('class', EMBEDDED_FILE_CLASS)
-            elem.setAttribute('type', APPLICATION_DATA_MIME_TYPE)
+      
+        await saveFolder(headElem, state.rootFolder, "")
 
-            if (info.type === "markdown") {
-                elem.innerHTML = info.markdown
-            }
-            headElem.insertAdjacentElement("afterend", elem)                        
-        }
-
-        const config = {
-            ...state.config
-        }
-        config.topPage = state.currentPage
-        const elem = document.createElement('script')
-        elem.setAttribute('id', `${EMBEDDED_FILE_ID_PREFIX}${CONFIG_ID}`)
-        elem.setAttribute('class', EMBEDDED_FILE_CLASS)
-        elem.setAttribute('type', APPLICATION_DATA_MIME_TYPE)
-        elem.innerHTML = JSON.stringify(config)
-        headElem.insertAdjacentElement("afterend", elem)                        
+        headElem.insertAdjacentElement("afterend", createJsonElement(CONFIG_ID, {
+            ...state.config,
+            topPage: state.currentPage
+        }, 0))
     }
 
     await writable.write('<!DOCTYPE html>\n' + document.documentElement.outerHTML)

@@ -1,6 +1,7 @@
 import { Reducer } from "../utils/FdtFlux"
 import { TopFdt } from "./TopFdt"
 import { getFile, updateDataFile, updateMarkdownFile, Folder, createRootFolder } from "../markdown/FileTree"
+import { normalizePath } from "../fs/localFileFS"
 import { ConfigType } from "../config"
 
 
@@ -13,19 +14,21 @@ export type TopStateType = {
 
 export const topReducer = new Reducer<TopFdt, TopStateType>()
     .add("updateMarkdownFile", (state, payload)=>{
-        updateMarkdownFile(state.rootFolder, payload.fileName, payload.markdownFile)        
+        const fileName = normalizePath(payload.fileName)
+        updateMarkdownFile(state.rootFolder, fileName, payload.markdownFile)        
         return {
             ...state,
-            currentPage: getFile(state.rootFolder, state.currentPage) === undefined ? payload.fileName : state.currentPage,
+            currentPage: getFile(state.rootFolder, state.currentPage) === undefined ? fileName : state.currentPage,
             seq: state.seq + 1
         }
     })
     .add("updateDataFile", (state, payload)=>{        
+        const fileName = normalizePath(payload.fileName)
         const blob = new Blob( [payload.data], { type: payload.mime })
         const dataRef = URL.createObjectURL(blob)
-        updateDataFile(state.rootFolder, payload.fileName, payload.timestamp, payload.mime, dataRef, payload.data)
+        updateDataFile(state.rootFolder, fileName, payload.timestamp, payload.mime, dataRef, payload.data)
         const markdownFile = getFile(state.rootFolder, state.currentPage)
-        if ((markdownFile !== undefined) && (markdownFile.type === "markdown") && (markdownFile.imageList.includes(payload.fileName) || markdownFile.linkList.includes(payload.fileName))) {            
+        if ((markdownFile !== undefined) && (markdownFile.type === "markdown") && (markdownFile.imageList.includes(fileName) || markdownFile.linkList.includes(fileName))) {            
             return {
                 ...state,
                 seq: state.seq + 1
@@ -38,7 +41,7 @@ export const topReducer = new Reducer<TopFdt, TopStateType>()
     .add("updateCurrentPage", (state, payload)=>{        
         return {
             ...state,
-            currentPage: payload.name,            
+            currentPage: normalizePath(payload.name)
         }
     })
     .add("resetRootFolder", (state) => {

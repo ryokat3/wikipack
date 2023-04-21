@@ -54,7 +54,8 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
         ></SearchAppBar>
         <MarkdownView
             markdownData={markdown}
-            rootFolder={state.rootFolder}      
+            rootFolder={state.rootFolder}
+            filePath={state.currentPage}
             isMarkdown={makeMarkdownFileRegexChecker(state.config.markdownFileRegex)}      
         ></MarkdownView>
     </TopContext.Provider>

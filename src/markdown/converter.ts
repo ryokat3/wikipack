@@ -1,7 +1,7 @@
 import { marked, Slugger } from 'marked'
 import hljs from 'highlight.js'
 import { MarkdownFile, Folder, getFile } from "./FileTree"
-import { splitPath } from "../fs/localFileFS"
+import { splitPath, getDir, addPath } from "../fs/localFileFS"
 
 function isURL(url:string):boolean {
     try {
@@ -46,11 +46,14 @@ export function getMarkdownFile(markdown:string, fileName:string, timestamp:numb
 class MyRenderer extends marked.Renderer {
 
     public title: string | undefined = undefined
+    private readonly dirPath:string
 
     public constructor(
         private readonly rootFolder:Folder,
+        private readonly filePath:string,
         private readonly isMarkdown:(fileName:string)=>boolean) {
         super()
+        this.dirPath = getDir(this.filePath)
     }
 
     public heading(text: string, level: 1 | 2 | 3 | 4 | 5 | 6, raw: string, slugger: Slugger) {
@@ -63,7 +66,8 @@ class MyRenderer extends marked.Renderer {
     public link(href: string, title: string, text: string) {
         //if (href.toLowerCase().match(/\.(md|mkd|markdown)$/)) {
         if (this.isMarkdown(href)) {
-            return super.link(`javascript:_open_markdown('${href}')`, title, text)
+            const fileName = addPath(this.dirPath, href)
+            return super.link(`javascript:_open_markdown('${fileName}')`, title, text)
         }
         else {
             return super.link(href, title, text)
@@ -71,7 +75,8 @@ class MyRenderer extends marked.Renderer {
     }
 
     public image(href:string, title:string, text:string) {      
-        const imageFile = getFile(this.rootFolder, href)
+        const fileName = addPath(this.dirPath, href)
+        const imageFile = getFile(this.rootFolder, fileName)
         if ((imageFile !== undefined) && (imageFile.type === 'data')) {
             return super.image(imageFile.dataRef, title, text)
         }
@@ -94,11 +99,11 @@ function decodeUriOrEcho(uri: string) {
     }
 }
 
-export function getRenderer(rootFolder: Folder,  isMarkdown:(fileName:string)=>boolean) {
+export function getRenderer(rootFolder: Folder,  filePath:string, isMarkdown:(fileName:string)=>boolean) {
     return (text: string): { html: string, title: string } => {
         // hljs.highlightAll()
 
-        const myRenderer = new MyRenderer(rootFolder, isMarkdown)
+        const myRenderer = new MyRenderer(rootFolder, filePath, isMarkdown)
         marked.setOptions({
             renderer: myRenderer,
             // highlight: (code: string, _lang: string, callback?: (error: any, code: string) => void) => {
