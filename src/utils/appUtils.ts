@@ -90,6 +90,10 @@ export function getDir(fileName:string):string {
     return splitPath(fileName).slice(0,-1).join('/')
 }
 
+export function getFileName(filePath:string):string {
+    return splitPath(filePath)?.pop() || ""
+}
+
 /************************************************************************************************ 
 Markdown File
 ************************************************************************************************/

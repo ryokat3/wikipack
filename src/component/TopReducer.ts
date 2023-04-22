@@ -25,8 +25,7 @@ export const topReducer = new Reducer<TopFdt, TopStateType>()
     .add("updateDataFile", (state, payload)=>{        
         const fileName = normalizePath(payload.fileName)
         const blob = new Blob( [payload.data], { type: payload.mime })
-        const dataRef = URL.createObjectURL(blob)
-        // updateDataFile(state.rootFolder, fileName, payload.timestamp, payload.mime, dataRef, payload.data)
+        const dataRef = URL.createObjectURL(blob)        
         updateDataFile(state.rootFolder, fileName, {
             type: "data",
             dataRef: dataRef,

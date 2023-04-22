@@ -3,14 +3,16 @@ import { topDispatcher, TopDispatcherType } from "./TopDispatcher"
 import { createContext, useEffect } from "react"
 import { topReducer, TopStateType } from "./TopReducer"
 import { MarkdownView } from "./MarkdownView"
+import { FileTreeView } from "./FileTreeView"
 import { SearchAppBar } from "./SearchAppBar"
 import { setupDragAndDrop } from "../file/dragAndDrop"
 import { WorkerInvoke } from "../utils/WorkerMessage"
 import { FileWorkerMessageType } from "../fileWorker/FileWorkerMessageType"
-import { getFile } from "../file/FileTree"
+import { getFile, getMarkdownTree } from "../file/FileTree"
 import { makeMarkdownFileRegexChecker } from "../utils/appUtils"
 import { ConfigType } from "../config"
 import { cloneThisHTML } from "../file/clone"
+import Grid from "@mui/material/Grid"
 
 
 export interface TopContextType {
@@ -52,14 +54,23 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
 
     return <TopContext.Provider value={context}>
         <SearchAppBar
-            title={title}            
-            saveDocument={async ()=> cloneThisHTML(state)}
+            title={title}
+            saveDocument={async () => cloneThisHTML(state)}
         ></SearchAppBar>
-        <MarkdownView
-            markdownData={markdown}
-            rootFolder={state.rootFolder}
-            filePath={state.currentPage}
-            isMarkdown={makeMarkdownFileRegexChecker(state.config.markdownFileRegex)}      
-        ></MarkdownView>
+        <Grid container spacing={2}>
+            <Grid item xs={3}>
+                <FileTreeView root={getMarkdownTree(state.rootFolder)}></FileTreeView>
+            </Grid>
+            <Grid item xs={6}>
+                <MarkdownView
+                    markdownData={markdown}
+                    rootFolder={state.rootFolder}
+                    filePath={state.currentPage}
+                    isMarkdown={makeMarkdownFileRegexChecker(state.config.markdownFileRegex)}
+                ></MarkdownView>
+            </Grid>
+            <Grid item xs={3}>                
+            </Grid>
+        </Grid>
     </TopContext.Provider>
 }
