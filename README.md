@@ -1,36 +1,35 @@
 # Markdown All-in-One HTML
 
-A portable HTML file to render the embedded Markdown without any preview applications/plugins.
+A portable HTML file to pack markdown, image, any data files into itself.
 
 ## Usage
 
-Copy the markdown-all-in-one.html file, and edit the Markdown
-between `<script type="text/template" id="markdown">`
-and `</screen>` at the top.
+1. Download [this HTML file](https://raw.githubusercontent.com/ryokat3/markdown-all-in-one-html/main/markdown-all-in-one.html)
 
-```html
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<script type="text/template" id="markdown">
+2. Open the downloaded HTML file
 
-# Write your Markdown here !!
+3. Drag-and-drop the directory (not a file [^1]) holding your markdown and image files
 
-</script>
-```
+4. Select 'Save as...' from the pull-down menu
 
-## Keywords Highlight
+5. Open the saved HTML file. You can find that the saved HTML file embeds all your markdown and image files.
+   You can transfer it to anyone as a file, as an attachment of mail, via file server, memory device etc.
 
-A code block is highlighted by [highlight.js](https://highlightjs.org/).
-Other than the languages supported by [highlight.js](https://highlightjs.org/),
-any keywords can be highlighed with a special language name like
+
+## Extended Markdown Syntax
+
+### Keywords Highlight
+
+Any keywords can be highlighed with a special language name like
+
 `#<text-color>[word1,word2,word3,...];%<background-color>[word4,word5,...];#....`.
 
 ``````````plaintext
-```%yellow[foo,bar];#ff0000[baz,qux]
-My name is foo, and
-its name is bar.
+```#blue[text-blue,foo];#dc143c[text-#dc143c,bar];%yellow[background-yellow,baz];%7fff00[background-#7fff00]
+text-blue
+text-#dc143c
+background-yellow
+background-#7fff00
 ```
 ``````````
 
@@ -38,37 +37,16 @@ will be rendered as
 
 ```html
 <pre>
-<code>
-My name is <span style="background-color:yellow">foo</span>, and
-its name is <span style="color:#ff0000">bar</span>.
-</code>
+   <code class="language-#blue[text-blue,foo];#dc143c[text-#dc143c,bar];%yellow[background-yellow,baz];%7fff00[background-#7fff00]">
+   <pre>
+      <code>
+         <span style="color:blue">text-blue</span>
+         <span style="color:#dc143c">text-#dc143c</span>
+         <span style="background-color:yellow">background-yellow</span>
+         <span style="background-color:#7fff00">background-#7fff00</span></code></pre>
+      </code>
+   </pre>
 </pre>
 ```
 
-## Customize
-
-In order to apply othor CSS on your preference, edit the template
-HTML file, and generate new HTML file with other CSS inlined.
-
-1. Download npm modules
-
-   ```shell
-   npm install
-   ```
-
-2. Edit the HTML template
-   In order to apply anothor CSSes on your preference, edit `html/template.html`.
-
-   ```html
-   <link inline rel="stylesheet" href="../node_modules/highlight.js/styles/monokai.css"/>
-   <link inline rel="stylesheet" href="github.css"/>
-   ```
-
-   [MarkedCustomStyles](https://github.com/ttscoff/MarkedCustomStyles) provides
-   excellent CSSes that can be used for 'marked' HTML files.
-
-3. Generate new HTML file
-
-   ```shell
-   npm run build
-   ```
+[^1]: No reference image will be displayed if a markdown file (not directory) is drag-and-dropped

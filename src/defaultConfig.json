@@ -1,5 +1,5 @@
 {
-    "topPage": "index.md",
+    "topPage": "Welcome.md",
     "markdownFileRegex": [ ".*\\.(md|markdown)" ],
     "initialConfig": true
 }

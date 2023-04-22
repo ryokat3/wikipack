@@ -1,9 +1,7 @@
 
-# Write your Markdown here !!
+__Get your markdown notes packed and share !__
 
-```#blue[text-blue,foo];#dc143c[text-#dc143c,bar];%yellow[background-yellow,baz];%7fff00[background-#7fff00]
-text-blue
-text-#dc143c
-background-yellow
-background-#7fff00
-```
+### Usage
+
+1. Drag-and-drop a directory of your markdown notes
+2. Select 'Save as...' from the pull-down menu

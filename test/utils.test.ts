@@ -1,5 +1,5 @@
 import * as chai from "chai"
-import { splitPath } from "../src/fs/localFileFS"
+import { splitPath } from "../src/utils/appUtils"
 
 describe("Javascript common", ()=>{
     it("splitPath", ()=>{        

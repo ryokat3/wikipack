@@ -35,7 +35,7 @@ const commonConfig:Configuration = {
 const fileWorkerConfig:Configuration = {  
   ...commonConfig,
   name: 'fileWorker',
-  entry: './src/fileWorker/index.ts',      
+  entry: './src/fileWorker/fileWorker.ts',      
   output: {
     filename: 'fileWorker.bundle.js.asdata',
     path: path.join(__dirname, 'src/tmp'),
