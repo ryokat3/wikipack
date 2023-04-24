@@ -1,6 +1,6 @@
 import { marked, Slugger } from 'marked'
 import hljs from 'highlight.js'
-import { MarkdownFile, Folder, getFile } from "../file/FileTree"
+import { MarkdownFile, Folder, getFile } from "../data/FileTree"
 import { splitPath, getDir, addPath } from "../utils/appUtils"
 
 function isURL(url:string):boolean {

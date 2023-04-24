@@ -1,4 +1,4 @@
-import { FileWorkerMessageType } from "../fileWorker/FileWorkerMessageType"
+import { FileWorkerMessageType } from "../localFile/FileWorkerMessageType"
 
 export type TopFdt = {
     updateMarkdownFile: FileWorkerMessageType["updateMarkdownFile"]['response'],

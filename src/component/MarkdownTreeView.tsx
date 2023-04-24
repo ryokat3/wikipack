@@ -1,5 +1,5 @@
 import React from "react"
-import { MarkdownTreeType, isMarkdownFile, getMarkdownFile } from "../file/FileTree"
+import { MarkdownTreeType, isMarkdownFile, getMarkdownFile } from "../data/MarkdownFileTree"
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import { TreeView, TreeItem } from '@mui/lab'
@@ -16,7 +16,7 @@ const MarkdownFileItem: React.FunctionComponent<MarkdownFileItemProps> = (props:
 
 interface FolderViewProps {
     root: MarkdownTreeType
-    pathName: string    
+    pathName: string  
 }
 
 export const FolderView: React.FunctionComponent<FolderViewProps> = (props: FolderViewProps) => {

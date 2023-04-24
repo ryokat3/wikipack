@@ -1,5 +1,5 @@
 import { WorkerInvoke } from "../utils/WorkerMessage"
-import { FileWorkerMessageType } from "../fileWorker/FileWorkerMessageType"
+import { FileWorkerMessageType } from "../localFile/FileWorkerMessageType"
 import { ConfigType } from "../config"
 import { TopDispatcherType } from "../component/TopDispatcher"
 

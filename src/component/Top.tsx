@@ -3,15 +3,16 @@ import { topDispatcher, TopDispatcherType } from "./TopDispatcher"
 import { createContext, useEffect } from "react"
 import { topReducer, TopStateType } from "./TopReducer"
 import { MarkdownView } from "./MarkdownView"
-import { FileTreeView } from "./FileTreeView"
+import { FileTreeView } from "./MarkdownTreeView"
 import { SearchAppBar } from "./SearchAppBar"
 import { setupDragAndDrop } from "../file/dragAndDrop"
 import { WorkerInvoke } from "../utils/WorkerMessage"
-import { FileWorkerMessageType } from "../fileWorker/FileWorkerMessageType"
-import { getFile, getMarkdownTree } from "../file/FileTree"
+import { FileWorkerMessageType } from "../localFile/FileWorkerMessageType"
+import { getFile } from "../data/FileTree"
+import { getMarkdownTree } from "../data/MarkdownFileTree"
 import { makeMarkdownFileRegexChecker } from "../utils/appUtils"
 import { ConfigType } from "../config"
-import { cloneThisHTML } from "../file/clone"
+import { cloneThisHTML } from "../element/dataToElement"
 import Grid from "@mui/material/Grid"
 
 
@@ -47,7 +48,7 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
         }
     }, [])
 
-    const currentFile = getFile(state.rootFolder, state.currentPage)
+    const currentFile = getFile(state.rootFolder, state.currentPage)    
 
     const [title, markdown] = ((currentFile !== undefined) && (currentFile.type === "markdown")) ? [ state.currentPage, currentFile.markdown] : [ "ERROR", `${state.currentPage} not found`]
 

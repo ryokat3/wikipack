@@ -1,4 +1,4 @@
-import { MarkdownFile } from "../file/FileTree"
+import { MarkdownFile } from "../data/FileTree"
 
 export type FileWorkerMessageType = {
     openFile : {

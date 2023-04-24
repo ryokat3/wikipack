@@ -1,6 +1,6 @@
 import { Reducer } from "../utils/FdtFlux"
 import { TopFdt } from "./TopFdt"
-import { getFile, updateDataFile, updateMarkdownFile, Folder, createRootFolder } from "../file/FileTree"
+import { getFile, updateDataFile, updateMarkdownFile, Folder, createRootFolder } from "../data/FileTree"
 import { normalizePath } from "../utils/appUtils"
 import { ConfigType } from "../config"
 

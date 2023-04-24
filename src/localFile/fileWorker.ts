@@ -1,7 +1,7 @@
 import { FileWorkerMessageType } from "./FileWorkerMessageType"
 import { WorkerThreadHandler } from "../utils/WorkerMessage"
 import { getMarkdownFile} from "../markdown/converter"
-import { collectFiles, getHandle } from "../file/localFile"
+import { collectFiles, getHandle } from "./fileRW"
 import { makeMarkdownFileRegexChecker } from "../utils/appUtils"
 
 
@@ -65,9 +65,8 @@ self.onmessage = new WorkerThreadHandler<FileWorkerMessageType>()
     })
     .addRequestHandler("openDirectory", async (payload, postEvent)=>{                
         for (const [name, handle] of Object.entries(await collectFiles(payload.handle, makeMarkdownFileRegexChecker(payload.markdownFileRegex)))) {
-            const result = await updateMarkdownFile(handle, name)
-            console.log(name)
-            console.log(result.markdownFile.markdown)
+            const result = await updateMarkdownFile(handle, name)            
+            
             postEvent.send("updateMarkdownFile", result)
 
             for (const name of result.markdownFile.imageList) {

@@ -7,7 +7,7 @@ function newInlineSourcePlugin (assetFileName:string, rootPath:string, template:
     return (compiler:Compiler) => {
         compiler.hooks.assetEmitted.tap('Inline Source', async (fileName:string) => {
             if (assetFileName === fileName) {
-                const html = await inlineSource(template, { rootpath: rootPath, compress: false })                
+                const html = await inlineSource(template, { rootpath: rootPath, compress: false })                                
                 fs.writeFileSync(target, html)
             }
         })
@@ -27,7 +27,7 @@ const commonConfig:Configuration = {
       {
         test: /\.(asdata|md)$/i,
         type: 'asset/source'
-      },
+      }
     ]
   }
 }
@@ -35,7 +35,7 @@ const commonConfig:Configuration = {
 const fileWorkerConfig:Configuration = {  
   ...commonConfig,
   name: 'fileWorker',
-  entry: './src/fileWorker/fileWorker.ts',      
+  entry: './src/localFile/fileWorker.ts',      
   output: {
     filename: 'fileWorker.bundle.js.asdata',
     path: path.join(__dirname, 'src/tmp'),

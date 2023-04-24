@@ -1,4 +1,4 @@
-import { getElementFileText } from "./file/elementFile"
+import { getElementFileText } from "./element/dataFromElement"
 import { CONFIG_ID } from "./constant"
 import defaultConfig from "./defaultConfig.json"
 
