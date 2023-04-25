@@ -24,11 +24,15 @@ export async function dataUrlEncode(data:string|ArrayBuffer, mime:string):Promis
 }
   
 export async function dataUrlDecode(dataUrl:string):Promise<string> {
-    return fetch(dataUrl).then(response => response.text());
-  }
+    return fetch(dataUrl).then(response => response.text())
+}
   
 export async function dataUrlDecodeAsBlob(dataUrl:string):Promise<Blob> {
-    return fetch(dataUrl).then(response => response.blob());
+    return fetch(dataUrl).then(response => response.blob())
+} 
+
+export async function dataUrlDecodeAsArrayBuffer(dataUrl:string):Promise<ArrayBuffer> {
+    return fetch(dataUrl).then(response => response.arrayBuffer())
 } 
 
 export function arrayBufferToString(buf:ArrayBuffer) {    

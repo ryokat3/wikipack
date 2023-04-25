@@ -12,7 +12,8 @@ import { getFile } from "../data/FileTree"
 import { getMarkdownTree } from "../data/MarkdownFileTree"
 import { makeMarkdownFileRegexChecker } from "../utils/appUtils"
 import { ConfigType } from "../config"
-import { cloneThisHTML } from "../element/dataToElement"
+import { saveAsHtml } from "../file/saveAsHtml"
+import { extract } from "../file/extract"
 import Grid from "@mui/material/Grid"
 
 
@@ -56,7 +57,8 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
     return <TopContext.Provider value={context}>
         <SearchAppBar
             title={title}
-            saveDocument={async () => cloneThisHTML(state)}
+            saveDocument={async () => saveAsHtml(state)}
+            extract={async () => extract(state.rootFolder)}            
         ></SearchAppBar>
         <Grid container spacing={2}>
             <Grid item xs={3}>

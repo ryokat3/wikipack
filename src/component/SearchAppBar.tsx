@@ -56,7 +56,8 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 
 export interface SearchAppBarProps {
     title: string,
-    saveDocument: ()=>Promise<void>
+    saveDocument: ()=>Promise<void>,
+    extract: ()=>Promise<void>
 }
 
 export const SearchAppBar: React.FunctionComponent<SearchAppBarProps> = (props: SearchAppBarProps) => {
@@ -71,6 +72,10 @@ export const SearchAppBar: React.FunctionComponent<SearchAppBarProps> = (props: 
     const handleSaveAs = async () => {
         setAnchorEl(null)
         await props.saveDocument()     
+    }
+    const handleExtract = async () => {
+        setAnchorEl(null)
+        await props.extract()     
     }
 
     // TODO: temporary
@@ -103,7 +108,8 @@ export const SearchAppBar: React.FunctionComponent<SearchAppBarProps> = (props: 
                         }}
                     >
                         <MenuItem onClick={handleSaveAs}>Save as...</MenuItem>
-                        <MenuItem onClick={handleClose}>hehe</MenuItem>                                                
+                        <MenuItem onClick={handleExtract}>Extract...</MenuItem>
+                        <MenuItem onClick={handleClose}>close</MenuItem>                                                
                     </Menu>
                     <Typography
                         variant="h6"

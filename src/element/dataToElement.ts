@@ -1,22 +1,10 @@
-import { TopStateType } from "../component/TopReducer"
-import { EMBEDDED_MARKDOWN_FILE_CLASS, EMBEDDED_DATA_FILE_CLASS, EMBEDDED_FILE_ID_PREFIX, EMBEDDED_FILE_HEAD_ID, APPLICATION_DATA_MIME_TYPE, CONFIG_ID } from "../constant"
+
+import { EMBEDDED_MARKDOWN_FILE_CLASS, EMBEDDED_DATA_FILE_CLASS, EMBEDDED_FILE_ID_PREFIX, APPLICATION_DATA_MIME_TYPE } from "../constant"
 import { MarkdownFile, DataFile, Folder } from '../data/FileTree'
 import { dataUrlEncode } from '../utils/appUtils'
-import { getElementFile } from "./dataFromElement"
 import { addPath } from "../utils/appUtils"
 
-export async function getNewFileHandle() {
-    return await window.showSaveFilePicker({
-        types: [
-            {
-                description: "HTML file",
-                accept: {
-                    "text/html": [ ".html" ]
-                }
-            }
-        ]
-    })
-}
+
 
 function createFileElement(fileName:string, timestamp:number):HTMLScriptElement {
 
@@ -64,14 +52,14 @@ async function saveDataFileToElement(fileName:string, dataFile:DataFile):Promise
     }
 }
 
-function saveJsonToElement(fileName:string, data:Object, timestamp:number) {
+export function saveJsonToElement(fileName:string, data:Object, timestamp:number) {
     const elem = createFileElement(fileName, timestamp)
     elem.innerHTML = JSON.stringify(data)
     return elem
 }
 
 
-async function saveFolderToElement(headElem:HTMLElement, folder:Folder, pathName:string) {
+export async function saveFolderToElement(headElem:HTMLElement, folder:Folder, pathName:string) {
     for (const [fileName, info] of Object.entries(folder.children)) {
         const filePath = addPath(pathName, fileName)
         if (info.type === "markdown") {
@@ -90,38 +78,4 @@ async function saveFolderToElement(headElem:HTMLElement, folder:Folder, pathName
             await saveFolderToElement(headElem, info, filePath)
         }
     }
-}
-
-function removeElementList(elemList:HTMLCollectionOf<Element>):void {
-    for (const elem of Array.from(elemList)) {
-        elem.remove()
-    }    
-}
-
-export async function cloneThisHTML(state:TopStateType) {
-
-    removeElementList(document.getElementsByClassName(EMBEDDED_MARKDOWN_FILE_CLASS))
-    removeElementList(document.getElementsByClassName(EMBEDDED_DATA_FILE_CLASS))
-    const configElement = getElementFile(CONFIG_ID)
-    if (configElement !== null) {
-        configElement.remove()
-    }
-
-    const headElem = document.getElementById(EMBEDDED_FILE_HEAD_ID)
-
-    if (headElem !== null) {
-      
-        await saveFolderToElement(headElem, state.rootFolder, "")
-
-        headElem.insertAdjacentElement("afterend", saveJsonToElement(CONFIG_ID, {
-            ...state.config,
-            topPage: state.currentPage,
-            initialConfig: false
-        }, 0))
-    }
-
-    const handle = await getNewFileHandle()
-    const writable = await handle.createWritable()
-    await writable.write('<!DOCTYPE html>\n' + document.documentElement.outerHTML)    
-    await writable.close()    
 }
