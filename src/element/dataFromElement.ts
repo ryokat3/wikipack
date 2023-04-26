@@ -1,8 +1,8 @@
-import { DataFile, MarkdownFile } from "../data/FileTree"
-import { EMBEDDED_FILE_ID_PREFIX, EMBEDDED_DATA_FILE_CLASS, EMBEDDED_MARKDOWN_FILE_CLASS } from "../constant"
+import { DataFile, CssFile, MarkdownFile } from "../data/FileTree"
+import { EMBEDDED_FILE_ID_PREFIX, EMBEDDED_DATA_FILE_CLASS, EMBEDDED_MARKDOWN_FILE_CLASS, EMBEDDED_CSS_FILE_CLASS } from "../constant"
 import { dataUrlDecode, dataUrlDecodeAsBlob } from "../utils/appUtils"
 import { getMarkdownFile } from "../markdown/converter"
-import { updateDataFile, updateMarkdownFile, Folder } from "../data/FileTree"
+import { updateDataFile, updateMarkdownFile, updateCssFile, Folder } from "../data/FileTree"
 
 export function getElementFile(fileName:string):HTMLElement|null {
     return document.getElementById(EMBEDDED_FILE_ID_PREFIX + fileName)
@@ -27,6 +27,25 @@ async function getMarkdownFileFromElement(elem:Element):Promise<[string, Markdow
         const timestamp = (timestampStr !== null) ? parseInt(timestampStr) : 0    
 
         return [fileName, getMarkdownFile(markdown, fileName, timestamp)]
+    }
+    else {
+        return undefined
+    }
+}
+
+async function getCssFileFromElement(elem:Element):Promise<[string, CssFile] | undefined> {    
+    const fileName = getFileNameFromElement(elem)
+
+    if (fileName !== undefined) {    
+        const css = await dataUrlDecode(elem.innerHTML)
+        const timestampStr = elem.getAttribute("timestamp")
+        const timestamp = (timestampStr !== null) ? parseInt(timestampStr) : 0    
+
+        return [fileName, {
+            type: "css",
+            timestamp: timestamp,
+            css: css
+        }]
     }
     else {
         return undefined
@@ -63,6 +82,18 @@ export async function injectAllMarkdownFileFromElement(root:Folder) {
             const fileData = await getMarkdownFileFromElement(elem)
             if (fileData !== undefined) {                                
                 updateMarkdownFile(root, fileData[0], fileData[1])
+            }
+        }
+    }    
+}
+
+export async function injectAllCssFileFromElement(root:Folder) {
+    const cssElemList = document.getElementsByClassName(EMBEDDED_CSS_FILE_CLASS)    
+    for (const elem of Array.from(cssElemList)) {        
+        if (elem !== null) {
+            const fileData = await getCssFileFromElement(elem)
+            if (fileData !== undefined) {                                
+                updateCssFile(root, fileData[0], fileData[1])
             }
         }
     }    

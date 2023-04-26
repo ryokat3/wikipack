@@ -6,7 +6,7 @@ import { FileWorkerMessageType } from "./localFile/FileWorkerMessageType"
 import { readConfig } from "./config"
 import { TopStateType } from "./component/TopReducer"
 import { createRootFolder, updateMarkdownFile } from "./data/FileTree"
-import { injectAllMarkdownFileFromElement, injectAllDataFileFromElement } from "./element/dataFromElement"
+import { injectAllMarkdownFileFromElement, injectAllCssFileFromElement, injectAllDataFileFromElement } from "./element/dataFromElement"
 import { TOP_COMPONENT_ID } from "./constant"
 
 import fileWorkerJS from "./tmp/fileWorker.bundle.js.asdata"
@@ -21,6 +21,7 @@ window.onload = async function () {
 
     const rootFolder = createRootFolder()
     await injectAllMarkdownFileFromElement(rootFolder)
+    await injectAllCssFileFromElement(rootFolder)
     await injectAllDataFileFromElement(rootFolder)
 
     if (config.initialConfig) {
@@ -37,6 +38,7 @@ window.onload = async function () {
         config: config,
         rootFolder: rootFolder,
         currentPage: config.topPage,
+        currentCss: {},
         seq: 0
     }
 

@@ -15,6 +15,15 @@ A portable HTML file to pack markdown, image, any data files into itself.
 5. Open the saved HTML file. You can find that the saved HTML file embeds all your markdown and image files.
    You can transfer it to anyone as a file, as an attachment of mail, via file server, memory device etc.
 
+## CSS
+
+CSS files in the same directory and 'css' sub-directory of the markdown file will be loaded and applied.
+
+### Recommend CSS
+
+- [GitHub Flavoured](https://github.com/sindresorhus/github-markdown-css)
+- [highlight.js](https://github.com/highlightjs/highlight.js/) (including many styles)
+
 
 ## Extended Markdown Syntax
 

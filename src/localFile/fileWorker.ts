@@ -2,7 +2,7 @@ import { FileWorkerMessageType } from "./FileWorkerMessageType"
 import { WorkerThreadHandler } from "../utils/WorkerMessage"
 import { getMarkdownFile} from "../markdown/converter"
 import { collectFiles, getHandle } from "./fileRW"
-import { makeMarkdownFileRegexChecker } from "../utils/appUtils"
+import { makeFileRegexChecker } from "../utils/appUtils"
 
 
 // Not used now...
@@ -18,7 +18,7 @@ export function getMimeType(fileName:string, typeName:string="image") {
 }
 */
 
-async function updateMarkdownFile(handle: FileSystemFileHandle, fileName: string|undefined = undefined ): Promise<FileWorkerMessageType["updateMarkdownFile"]["response"]> {
+async function readMarkdownFile(handle: FileSystemFileHandle, fileName: string|undefined = undefined ): Promise<FileWorkerMessageType["updateMarkdownFile"]["response"]> {
     return await new Promise<FileWorkerMessageType["updateMarkdownFile"]["response"]>(async (resolve) => {
         const blob = await handle.getFile()
 
@@ -38,7 +38,26 @@ async function updateMarkdownFile(handle: FileSystemFileHandle, fileName: string
     })    
 }
 
-async function updateDataFile(handle: FileSystemFileHandle, fileName: string): Promise<FileWorkerMessageType["updateDataFile"]["response"]> {
+async function readCssFile(handle: FileSystemFileHandle, fileName: string|undefined = undefined ): Promise<FileWorkerMessageType["updateCssFile"]["response"]> {
+    return await new Promise<FileWorkerMessageType["updateCssFile"]["response"]>(async (resolve) => {
+        const blob = await handle.getFile()
+
+        const reader = new FileReader()
+        reader.onload = (e: ProgressEvent<FileReader>) => {
+            if ((e.target !== null) && (e.target.result !== null) && (typeof e.target.result == 'string')) {
+                const cssFileName = (fileName !== undefined) ? fileName : blob.name                                
+                resolve({
+                    fileName: cssFileName,
+                    timestamp: blob.lastModified,
+                    data: e.target.result
+                })                
+            }
+        }
+        reader.readAsText(blob, "utf-8")
+    })    
+}
+
+async function readDataFile(handle: FileSystemFileHandle, fileName: string): Promise<FileWorkerMessageType["updateDataFile"]["response"]> {
     return await new Promise<FileWorkerMessageType["updateDataFile"]["response"]>(async (resolve) => {
         const blob = await handle.getFile()         
         
@@ -60,22 +79,25 @@ async function updateDataFile(handle: FileSystemFileHandle, fileName: string): P
 
 self.onmessage = new WorkerThreadHandler<FileWorkerMessageType>()
     .addRequestHandler("openFile", async (payload, postEvent) => {
-        const result = await updateMarkdownFile(payload.handle)
+        const result = await readMarkdownFile(payload.handle)
         postEvent.send("updateMarkdownFile",  result)        
     })
     .addRequestHandler("openDirectory", async (payload, postEvent)=>{                
-        for (const [name, handle] of Object.entries(await collectFiles(payload.handle, makeMarkdownFileRegexChecker(payload.markdownFileRegex)))) {
-            const result = await updateMarkdownFile(handle, name)            
-            
+        for (const [name, handle] of Object.entries(await collectFiles(payload.handle, makeFileRegexChecker(payload.markdownFileRegex)))) {
+            const result = await readMarkdownFile(handle, name)                        
             postEvent.send("updateMarkdownFile", result)
 
             for (const name of result.markdownFile.imageList) {
                 const handle = await getHandle(payload.handle, name)
                 if ((handle !== undefined) && (handle.kind === "file")) {                    
-                    const dataFile = await updateDataFile(handle as FileSystemFileHandle, name)
-                    postEvent.send("updateDataFile", await updateDataFile(handle as FileSystemFileHandle, name), [ dataFile.data ])
+                    const dataFile = await readDataFile(handle as FileSystemFileHandle, name)
+                    postEvent.send("updateDataFile", await readDataFile(handle as FileSystemFileHandle, name), [ dataFile.data ])
                 }
             }
+        }
+        for (const [name, handle] of Object.entries(await collectFiles(payload.handle, makeFileRegexChecker(payload.cssFileRegex)))) {
+            const result = await readCssFile(handle, name)                        
+            postEvent.send("updateCssFile", result)
         }
     })
     .build()    

@@ -1,6 +1,6 @@
 import React from "react"
 import { topDispatcher, TopDispatcherType } from "./TopDispatcher"
-import { createContext, useEffect } from "react"
+import { createContext, useEffect/*, useLayoutEffect */} from "react"
 import { topReducer, TopStateType } from "./TopReducer"
 import { MarkdownView } from "./MarkdownView"
 import { FileTreeView } from "./MarkdownTreeView"
@@ -10,10 +10,12 @@ import { WorkerInvoke } from "../utils/WorkerMessage"
 import { FileWorkerMessageType } from "../localFile/FileWorkerMessageType"
 import { getFile } from "../data/FileTree"
 import { getMarkdownTree } from "../data/MarkdownFileTree"
-import { makeMarkdownFileRegexChecker } from "../utils/appUtils"
+import { makeFileRegexChecker } from "../utils/appUtils"
 import { ConfigType } from "../config"
 import { saveAsHtml } from "../file/saveAsHtml"
 import { extract } from "../file/extract"
+import { getCurrentCssElement, addCssElement } from "../element/styleElement"
+import { FILE_NAME_ATTR } from "../constant"
 import Grid from "@mui/material/Grid"
 
 
@@ -42,12 +44,35 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
     // Call once
     useEffect(() => {
         props.fileWorker.addEventHandler("updateMarkdownFile", (payload)=>dispatcher.updateMarkdownFile(payload))
+        props.fileWorker.addEventHandler("updateCssFile", (payload)=>dispatcher.updateCssFile(payload))
         props.fileWorker.addEventHandler("updateDataFile", (payload)=>dispatcher.updateDataFile(payload))
         setupDragAndDrop(props.fileWorker, dispatcher, props.config)
         _open_markdown = function(name:string) {
             dispatcher.updateCurrentPage({ name:name })
         }
     }, [])
+
+    // Call before render
+    useEffect(() => {        
+        const cssElementNameList = Object.keys(state.currentCss)
+        getCurrentCssElement().forEach((elem)=>{
+            const cssFileName = elem.getAttribute(FILE_NAME_ATTR)
+            if ((cssFileName === null) || !(cssFileName in cssElementNameList)) {
+                elem.remove()
+            }
+            else if (state.currentCss[cssFileName] >= state.seq) {
+                elem.remove()
+            }        
+        })
+        Object.entries(state.currentCss).forEach(([cssFileName, seq])=>{
+            if (seq >= state.seq) {
+                const result = getFile(state.rootFolder, cssFileName)
+                if ((result !== undefined) && (result.type === "css")) {
+                    addCssElement(cssFileName, result.css, state.currentCss[cssFileName])
+                }
+            }
+        })     
+    }, [ state.currentCss ])
 
     const currentFile = getFile(state.rootFolder, state.currentPage)    
 
@@ -69,7 +94,7 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
                     markdownData={markdown}
                     rootFolder={state.rootFolder}
                     filePath={state.currentPage}
-                    isMarkdown={makeMarkdownFileRegexChecker(state.config.markdownFileRegex)}
+                    isMarkdown={makeFileRegexChecker(state.config.markdownFileRegex)}
                 ></MarkdownView>
             </Grid>
             <Grid item xs={3}>                

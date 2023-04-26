@@ -16,15 +16,21 @@ export type MarkdownFile = {
     linkList: string[]
 }
 
+export type CssFile = {
+    type: "css",
+    css: string,
+    timestamp: number    
+}
+
 export type Folder = {
     type: "folder",
     parent: Folder | undefined,
     children: {
-        [name:string]: DataFile | MarkdownFile | Folder
+        [name:string]: DataFile | MarkdownFile | CssFile | Folder
     }
 }
 
-export type FileType = Folder | MarkdownFile | DataFile
+export type FileType = Folder | MarkdownFile | CssFile | DataFile
 
 
 export function createRootFolder():Folder {
@@ -56,6 +62,18 @@ export function updateMarkdownFile(folder:Folder, pathName:string|string[], mark
     }
     else {
         updateMarkdownFile(getOrCreateFolder(folder, pathName[0]), pathName.slice(1), markdownFile)
+    }
+}
+
+export function updateCssFile(folder:Folder, pathName:string|string[], cssFile:CssFile):void {
+    if (typeof pathName === 'string') {
+        updateCssFile(folder, splitPath(pathName), cssFile)
+    }
+    else if (pathName.length == 1) {
+        folder.children[pathName[0]] = cssFile
+    }
+    else {
+        updateCssFile(getOrCreateFolder(folder, pathName[0]), pathName.slice(1), cssFile)
     }
 }
 

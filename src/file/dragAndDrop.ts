@@ -40,7 +40,8 @@ async function ondropped(fileWorker:WorkerInvoke<FileWorkerMessageType>, dispatc
             dispatcher.resetRootFolder()
             fileWorker.request("openDirectory", { 
                 handle: rootHandle,
-                markdownFileRegex: config.markdownFileRegex
+                markdownFileRegex: config.markdownFileRegex,
+                cssFileRegex: config.cssFileRegex
             })
         }
     }

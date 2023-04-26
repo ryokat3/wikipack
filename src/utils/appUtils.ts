@@ -102,7 +102,7 @@ export function getFileName(filePath:string):string {
 Markdown File
 ************************************************************************************************/
 
-export function makeMarkdownFileRegexChecker(regexList:string[]):(name:string)=>boolean {
+export function makeFileRegexChecker(regexList:string[]):(name:string)=>boolean {
     return function (name:string) {
         for (const regex of regexList.map((re:string)=>new RegExp(re, "i"))) {
             if (name.match(regex)) {

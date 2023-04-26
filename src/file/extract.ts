@@ -1,4 +1,4 @@
-import { Folder, MarkdownFile, DataFile } from "../data/FileTree"
+import { Folder, MarkdownFile, CssFile, DataFile } from "../data/FileTree"
 import { dataUrlDecodeAsArrayBuffer } from "../utils/appUtils"
 
 export async function getDirectoryHandle() {
@@ -12,6 +12,13 @@ async function saveMarkdownFileToLocalFile(handle:FileSystemDirectoryHandle, mar
     const fileHandle = await handle.getFileHandle(name, { create: true })
     const writable = await fileHandle.createWritable()
     await writable.write(markdownFile.markdown)
+    await writable.close()
+}
+
+async function saveCssFileToLocalFile(handle:FileSystemDirectoryHandle, cssFile:CssFile, name:string) {
+    const fileHandle = await handle.getFileHandle(name, { create: true })
+    const writable = await fileHandle.createWritable()
+    await writable.write(cssFile.css)
     await writable.close()
 }
 
@@ -34,6 +41,9 @@ async function saveFolderToLocalFolder(handle:FileSystemDirectoryHandle, folder:
         }
         else if (child.type === "markdown") {
             await saveMarkdownFileToLocalFile(handle, child, name)
+        }
+        else if (child.type === "css") {
+            await saveCssFileToLocalFile(handle, child, name)
         }
         else {
             await saveDataFileToLocalFile(handle, child, name)

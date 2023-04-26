@@ -1,6 +1,6 @@
 import { Reducer } from "../utils/FdtFlux"
 import { TopFdt } from "./TopFdt"
-import { getFile, updateDataFile, updateMarkdownFile, Folder, createRootFolder } from "../data/FileTree"
+import { getFile, updateDataFile, updateMarkdownFile, updateCssFile, Folder, createRootFolder } from "../data/FileTree"
 import { normalizePath } from "../utils/appUtils"
 import { ConfigType } from "../config"
 
@@ -9,6 +9,7 @@ export type TopStateType = {
     config: ConfigType
     rootFolder: Folder
     currentPage: string,
+    currentCss: { [fileName:string]:number }, // entry for fileName and seq
     seq: number
 }
 
@@ -19,6 +20,19 @@ export const topReducer = new Reducer<TopFdt, TopStateType>()
         return {
             ...state,
             currentPage: getFile(state.rootFolder, state.currentPage) === undefined ? fileName : state.currentPage,
+            seq: state.seq + 1
+        }
+    })
+    .add("updateCssFile", (state, payload)=>{
+        const fileName = normalizePath(payload.fileName)
+        updateCssFile(state.rootFolder, fileName, {
+            type: "css",
+            timestamp: payload.timestamp,
+            css: payload.data
+        })
+        return {
+            ...state,
+            currentCss: { ...state.currentCss, [fileName]: state.seq + 1 },
             seq: state.seq + 1
         }
     })

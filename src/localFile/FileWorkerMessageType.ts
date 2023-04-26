@@ -9,7 +9,8 @@ export type FileWorkerMessageType = {
     openDirectory: {
         request: {
             handle: FileSystemDirectoryHandle,
-            markdownFileRegex: string[]
+            markdownFileRegex: string[],
+            cssFileRegex: string[]
         }
     },
     updateMarkdownFile: {
@@ -17,6 +18,13 @@ export type FileWorkerMessageType = {
             fileName: string,
             timestamp: number,
             markdownFile: MarkdownFile
+        }
+    },
+    updateCssFile: {
+        response: {
+            fileName: string,
+            timestamp: number,
+            data: string
         }
     },
     updateDataFile: {

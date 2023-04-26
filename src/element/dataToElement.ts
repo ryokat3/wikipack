@@ -1,6 +1,6 @@
 
-import { EMBEDDED_MARKDOWN_FILE_CLASS, EMBEDDED_DATA_FILE_CLASS, EMBEDDED_FILE_ID_PREFIX, APPLICATION_DATA_MIME_TYPE } from "../constant"
-import { MarkdownFile, DataFile, Folder } from '../data/FileTree'
+import { EMBEDDED_MARKDOWN_FILE_CLASS, EMBEDDED_DATA_FILE_CLASS, EMBEDDED_CSS_FILE_CLASS, EMBEDDED_FILE_ID_PREFIX, APPLICATION_DATA_MIME_TYPE } from "../constant"
+import { MarkdownFile, CssFile, DataFile, Folder } from '../data/FileTree'
 import { dataUrlEncode } from '../utils/appUtils'
 import { addPath } from "../utils/appUtils"
 
@@ -21,6 +21,19 @@ async function saveMarkdownFileToElement(fileName:string, markdownFile:MarkdownF
     if (dataUrl !== null) {
         const elem = createFileElement(fileName, markdownFile.timestamp)        
         elem.setAttribute('class', EMBEDDED_MARKDOWN_FILE_CLASS)
+        elem.innerHTML = dataUrl                
+        return elem
+    }
+    else {
+        return undefined
+    }
+}
+
+async function saveCssFileToElement(fileName:string, cssFile:CssFile):Promise<HTMLScriptElement|undefined> {
+    const dataUrl = await dataUrlEncode(cssFile.css, 'text/css')    
+    if (dataUrl !== null) {
+        const elem = createFileElement(fileName, cssFile.timestamp)        
+        elem.setAttribute('class', EMBEDDED_CSS_FILE_CLASS)
         elem.innerHTML = dataUrl                
         return elem
     }
@@ -59,23 +72,29 @@ export function saveJsonToElement(fileName:string, data:Object, timestamp:number
 }
 
 
-export async function saveFolderToElement(headElem:HTMLElement, folder:Folder, pathName:string) {
+export async function saveFolderToElement(folder:Folder, pathName:string) {
     for (const [fileName, info] of Object.entries(folder.children)) {
         const filePath = addPath(pathName, fileName)
         if (info.type === "markdown") {
             const elem = await saveMarkdownFileToElement(filePath, info)            
-            if (elem !== undefined) {                
-                headElem.insertAdjacentElement("afterend", elem)
+            if (elem !== undefined) {   
+                document.head.appendChild(elem)
             }
         }
         else if (info.type === "data") {
             const elem = await saveDataFileToElement(filePath, info)            
-            if (elem !== undefined) {                
-                headElem.insertAdjacentElement("afterend", elem)
+            if (elem !== undefined) {          
+                document.head.appendChild(elem)                      
             }
         }
+        else if (info.type === "css") {
+            const elem = await saveCssFileToElement(filePath, info)
+            if (elem !== undefined) {                
+                document.head.appendChild(elem)                
+            }           
+        }
         else {
-            await saveFolderToElement(headElem, info, filePath)
+            await saveFolderToElement(info, filePath)            
         }
     }
 }
