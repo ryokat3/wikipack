@@ -1,4 +1,4 @@
-import { FolderBase } from "./FileTree"
+import { FileTreeFolderType } from "./FileTree"
 
 export type FileType = {
     markdown: {
@@ -22,7 +22,8 @@ export type FileType = {
     }
 }
 
-export type DataFile = FileType['data']
-export type MarkdownFile = FileType['markdown']
-export type CssFile = FileType['css']
-export type Folder = FolderBase<FileType>
+export type DataFileType = FileType['data']
+export type MarkdownFileType = FileType['markdown']
+export type CssFileType = FileType['css']
+
+export type FolderType = FileTreeFolderType<FileType>

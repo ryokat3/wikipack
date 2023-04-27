@@ -1,4 +1,4 @@
-import { MarkdownFile } from "../data/FileTreeType"
+import { MarkdownFileType } from "../data/FileTreeType"
 
 export type FileWorkerMessageType = {
     openFile : {
@@ -17,7 +17,7 @@ export type FileWorkerMessageType = {
         response: {
             fileName: string,
             timestamp: number,
-            markdownFile: MarkdownFile
+            markdownFile: MarkdownFileType
         }
     },
     updateCssFile: {

@@ -1,7 +1,7 @@
 import { marked, Slugger } from 'marked'
 import hljs from 'highlight.js'
 import { getFile } from "../data/FileTree"
-import { MarkdownFile, Folder } from "../data/FileTreeType"
+import { MarkdownFileType, FolderType } from "../data/FileTreeType"
 import { splitPath, getDir, addPath } from "../utils/appUtils"
 
 function isURL(url:string):boolean {
@@ -13,9 +13,9 @@ function isURL(url:string):boolean {
     }   
 }
 
-export function getMarkdownFile(markdown:string, fileName:string, timestamp:number):MarkdownFile {
+export function getMarkdownFile(markdown:string, fileName:string, timestamp:number):MarkdownFileType {
 
-    const result:MarkdownFile = {
+    const result:MarkdownFileType = {
         type: "markdown",
         markdown: markdown,
         timestamp: timestamp,
@@ -50,7 +50,7 @@ class MyRenderer extends marked.Renderer {
     private readonly dirPath:string
 
     public constructor(
-        private readonly rootFolder:Folder,
+        private readonly rootFolder:FolderType,
         private readonly filePath:string,
         private readonly isMarkdown:(fileName:string)=>boolean) {
         super()
@@ -100,7 +100,7 @@ function decodeUriOrEcho(uri: string) {
     }
 }
 
-export function getRenderer(rootFolder: Folder,  filePath:string, isMarkdown:(fileName:string)=>boolean) {
+export function getRenderer(rootFolder: FolderType,  filePath:string, isMarkdown:(fileName:string)=>boolean) {
     return (text: string): { html: string, title: string } => {
         // hljs.highlightAll()
 

@@ -1,15 +1,15 @@
-import { Folder, MarkdownFile } from "./FileTreeType"
+import { FolderType, MarkdownFileType } from "./FileTreeType"
 import { splitPath } from "../utils/appUtils"
 
 export type MarkdownTreeType = {
-    [name:string]: MarkdownTreeType | MarkdownFile
+    [name:string]: MarkdownTreeType | MarkdownFileType
 }
 
-export function isMarkdownFile(obj:MarkdownTreeType|MarkdownFile):obj is MarkdownFile {
+export function isMarkdownFile(obj:MarkdownTreeType|MarkdownFileType):obj is MarkdownFileType {
     return ("type" in obj) && (obj['type'] === "markdown")
 }
 
-export function getMarkdownTree(root:Folder):MarkdownTreeType {
+export function getMarkdownTree(root:FolderType):MarkdownTreeType {
     return Object.entries(root.children).sort((a, b)=>a[0] > b[0] ? 1 : -1).reduce((result, [name, node])=>{
         if (node.type === "markdown") {
             return {
@@ -35,7 +35,7 @@ export function getMarkdownTree(root:Folder):MarkdownTreeType {
     }, Object.create(null) as MarkdownTreeType)
 }
 
-export function getMarkdownFile(node:MarkdownTreeType|MarkdownFile, pathName:string|string[]):MarkdownFile|undefined {
+export function getMarkdownFile(node:MarkdownTreeType|MarkdownFileType, pathName:string|string[]):MarkdownFileType|undefined {
     if (typeof pathName === 'string') {
         return getMarkdownFile(node, splitPath(pathName))
     }

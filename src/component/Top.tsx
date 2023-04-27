@@ -15,7 +15,7 @@ import { ConfigType } from "../config"
 import { saveAsHtml } from "../file/saveAsHtml"
 import { extract } from "../file/extract"
 import { getCurrentCssElement, addCssElement } from "../element/styleElement"
-import { FILE_NAME_ATTR } from "../constant"
+import { FILE_NAME_ATTR, SEQ_NUMBER_ATTR } from "../constant"
 import Grid from "@mui/material/Grid"
 
 
@@ -52,22 +52,30 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
         }
     }, [])
 
-    // Call before render
-    useEffect(() => {        
+    useEffect(() => {
+        console.log(`Current CSS: ${JSON.stringify(state.currentCss)}`)
+        console.log(`Seq: ${state.seq}`)
         const cssElementNameList = Object.keys(state.currentCss)
+        const cssList:string[] =  []
         getCurrentCssElement().forEach((elem)=>{
             const cssFileName = elem.getAttribute(FILE_NAME_ATTR)
+            const seq = Number.parseInt(elem.getAttribute(SEQ_NUMBER_ATTR) || "-1")
+
             if ((cssFileName === null) || !(cssFileName in cssElementNameList)) {
+                elem.remove()                
+            }
+            else if ((seq < 0) || state.currentCss[cssFileName] > seq) {
                 elem.remove()
             }
-            else if (state.currentCss[cssFileName] >= state.seq) {
-                elem.remove()
-            }        
+            else {
+                cssList.push(cssFileName)
+            }
         })
-        Object.entries(state.currentCss).forEach(([cssFileName, seq])=>{
-            if (seq >= state.seq) {
+        Object.entries(state.currentCss).forEach(([cssFileName, _])=>{
+            if (!(cssFileName in cssList)) {   
                 const result = getFile(state.rootFolder, cssFileName)
                 if ((result !== undefined) && (result.type === "css")) {
+                    console.log(`Apply CSS: ${cssFileName}`)
                     addCssElement(cssFileName, result.css, state.currentCss[cssFileName])
                 }
             }

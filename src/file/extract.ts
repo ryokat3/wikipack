@@ -1,4 +1,4 @@
-import { Folder, MarkdownFile, CssFile, DataFile } from "../data/FileTreeType"
+import { FolderType, MarkdownFileType, CssFileType, DataFileType } from "../data/FileTreeType"
 import { dataUrlDecodeAsArrayBuffer } from "../utils/appUtils"
 
 export async function getDirectoryHandle() {
@@ -8,21 +8,21 @@ export async function getDirectoryHandle() {
     })
 }
 
-async function saveMarkdownFileToLocalFile(handle:FileSystemDirectoryHandle, markdownFile:MarkdownFile, name:string) {
+async function saveMarkdownFileToLocalFile(handle:FileSystemDirectoryHandle, markdownFile:MarkdownFileType, name:string) {
     const fileHandle = await handle.getFileHandle(name, { create: true })
     const writable = await fileHandle.createWritable()
     await writable.write(markdownFile.markdown)
     await writable.close()
 }
 
-async function saveCssFileToLocalFile(handle:FileSystemDirectoryHandle, cssFile:CssFile, name:string) {
+async function saveCssFileToLocalFile(handle:FileSystemDirectoryHandle, cssFile:CssFileType, name:string) {
     const fileHandle = await handle.getFileHandle(name, { create: true })
     const writable = await fileHandle.createWritable()
     await writable.write(cssFile.css)
     await writable.close()
 }
 
-async function saveDataFileToLocalFile(handle:FileSystemDirectoryHandle, dataFile:DataFile, name:string) {
+async function saveDataFileToLocalFile(handle:FileSystemDirectoryHandle, dataFile:DataFileType, name:string) {
     const fileHandle = await handle.getFileHandle(name, { create: true })
     const writable = await fileHandle.createWritable()
     if (typeof dataFile.buffer === "string") {
@@ -34,7 +34,7 @@ async function saveDataFileToLocalFile(handle:FileSystemDirectoryHandle, dataFil
     await writable.close()
 }
 
-async function saveFolderToLocalFolder(handle:FileSystemDirectoryHandle, folder:Folder) {
+async function saveFolderToLocalFolder(handle:FileSystemDirectoryHandle, folder:FolderType) {
     Object.entries(folder.children).map(async ([name, child])=>{
         if (child.type === "folder") {
             await saveFolderToLocalFolder(await handle.getDirectoryHandle(name, { create: true}), child)
@@ -51,7 +51,7 @@ async function saveFolderToLocalFolder(handle:FileSystemDirectoryHandle, folder:
     })
 }
 
-export async function extract(root:Folder):Promise<void> {
+export async function extract(root:FolderType):Promise<void> {
     const handle = await getDirectoryHandle()
     await saveFolderToLocalFolder(handle, root)
 }

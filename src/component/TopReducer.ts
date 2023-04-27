@@ -1,14 +1,14 @@
 import { Reducer } from "../utils/FdtFlux"
 import { TopFdt } from "./TopFdt"
 import { getFile, updateFile, createRootFolder } from "../data/FileTree"
-import { Folder } from "../data/FileTreeType"
+import { FolderType } from "../data/FileTreeType"
 import { normalizePath } from "../utils/appUtils"
 import { ConfigType } from "../config"
 
 
 export type TopStateType = {
     config: ConfigType
-    rootFolder: Folder
+    rootFolder: FolderType
     currentPage: string,
     currentCss: { [fileName:string]:number }, // entry for fileName and seq
     seq: number
@@ -33,7 +33,7 @@ export const topReducer = new Reducer<TopFdt, TopStateType>()
         })
         return {
             ...state,
-            currentCss: { ...state.currentCss, [fileName]: state.seq + 1 },
+            currentCss: { ...state.currentCss, [fileName]: state.seq },
             seq: state.seq + 1
         }
     })

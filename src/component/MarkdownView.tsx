@@ -1,10 +1,10 @@
 import React from "react"
 import { getRenderer } from "../markdown/converter"
-import { Folder } from "../data/FileTreeType"
+import { FolderType } from "../data/FileTreeType"
 
 export interface MarkdownViewProps {
     markdownData: string,
-    rootFolder: Folder,
+    rootFolder: FolderType,
     filePath: string,
     isMarkdown: (fileName:string)=>boolean
 }

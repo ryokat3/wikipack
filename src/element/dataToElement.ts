@@ -1,6 +1,6 @@
 
 import { EMBEDDED_MARKDOWN_FILE_CLASS, EMBEDDED_DATA_FILE_CLASS, EMBEDDED_CSS_FILE_CLASS, EMBEDDED_FILE_ID_PREFIX, APPLICATION_DATA_MIME_TYPE } from "../constant"
-import { MarkdownFile, CssFile, DataFile, Folder } from '../data/FileTreeType'
+import { MarkdownFileType, CssFileType, DataFileType, FolderType } from '../data/FileTreeType'
 import { dataUrlEncode } from '../utils/appUtils'
 import { addPath } from "../utils/appUtils"
 
@@ -14,7 +14,7 @@ function createFileElement(fileName:string, timestamp:number):HTMLScriptElement 
     return elem
 }
 
-async function saveMarkdownFileToElement(fileName:string, markdownFile:MarkdownFile):Promise<HTMLScriptElement|undefined> {
+async function saveMarkdownFileToElement(fileName:string, markdownFile:MarkdownFileType):Promise<HTMLScriptElement|undefined> {
     const dataUrl = await dataUrlEncode(markdownFile.markdown, 'text/plain')    
     if (dataUrl !== null) {
         const elem = createFileElement(fileName, markdownFile.timestamp)        
@@ -27,7 +27,7 @@ async function saveMarkdownFileToElement(fileName:string, markdownFile:MarkdownF
     }
 }
 
-async function saveCssFileToElement(fileName:string, cssFile:CssFile):Promise<HTMLScriptElement|undefined> {
+async function saveCssFileToElement(fileName:string, cssFile:CssFileType):Promise<HTMLScriptElement|undefined> {
     const dataUrl = await dataUrlEncode(cssFile.css, 'text/css')    
     if (dataUrl !== null) {
         const elem = createFileElement(fileName, cssFile.timestamp)        
@@ -40,7 +40,7 @@ async function saveCssFileToElement(fileName:string, cssFile:CssFile):Promise<HT
     }
 }
 
-async function saveDataFileToElement(fileName:string, dataFile:DataFile):Promise<HTMLScriptElement|undefined> {
+async function saveDataFileToElement(fileName:string, dataFile:DataFileType):Promise<HTMLScriptElement|undefined> {
     if (typeof dataFile.buffer !== 'string') {
         const dataUrl = await dataUrlEncode(dataFile.buffer, dataFile.mime)        
         if (dataUrl !== null) {            
@@ -70,7 +70,7 @@ export function saveJsonToElement(fileName:string, data:Object, timestamp:number
 }
 
 
-export async function saveFolderToElement(folder:Folder, pathName:string) {
+export async function saveFolderToElement(folder:FolderType, pathName:string) {
     for (const [fileName, info] of Object.entries(folder.children)) {
         const filePath = addPath(pathName, fileName)
         if (info.type === "markdown") {

@@ -1,9 +1,9 @@
-import { DataFile, CssFile, MarkdownFile } from "../data/FileTreeType"
+import { DataFileType, CssFileType, MarkdownFileType } from "../data/FileTreeType"
 import { EMBEDDED_FILE_ID_PREFIX, EMBEDDED_DATA_FILE_CLASS, EMBEDDED_MARKDOWN_FILE_CLASS, EMBEDDED_CSS_FILE_CLASS } from "../constant"
 import { dataUrlDecode, dataUrlDecodeAsBlob } from "../utils/appUtils"
 import { getMarkdownFile } from "../markdown/converter"
 import { updateFile } from "../data/FileTree"
-import { Folder } from "../data/FileTreeType"
+import { FolderType } from "../data/FileTreeType"
 
 export function getElementFile(fileName:string):HTMLElement|null {
     return document.getElementById(EMBEDDED_FILE_ID_PREFIX + fileName)
@@ -19,7 +19,7 @@ function getFileNameFromElement(elem:Element):string|undefined {
     return (id !== null) && id.startsWith(EMBEDDED_FILE_ID_PREFIX) ? id.slice(EMBEDDED_FILE_ID_PREFIX.length) : undefined
 }
 
-async function getMarkdownFileFromElement(elem:Element):Promise<[string, MarkdownFile] | undefined> {    
+async function getMarkdownFileFromElement(elem:Element):Promise<[string, MarkdownFileType] | undefined> {    
     const fileName = getFileNameFromElement(elem)
 
     if (fileName !== undefined) {    
@@ -34,7 +34,7 @@ async function getMarkdownFileFromElement(elem:Element):Promise<[string, Markdow
     }
 }
 
-async function getCssFileFromElement(elem:Element):Promise<[string, CssFile] | undefined> {    
+async function getCssFileFromElement(elem:Element):Promise<[string, CssFileType] | undefined> {    
     const fileName = getFileNameFromElement(elem)
 
     if (fileName !== undefined) {    
@@ -53,7 +53,7 @@ async function getCssFileFromElement(elem:Element):Promise<[string, CssFile] | u
     }
 }
 
-async function getDataFileFromElement(elem:Element):Promise<[string, DataFile] | undefined> {
+async function getDataFileFromElement(elem:Element):Promise<[string, DataFileType] | undefined> {
     const fileName = getFileNameFromElement(elem)
 
     if (fileName !== undefined) {    
@@ -76,7 +76,7 @@ async function getDataFileFromElement(elem:Element):Promise<[string, DataFile] |
     }
 }
 
-export async function injectAllMarkdownFileFromElement(root:Folder) {
+export async function injectAllMarkdownFileFromElement(root:FolderType) {
     const markdownElemList = document.getElementsByClassName(EMBEDDED_MARKDOWN_FILE_CLASS)    
     for (const elem of Array.from(markdownElemList)) {        
         if (elem !== null) {
@@ -88,7 +88,7 @@ export async function injectAllMarkdownFileFromElement(root:Folder) {
     }    
 }
 
-export async function injectAllCssFileFromElement(root:Folder) {
+export async function injectAllCssFileFromElement(root:FolderType) {
     const cssElemList = document.getElementsByClassName(EMBEDDED_CSS_FILE_CLASS)    
     for (const elem of Array.from(cssElemList)) {        
         if (elem !== null) {
@@ -100,7 +100,7 @@ export async function injectAllCssFileFromElement(root:Folder) {
     }    
 }
 
-export async function injectAllDataFileFromElement(root:Folder) {
+export async function injectAllDataFileFromElement(root:FolderType) {
     const dataElemList = document.getElementsByClassName(EMBEDDED_DATA_FILE_CLASS)        
     for (const elem of Array.from(dataElemList)) {        
         if (elem !== null) {
