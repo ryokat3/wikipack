@@ -68,8 +68,8 @@ function removeParentDir(pathName:string[]):string[] {
     return result
 }
 
-export function splitPath(pathName:string):string[] {
-    return pipe(
+export function splitPath(pathName:string|undefined|null):string[] {
+    return pathName ? pipe(
         pathName.split('/'),
         (pathList:string[]) => pathList.length > 0 ? O.some(pathList) : O.none,
 //        O.map((pathList:string[])=> pathList.at(0) === '' ? pathList.slice(1) :  pathList),
@@ -79,23 +79,23 @@ export function splitPath(pathName:string):string[] {
         O.map((pathList:string[])=> pathList.filter((name:string)=>name !== "." && name !== '')), 
         O.map((pathList:string[])=> removeParentDir(pathList)), 
         O.getOrElse(()=>[] as string[])
-    )
+    ) : []
 }
 
-export function addPath(dirName:string, fileName:string):string {
-    return splitPath(`${dirName}/${fileName}`).join("/")
+export function addPath(dirName:string|undefined|null, fileName:string):string {
+    return splitPath(`${dirName ? dirName + "/" : ""}${fileName}`).join("/")
 }
 
-export function normalizePath(fileName:string):string {
-    return splitPath(fileName).join("/")
+export function normalizePath(fileName:string|undefined|null):string {
+    return fileName ? splitPath(fileName).join("/") : ""
 }
 
-export function getDir(fileName:string):string {
+export function getDir(fileName:string|undefined|null):string {
     return splitPath(fileName).slice(0,-1).join('/')
 }
 
-export function getFileName(filePath:string):string {
-    return splitPath(filePath)?.pop() || ""
+export function getFileName(filePath:string|undefined|null):string {
+    return splitPath(filePath).pop() || ""
 }
 
 /************************************************************************************************ 

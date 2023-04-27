@@ -3,13 +3,14 @@ import { topDispatcher, TopDispatcherType } from "./TopDispatcher"
 import { createContext, useEffect/*, useLayoutEffect */} from "react"
 import { topReducer, TopStateType } from "./TopReducer"
 import { MarkdownView } from "./MarkdownView"
-import { FileTreeView } from "./MarkdownTreeView"
+import { MarkdownMenuView } from "./MarkdownMenuView"
 import { SearchAppBar } from "./SearchAppBar"
 import { setupDragAndDrop } from "../file/dragAndDrop"
 import { WorkerInvoke } from "../utils/WorkerMessage"
 import { FileWorkerMessageType } from "../localFile/FileWorkerMessageType"
 import { getFile } from "../data/FileTree"
-import { getMarkdownTree } from "../data/MarkdownFileTree"
+import { getMarkdownMenu, MarkdownMenuFileType } from "../data/MarkdownMenu"
+import { createRootFolder } from "../data/FileTree"
 import { makeFileRegexChecker } from "../utils/appUtils"
 import { ConfigType } from "../config"
 import { saveAsHtml } from "../file/saveAsHtml"
@@ -53,8 +54,6 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
     }, [])
 
     useEffect(() => {
-        console.log(`Current CSS: ${JSON.stringify(state.currentCss)}`)
-        console.log(`Seq: ${state.seq}`)
         const cssElementNameList = Object.keys(state.currentCss)
         const cssList:string[] =  []
         getCurrentCssElement().forEach((elem)=>{
@@ -75,7 +74,6 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
             if (!(cssFileName in cssList)) {   
                 const result = getFile(state.rootFolder, cssFileName)
                 if ((result !== undefined) && (result.type === "css")) {
-                    console.log(`Apply CSS: ${cssFileName}`)
                     addCssElement(cssFileName, result.css, state.currentCss[cssFileName])
                 }
             }
@@ -95,7 +93,7 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
         ></SearchAppBar>
         <Grid container spacing={2}>
             <Grid item xs={3}>
-                <FileTreeView root={getMarkdownTree(state.rootFolder)}></FileTreeView>
+                <MarkdownMenuView root={getMarkdownMenu(state.rootFolder) || createRootFolder<MarkdownMenuFileType>()}></MarkdownMenuView>
             </Grid>
             <Grid item xs={6}>
                 <MarkdownView
