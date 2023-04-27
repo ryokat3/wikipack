@@ -1,6 +1,6 @@
 {
   "name": "markdown-all-in-one-html",
-  "version": "0.12.1",
+  "version": "0.12.2",
   "description": "A HTML to pack all markdown files and assets in a single HTML with viewer",
   "main": "index.js",
   "scripts": {
@@ -38,7 +38,6 @@
     "boost-ts": "^2.2.0",
     "flux-standard-action": "^2.1.2",
     "fp-ts": "^2.13.1",
-    "github-markdown-css": "^5.2.0",
     "highlight.js": "^11.7.0",
     "marked": "^4.3.0",
     "react": "^18.2.0",

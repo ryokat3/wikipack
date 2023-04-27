@@ -1,4 +1,4 @@
-import { Folder, MarkdownFile } from "./FileTree"
+import { Folder, MarkdownFile } from "./FileTreeType"
 import { splitPath } from "../utils/appUtils"
 
 export type MarkdownTreeType = {

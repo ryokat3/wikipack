@@ -5,7 +5,8 @@ import { WorkerInvoke } from "./utils/WorkerMessage"
 import { FileWorkerMessageType } from "./localFile/FileWorkerMessageType"
 import { readConfig } from "./config"
 import { TopStateType } from "./component/TopReducer"
-import { createRootFolder, updateMarkdownFile } from "./data/FileTree"
+import { FileType } from "./data/FileTreeType"
+import { createRootFolder, updateFile } from "./data/FileTree"
 import { injectAllMarkdownFileFromElement, injectAllCssFileFromElement, injectAllDataFileFromElement } from "./element/dataFromElement"
 import { TOP_COMPONENT_ID } from "./constant"
 
@@ -19,13 +20,13 @@ window.onload = async function () {
     const config = readConfig()
     const container = document.getElementById(TOP_COMPONENT_ID)
 
-    const rootFolder = createRootFolder()
+    const rootFolder = createRootFolder<FileType>()
     await injectAllMarkdownFileFromElement(rootFolder)
     await injectAllCssFileFromElement(rootFolder)
     await injectAllDataFileFromElement(rootFolder)
 
     if (config.initialConfig) {
-        updateMarkdownFile(rootFolder, config.topPage, {
+        updateFile(rootFolder, config.topPage, {
             type: "markdown",
             markdown: defaultMarkdown,
             timestamp: 0,

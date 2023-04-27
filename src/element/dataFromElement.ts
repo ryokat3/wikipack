@@ -1,8 +1,9 @@
-import { DataFile, CssFile, MarkdownFile } from "../data/FileTree"
+import { DataFile, CssFile, MarkdownFile } from "../data/FileTreeType"
 import { EMBEDDED_FILE_ID_PREFIX, EMBEDDED_DATA_FILE_CLASS, EMBEDDED_MARKDOWN_FILE_CLASS, EMBEDDED_CSS_FILE_CLASS } from "../constant"
 import { dataUrlDecode, dataUrlDecodeAsBlob } from "../utils/appUtils"
 import { getMarkdownFile } from "../markdown/converter"
-import { updateDataFile, updateMarkdownFile, updateCssFile, Folder } from "../data/FileTree"
+import { updateFile } from "../data/FileTree"
+import { Folder } from "../data/FileTreeType"
 
 export function getElementFile(fileName:string):HTMLElement|null {
     return document.getElementById(EMBEDDED_FILE_ID_PREFIX + fileName)
@@ -81,7 +82,7 @@ export async function injectAllMarkdownFileFromElement(root:Folder) {
         if (elem !== null) {
             const fileData = await getMarkdownFileFromElement(elem)
             if (fileData !== undefined) {                                
-                updateMarkdownFile(root, fileData[0], fileData[1])
+                updateFile(root, fileData[0], fileData[1])
             }
         }
     }    
@@ -93,7 +94,7 @@ export async function injectAllCssFileFromElement(root:Folder) {
         if (elem !== null) {
             const fileData = await getCssFileFromElement(elem)
             if (fileData !== undefined) {                                
-                updateCssFile(root, fileData[0], fileData[1])
+                updateFile(root, fileData[0], fileData[1])
             }
         }
     }    
@@ -105,7 +106,7 @@ export async function injectAllDataFileFromElement(root:Folder) {
         if (elem !== null) {
             const fileData = await getDataFileFromElement(elem)
             if (fileData !== undefined) {
-                updateDataFile(root, fileData[0], fileData[1])
+                updateFile(root, fileData[0], fileData[1])
             }
         }
     }  

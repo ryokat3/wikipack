@@ -1,6 +1,6 @@
 import React from "react"
 import { getRenderer } from "../markdown/converter"
-import { Folder } from "../data/FileTree"
+import { Folder } from "../data/FileTreeType"
 
 export interface MarkdownViewProps {
     markdownData: string,

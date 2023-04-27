@@ -1,39 +1,47 @@
 import { splitPath } from "../utils/appUtils"
 
-export type DataFile = {
-    type: "data",
-    dataRef: string,
-    buffer: ArrayBuffer | string,
-    timestamp: number,
-    mime: string
+/*
+type FileTypeBase = {
+    markdown: {
+        type: "markdown"
+    },
+    css: {
+        type: "css"
+    },
+    data: {
+        type: "data"
+    }
 }
+*/
 
-export type MarkdownFile = {
-    type: "markdown",
-    markdown: string,
-    timestamp: number,
-    imageList: string[],
-    linkList: string[]
-}
-
-export type CssFile = {
-    type: "css",
-    css: string,
-    timestamp: number    
-}
-
-export type Folder = {
-    type: "folder",
-    parent: Folder | undefined,
-    children: {
-        [name:string]: DataFile | MarkdownFile | CssFile | Folder
+type FileTypeBaseBase<T extends string> = {
+    [key in T]: {
+        // type: keyof FileTypeBaseBase<T>
+        type: key
     }
 }
 
-export type FileType = Folder | MarkdownFile | CssFile | DataFile
+type FileTypeBase = FileTypeBaseBase<"markdown" | "css" | "data">
 
+export type FolderBase<FT extends FileTypeBase> = {
+    type: "folder",
+    parent: FolderBase<FT> | undefined,
+    children: {
+        [key:string]: FT[keyof FileTypeBase] | FolderBase<FT>
+    }
+}
 
-export function createRootFolder():Folder {
+/*
+export type FolderBase<T extends string> = {
+    type: "folder",
+    parent: FolderBase<T> | undefined,
+    children: {
+        [key:string]: FileTypeBaseBase<T>[keyof FileTypeBaseBase<T>] | FolderBase<T>
+    }
+}
+*/
+
+export function createRootFolder<FT extends FileTypeBase>():FolderBase<FT> {
     return {
         type: "folder",
         parent: undefined,
@@ -41,55 +49,32 @@ export function createRootFolder():Folder {
     }
 }
 
-function getOrCreateFolder(folder:Folder, name:string):Folder {
+function getOrCreateFolder<FT extends FileTypeBase>(folder:FolderBase<FT>, name:string):FolderBase<FT> {
     if ((name in folder.children) && (folder.children[name].type === "folder")) {
-        return folder.children[name] as Folder
+        return folder.children[name] as FolderBase<FT>
     }    
     folder.children[name] = {
         type: "folder",
         parent: folder,
         children: Object.create(null)
     }
-    return folder.children[name] as Folder
+    return folder.children[name] as FolderBase<FT>
 }
 
-export function updateMarkdownFile(folder:Folder, pathName:string|string[], markdownFile:MarkdownFile):void {
+export function updateFile<FT extends FileTypeBase>(folder:FolderBase<FT>, pathName:string|string[], file:FT[keyof FileTypeBase]):void {
     if (typeof pathName === 'string') {
-        updateMarkdownFile(folder, splitPath(pathName), markdownFile)
+        return updateFile(folder, splitPath(pathName), file)
     }
     else if (pathName.length == 1) {
-        folder.children[pathName[0]] = markdownFile        
+        // TODO: Not use 'as any'
+        folder.children[pathName[0]] = file as any
     }
     else {
-        updateMarkdownFile(getOrCreateFolder(folder, pathName[0]), pathName.slice(1), markdownFile)
+        return updateFile(getOrCreateFolder(folder, pathName[0]), pathName.slice(1), file)
     }
 }
 
-export function updateCssFile(folder:Folder, pathName:string|string[], cssFile:CssFile):void {
-    if (typeof pathName === 'string') {
-        updateCssFile(folder, splitPath(pathName), cssFile)
-    }
-    else if (pathName.length == 1) {
-        folder.children[pathName[0]] = cssFile
-    }
-    else {
-        updateCssFile(getOrCreateFolder(folder, pathName[0]), pathName.slice(1), cssFile)
-    }
-}
-
-export function updateDataFile(folder:Folder, pathName:string|string[], dataFile:DataFile):void {
-    if (typeof pathName === 'string') {
-        return updateDataFile(folder, splitPath(pathName), dataFile)
-    }
-    else if (pathName.length == 1) {
-        folder.children[pathName[0]] = dataFile
-    }
-    else {
-        return updateDataFile(getOrCreateFolder(folder, pathName[0]), pathName.slice(1), dataFile)
-    }
-}
-
-export function getFile(folder:Folder, pathName:string|string[]):FileType|undefined {
+export function getFile<FT extends FileTypeBase>(folder:FolderBase<FT>, pathName:string|string[]):FT[keyof FT]|FolderBase<FT>|undefined {
     if (typeof pathName === 'string') {
         return getFile(folder, splitPath(pathName))
     }
@@ -97,14 +82,14 @@ export function getFile(folder:Folder, pathName:string|string[]):FileType|undefi
         return folder.children[pathName[0]]
     }
     else if ((pathName.length > 1) && (pathName[0] in folder.children) && (folder.children[pathName[0]].type === "folder")) {
-        return getFile(folder.children[pathName[0]] as Folder, pathName.slice(1))
+        return getFile(folder.children[pathName[0]] as FolderBase<FT>, pathName.slice(1))
     }
     else {
         return undefined
     }
 }
 
-export function deleteFile(folder:Folder, pathName:string|string[]):void {
+export function deleteFile<FT extends FileTypeBase>(folder:FolderBase<FT>, pathName:string|string[]):void {
     if (typeof pathName === 'string') {
         deleteFile(folder, splitPath(pathName))
     }
@@ -112,6 +97,6 @@ export function deleteFile(folder:Folder, pathName:string|string[]):void {
         delete folder.children[pathName[0]]
     }
     else if ((pathName.length > 1) && (pathName[0] in folder.children) && (folder.children[pathName[0]].type === "folder")) {
-        deleteFile(folder.children[pathName[0]] as Folder, pathName.slice(1))
+        deleteFile(folder.children[pathName[0]] as FolderBase<FT>, pathName.slice(1))
     }
 }

@@ -1,4 +1,4 @@
-import { Folder, MarkdownFile, CssFile, DataFile } from "../data/FileTree"
+import { Folder, MarkdownFile, CssFile, DataFile } from "../data/FileTreeType"
 import { dataUrlDecodeAsArrayBuffer } from "../utils/appUtils"
 
 export async function getDirectoryHandle() {

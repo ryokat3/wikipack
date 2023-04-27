@@ -1,6 +1,7 @@
 import { Reducer } from "../utils/FdtFlux"
 import { TopFdt } from "./TopFdt"
-import { getFile, updateDataFile, updateMarkdownFile, updateCssFile, Folder, createRootFolder } from "../data/FileTree"
+import { getFile, updateFile, createRootFolder } from "../data/FileTree"
+import { Folder } from "../data/FileTreeType"
 import { normalizePath } from "../utils/appUtils"
 import { ConfigType } from "../config"
 
@@ -16,7 +17,7 @@ export type TopStateType = {
 export const topReducer = new Reducer<TopFdt, TopStateType>()
     .add("updateMarkdownFile", (state, payload)=>{
         const fileName = normalizePath(payload.fileName)
-        updateMarkdownFile(state.rootFolder, fileName, payload.markdownFile)        
+        updateFile(state.rootFolder, fileName, payload.markdownFile)        
         return {
             ...state,
             currentPage: getFile(state.rootFolder, state.currentPage) === undefined ? fileName : state.currentPage,
@@ -25,7 +26,7 @@ export const topReducer = new Reducer<TopFdt, TopStateType>()
     })
     .add("updateCssFile", (state, payload)=>{
         const fileName = normalizePath(payload.fileName)
-        updateCssFile(state.rootFolder, fileName, {
+        updateFile(state.rootFolder, fileName, {
             type: "css",
             timestamp: payload.timestamp,
             css: payload.data
@@ -40,7 +41,7 @@ export const topReducer = new Reducer<TopFdt, TopStateType>()
         const fileName = normalizePath(payload.fileName)
         const blob = new Blob( [payload.data], { type: payload.mime })
         const dataRef = URL.createObjectURL(blob)        
-        updateDataFile(state.rootFolder, fileName, {
+        updateFile(state.rootFolder, fileName, {
             type: "data",
             dataRef: dataRef,
             buffer: payload.data,

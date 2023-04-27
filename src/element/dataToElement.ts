@@ -1,13 +1,11 @@
 
 import { EMBEDDED_MARKDOWN_FILE_CLASS, EMBEDDED_DATA_FILE_CLASS, EMBEDDED_CSS_FILE_CLASS, EMBEDDED_FILE_ID_PREFIX, APPLICATION_DATA_MIME_TYPE } from "../constant"
-import { MarkdownFile, CssFile, DataFile, Folder } from '../data/FileTree'
+import { MarkdownFile, CssFile, DataFile, Folder } from '../data/FileTreeType'
 import { dataUrlEncode } from '../utils/appUtils'
 import { addPath } from "../utils/appUtils"
 
 
-
 function createFileElement(fileName:string, timestamp:number):HTMLScriptElement {
-
     const elem = document.createElement('script')
     elem.setAttribute('id', `${EMBEDDED_FILE_ID_PREFIX}${fileName}`)    
     elem.setAttribute('type', APPLICATION_DATA_MIME_TYPE)
