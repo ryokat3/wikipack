@@ -13,7 +13,7 @@ function isURL(url:string):boolean {
     }   
 }
 
-export function getMarkdownFile(markdown:string, fileName:string, timestamp:number):MarkdownFileType {
+export function getMarkdownFile(markdown:string, fileName:string, timestamp:number, isMarkdownFile:(fileName:string)=>boolean):MarkdownFileType {
 
     const result:MarkdownFileType = {
         type: "markdown",
@@ -31,7 +31,7 @@ export function getMarkdownFile(markdown:string, fileName:string, timestamp:numb
             }
         }
         else if (token.type === "link") {                        
-            if (! isURL(token.href)) {                
+            if ((! isURL(token.href)) && (! isMarkdownFile(token.href))) {                
                 result.linkList.push(splitPath(`${dirPath}/${token.href}`).join('/'))
             }
         }

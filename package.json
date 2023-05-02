@@ -1,6 +1,6 @@
 {
   "name": "markdown-all-in-one-html",
-  "version": "0.12.3",
+  "version": "0.13.1",
   "description": "A HTML to pack all markdown files and assets in a single HTML with viewer",
   "main": "index.js",
   "scripts": {
@@ -30,6 +30,8 @@
     "webpack-cli": "^5.0.1"
   },
   "dependencies": {
+    "@emotion/react": "^11.10.8",
+    "@emotion/styled": "^11.10.8",
     "@mui/icons-material": "^5.11.11",
     "@mui/lab": "^5.0.0-alpha.127",
     "@mui/material": "^5.11.14",

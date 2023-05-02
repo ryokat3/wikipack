@@ -19,7 +19,7 @@ function getFileNameFromElement(elem:Element):string|undefined {
     return (id !== null) && id.startsWith(EMBEDDED_FILE_ID_PREFIX) ? id.slice(EMBEDDED_FILE_ID_PREFIX.length) : undefined
 }
 
-async function getMarkdownFileFromElement(elem:Element):Promise<[string, MarkdownFileType] | undefined> {    
+async function getMarkdownFileFromElement(elem:Element, isMarkdownFile:(fileName:string)=>boolean):Promise<[string, MarkdownFileType] | undefined> {    
     const fileName = getFileNameFromElement(elem)
 
     if (fileName !== undefined) {    
@@ -27,7 +27,7 @@ async function getMarkdownFileFromElement(elem:Element):Promise<[string, Markdow
         const timestampStr = elem.getAttribute("timestamp")
         const timestamp = (timestampStr !== null) ? parseInt(timestampStr) : 0    
 
-        return [fileName, getMarkdownFile(markdown, fileName, timestamp)]
+        return [fileName, getMarkdownFile(markdown, fileName, timestamp, isMarkdownFile)]
     }
     else {
         return undefined
@@ -76,11 +76,11 @@ async function getDataFileFromElement(elem:Element):Promise<[string, DataFileTyp
     }
 }
 
-export async function injectAllMarkdownFileFromElement(root:FolderType) {
+export async function injectAllMarkdownFileFromElement(root:FolderType, isMarkdownFile:(fileName:string)=>boolean) {
     const markdownElemList = document.getElementsByClassName(EMBEDDED_MARKDOWN_FILE_CLASS)    
     for (const elem of Array.from(markdownElemList)) {        
         if (elem !== null) {
-            const fileData = await getMarkdownFileFromElement(elem)
+            const fileData = await getMarkdownFileFromElement(elem, isMarkdownFile)
             if (fileData !== undefined) {                                
                 updateFile(root, fileData[0], fileData[1])
             }

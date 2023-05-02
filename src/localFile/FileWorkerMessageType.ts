@@ -3,7 +3,8 @@ import { MarkdownFileType } from "../data/FileTreeType"
 export type FileWorkerMessageType = {
     openFile : {
         request: {
-            handle: FileSystemFileHandle
+            handle: FileSystemFileHandle,
+            markdownFileRegex: string[]
         }
     },
     openDirectory: {

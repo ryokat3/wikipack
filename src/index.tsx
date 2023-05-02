@@ -9,6 +9,7 @@ import { FileType } from "./data/FileTreeType"
 import { createRootFolder, updateFile } from "./data/FileTree"
 import { injectAllMarkdownFileFromElement, injectAllCssFileFromElement, injectAllDataFileFromElement } from "./element/dataFromElement"
 import { TOP_COMPONENT_ID } from "./constant"
+import { makeFileRegexChecker } from "./utils/appUtils"
 
 import fileWorkerJS from "./tmp/fileWorker.bundle.js.asdata"
 import defaultMarkdown from "./defaultMarkdown.md"
@@ -19,9 +20,10 @@ window.onload = async function () {
     const fileWorker = new WorkerInvoke<FileWorkerMessageType>(new Worker(URL.createObjectURL(fileWorkerBlob)))
     const config = readConfig()
     const container = document.getElementById(TOP_COMPONENT_ID)
+    const isMarkdownFile = makeFileRegexChecker(config.markdownFileRegex)
 
     const rootFolder = createRootFolder<FileType>()
-    await injectAllMarkdownFileFromElement(rootFolder)
+    await injectAllMarkdownFileFromElement(rootFolder, isMarkdownFile)
     await injectAllCssFileFromElement(rootFolder)
     await injectAllDataFileFromElement(rootFolder)
 

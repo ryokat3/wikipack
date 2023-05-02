@@ -33,7 +33,10 @@ async function ondropped(fileWorker:WorkerInvoke<FileWorkerMessageType>, dispatc
         }
         else if (handle.kind === 'file') {            
             dispatcher.resetRootFolder()
-            fileWorker.request("openFile", { handle: handle as FileSystemFileHandle })   
+            fileWorker.request("openFile", {
+                handle: handle as FileSystemFileHandle,
+                markdownFileRegex: config.markdownFileRegex,
+            })   
         }
         else if (handle.kind === 'directory') {            
             const rootHandle = handle as FileSystemDirectoryHandle

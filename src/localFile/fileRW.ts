@@ -24,6 +24,7 @@ export async function getHandle(dirHandle:FileSystemDirectoryHandle, pathName:st
     }
 
 }
+
 export async function collectFiles(dirHandle:FileSystemDirectoryHandle, pred:(fileName:string)=>boolean) {
     
     const result = Object.create(null) as { [name:string]: FileSystemFileHandle }
@@ -38,4 +39,12 @@ export async function collectFiles(dirHandle:FileSystemDirectoryHandle, pred:(fi
         }
     }
     return result
+}
+
+export function isFileHandle(handle:FileSystemHandle):handle is FileSystemFileHandle {
+    return handle.kind === "file"
+}
+
+export function isDirectoryHandle(handle:FileSystemHandle):handle is FileSystemFileHandle {
+    return handle.kind === "directory"
 }

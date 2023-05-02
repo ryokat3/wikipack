@@ -103,8 +103,10 @@ Markdown File
 ************************************************************************************************/
 
 export function makeFileRegexChecker(regexList:string[]):(name:string)=>boolean {
+    const compiledRegexList = regexList.map((re)=>new RegExp(re, "i"))
     return function (name:string) {
-        for (const regex of regexList.map((re:string)=>new RegExp(re, "i"))) {
+        //for (const regex of regexList.map((re:string)=>new RegExp(re, "i"))) {
+        for (const regex of compiledRegexList) {            
             if (name.match(regex)) {
                 return true
             }
