@@ -1,10 +1,10 @@
-# Markdown All-in-One HTML
+# WikiPack
 
-A portable HTML file to pack markdown, image, any data files into itself.
+A portable HTML file to pack markdown, image, css, and any data files into itself.
 
 ## Usage
 
-1. Download [this HTML file](https://raw.githubusercontent.com/ryokat3/markdown-all-in-one-html/main/markdown-all-in-one.html)
+1. Download [this HTML file](https://raw.githubusercontent.com/ryokat3/wikipack/main/wikipack.html)
 
 2. Open the downloaded HTML file
 

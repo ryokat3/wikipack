@@ -1,12 +1,12 @@
 {
-  "name": "markdown-all-in-one-html",
-  "version": "0.13.1",
+  "name": "wikipack",
+  "version": "0.14.1",
   "description": "A HTML to pack all markdown files and assets in a single HTML with viewer",
   "main": "index.js",
   "scripts": {
     "build": "NODE_OPTIONS='--openssl-legacy-provider' webpack-cli",
     "test": "mocha --exit -r ts-node/register test/**/*.ts",
-    "clean": "shx rm -rf dist markdown-all-in-one.html src/tmp"
+    "clean": "shx rm -rf dist wikipack.html src/tmp"
   },
   "author": "https://github.com/ryokat3",
   "license": "MIT",

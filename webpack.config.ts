@@ -47,7 +47,7 @@ const mainConfig:Configuration = {
   ...commonConfig,
   entry: './src/index.tsx',      
   output: {
-    filename: 'markdown_all_in_one.js',
+    filename: 'wikipack.js',
     path: path.join(__dirname, 'dist'),
     library: 'markdown_all_in_one',
     libraryTarget: 'umd',
@@ -55,7 +55,7 @@ const mainConfig:Configuration = {
   },
   dependencies: [ 'fileWorker' ],
   plugins: [
-    newInlineSourcePlugin('markdown_all_in_one.js', 'html', 'html/template.html', './markdown-all-in-one.html')
+    newInlineSourcePlugin('wikipack.js', 'html', 'html/template.html', './wikipack.html')
   ]
 }
 
