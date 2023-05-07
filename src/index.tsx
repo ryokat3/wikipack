@@ -13,6 +13,7 @@ import { makeFileRegexChecker } from "./utils/appUtils"
 
 import fileWorkerJS from "./tmp/fileWorker.bundle.js.asdata"
 import defaultMarkdown from "./defaultMarkdown.md"
+import templateHtml from "./template.html"
 
 window.onload = async function () {
 
@@ -47,7 +48,7 @@ window.onload = async function () {
 
     if (container !== null) {     
         const root = createRoot(container)
-        root.render(<Top fileWorker={fileWorker} config={config} initialState={initialState}/>)
+        root.render(<Top fileWorker={fileWorker} config={config} templateHtml={templateHtml} initialState={initialState}/>)
     }
     else {
         // TODO: do something like : body.innerHTML = ...

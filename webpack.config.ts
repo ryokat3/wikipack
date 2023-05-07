@@ -25,7 +25,7 @@ const commonConfig:Configuration = {
       { test: /\.tsx?$/, loader: "ts-loader" },      
       { enforce: "pre", test: /\.js\.map$/, loader: "source-map-loader" },
       {
-        test: /\.(asdata|md)$/i,
+        test: /\.(asdata|md|html)$/i,
         type: 'asset/source'
       }
     ]
@@ -49,13 +49,13 @@ const mainConfig:Configuration = {
   output: {
     filename: 'wikipack.js',
     path: path.join(__dirname, 'dist'),
-    library: 'markdown_all_in_one',
+    library: 'wikipack',
     libraryTarget: 'umd',
     publicPath: ''
   },
   dependencies: [ 'fileWorker' ],
   plugins: [
-    newInlineSourcePlugin('wikipack.js', 'html', 'html/template.html', './wikipack.html')
+    newInlineSourcePlugin('wikipack.js', 'src', 'src/template.html', './wikipack.html')
   ]
 }
 

@@ -13,7 +13,7 @@ import { getMarkdownMenu, MarkdownMenuFileType } from "../data/MarkdownMenu"
 import { createRootFolder } from "../data/FileTree"
 import { makeFileRegexChecker } from "../utils/appUtils"
 import { ConfigType } from "../config"
-import { saveAsHtml } from "../file/saveAsHtml"
+import { createPack, saveAsHtml } from "../file/saveAsHtml"
 import { extract } from "../file/extract"
 import { getCurrentCssElement, addCssElement } from "../element/styleElement"
 import { FILE_NAME_ATTR, SEQ_NUMBER_ATTR } from "../constant"
@@ -30,6 +30,7 @@ export const TopContext = createContext<TopContextType>(Object.create(null))
 export interface TopProps {
     fileWorker: WorkerInvoke<FileWorkerMessageType>
     config: ConfigType,
+    templateHtml: string,
     initialState: TopStateType
 }
 
@@ -39,7 +40,7 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
     const dispatcher = topDispatcher.build(dispatch)    
     const context = {
         dispatcher: dispatcher,
-        fileWorker: props.fileWorker      
+        fileWorker: props.fileWorker    
     }
 
     // Call once
@@ -89,7 +90,8 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
         <SearchAppBar
             title={title}
             saveDocument={async () => saveAsHtml(state)}
-            extract={async () => extract(state.rootFolder)}            
+            extract={async () => extract(state.rootFolder)}
+            pack={async () => await createPack(props.templateHtml, state)}
         ></SearchAppBar>
         <Grid container spacing={2}>
             <Grid item xs={3}>

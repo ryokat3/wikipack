@@ -9,6 +9,7 @@ export const EMBEDDED_FILE_ID_PREFIX = "embedded-file:"
 export const EMBEDDED_FILE_CONFIG_ID="embedded-file-config"
 
 export const TOP_COMPONENT_ID="top-component"
+export const WIKIPACK_SCRIPT_ID="wikipack-script"
 
 export const CURRENT_CSS_FILE_CLASS = "current-css-file"
 

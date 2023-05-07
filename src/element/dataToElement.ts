@@ -70,29 +70,29 @@ export function saveJsonToElement(fileName:string, data:Object, timestamp:number
 }
 
 
-export async function saveFolderToElement(folder:FolderType, pathName:string) {
+export async function saveFolderToElement(doc:Document, folder:FolderType, pathName:string) {
     for (const [fileName, info] of Object.entries(folder.children)) {
         const filePath = addPath(pathName, fileName)
         if (info.type === "markdown") {
             const elem = await saveMarkdownFileToElement(filePath, info)            
             if (elem !== undefined) {   
-                document.head.appendChild(elem)
+                doc.head.appendChild(elem)
             }
         }
         else if (info.type === "data") {
             const elem = await saveDataFileToElement(filePath, info)            
             if (elem !== undefined) {          
-                document.head.appendChild(elem)                      
+                doc.head.appendChild(elem)                      
             }
         }
         else if (info.type === "css") {
             const elem = await saveCssFileToElement(filePath, info)
             if (elem !== undefined) {                
-                document.head.appendChild(elem)                
+                doc.head.appendChild(elem)                
             }           
         }
         else {
-            await saveFolderToElement(info, filePath)            
+            await saveFolderToElement(doc, info, filePath)            
         }
     }
 }
