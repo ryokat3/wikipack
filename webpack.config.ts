@@ -55,7 +55,7 @@ const mainConfig:Configuration = {
   },
   dependencies: [ 'fileWorker' ],
   plugins: [
-    newInlineSourcePlugin('wikipack.js', 'src', 'src/template.html', './dist/wikipack.html')
+    newInlineSourcePlugin('wikipack.js', 'src', 'src/template.html', './dist/index.html')
   ]
 }
 
