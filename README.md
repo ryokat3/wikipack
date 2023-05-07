@@ -4,15 +4,13 @@ A portable HTML file to pack markdown, image, css, and any data files into itsel
 
 ## Usage
 
-1. Download [this HTML file](https://raw.githubusercontent.com/ryokat3/wikipack/main/wikipack.html)
+1. Open [the HTML file](https://ryokat3.github.io/wikipack/)
 
-2. Open the downloaded HTML file
+2. Drag-and-drop the directory (not a file [^1]) holding your markdown and image files
 
-3. Drag-and-drop the directory (not a file [^1]) holding your markdown and image files
+3. Select 'Pack...' from the pull-down menu
 
-4. Select 'Save as...' from the pull-down menu
-
-5. Open the saved HTML file. You can find that the saved HTML file embeds all your markdown and image files.
+4. Open the saved HTML file. You can find that the saved HTML file embeds all your markdown and image files.
    You can transfer it to anyone as a file, as an attachment of mail, via file server, memory device etc.
 
 ## CSS
