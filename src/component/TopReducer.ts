@@ -4,6 +4,7 @@ import { getFile, updateFile, createRootFolder } from "../data/FileTree"
 import { FolderType } from "../data/FileTreeType"
 import { normalizePath } from "../utils/appUtils"
 import { ConfigType } from "../config"
+import { collectCssFiles } from "../element/styleElement"
 
 
 export type TopStateType = {
@@ -12,6 +13,13 @@ export type TopStateType = {
     currentPage: string,
     currentCss: { [fileName:string]:number }, // entry for fileName and seq
     seq: number
+}
+
+function updateCurrentCss(currentCss: { [fileName:string]:number }, cssList:string[]): { [fileName:string]:number } {
+    return cssList.reduce<{ [fileName:string]:number }>((acc, name) => (name in Object.keys(acc)) ? acc : {
+        ...acc,
+        [name]: 0        
+    }, Object.fromEntries(Object.entries(currentCss).filter(([name, _]) => name in cssList)))
 }
 
 export const topReducer = new Reducer<TopFdt, TopStateType>()
@@ -31,9 +39,10 @@ export const topReducer = new Reducer<TopFdt, TopStateType>()
             timestamp: payload.timestamp,
             css: payload.data
         })
+        const currentCss = updateCurrentCss({ ...state.currentCss, [fileName]: state.seq }, collectCssFiles(state.rootFolder, state.currentPage))
         return {
             ...state,
-            currentCss: { ...state.currentCss, [fileName]: state.seq },
+            currentCss: currentCss,
             seq: state.seq + 1
         }
     })
@@ -59,10 +68,13 @@ export const topReducer = new Reducer<TopFdt, TopStateType>()
             return state
         }
     })
-    .add("updateCurrentPage", (state, payload)=>{        
+    .add("updateCurrentPage", (state, payload)=>{
+        const filePath = normalizePath(payload.name)
+        const currentCss = updateCurrentCss(state.currentCss, collectCssFiles(state.rootFolder, filePath))
         return {
             ...state,
-            currentPage: normalizePath(payload.name)
+            currentCss: currentCss,
+            currentPage: filePath
         }
     })
     .add("resetRootFolder", (state) => {

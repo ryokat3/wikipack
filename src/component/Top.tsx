@@ -13,7 +13,7 @@ import { getMarkdownMenu, MarkdownMenuFileType } from "../data/MarkdownMenu"
 import { createRootFolder } from "../data/FileTree"
 import { makeFileRegexChecker } from "../utils/appUtils"
 import { ConfigType } from "../config"
-import { createPack, saveAsHtml } from "../file/saveAsHtml"
+import { createPack } from "../file/saveAsHtml"
 import { extract } from "../file/extract"
 import { getCurrentCssElement, addCssElement } from "../element/styleElement"
 import { FILE_NAME_ATTR, SEQ_NUMBER_ATTR } from "../constant"
@@ -88,8 +88,7 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
 
     return <TopContext.Provider value={context}>
         <SearchAppBar
-            title={title}
-            saveDocument={async () => saveAsHtml(state)}
+            title={title}            
             extract={async () => extract(state.rootFolder)}
             pack={async () => await createPack(props.templateHtml, state)}
         ></SearchAppBar>

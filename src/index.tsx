@@ -10,6 +10,7 @@ import { createRootFolder, updateFile } from "./data/FileTree"
 import { injectAllMarkdownFileFromElement, injectAllCssFileFromElement, injectAllDataFileFromElement } from "./element/dataFromElement"
 import { TOP_COMPONENT_ID } from "./constant"
 import { makeFileRegexChecker } from "./utils/appUtils"
+import { collectCssFiles } from "./element/styleElement"
 
 import fileWorkerJS from "./tmp/fileWorker.bundle.js.asdata"
 import defaultMarkdown from "./defaultMarkdown.md"
@@ -42,7 +43,7 @@ window.onload = async function () {
         config: config,
         rootFolder: rootFolder,
         currentPage: config.topPage,
-        currentCss: {},
+        currentCss: Object.fromEntries(collectCssFiles(rootFolder, config.topPage).map((name)=>[name, 0])),
         seq: 0
     }
 

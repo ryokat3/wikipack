@@ -1,9 +1,9 @@
 import { TopStateType } from "../component/TopReducer"
 import { saveFolderToElement, saveJsonToElement } from "../element/dataToElement"
-import { getElementFile } from "../element/dataFromElement"
-import { CONFIG_ID, EMBEDDED_DATA_FILE_CLASS, EMBEDDED_MARKDOWN_FILE_CLASS, EMBEDDED_CSS_FILE_CLASS, WIKIPACK_SCRIPT_ID } from "../constant"
+// import { getElementFile } from "../element/dataFromElement"
+import { CONFIG_ID, /* EMBEDDED_DATA_FILE_CLASS, EMBEDDED_MARKDOWN_FILE_CLASS, EMBEDDED_CSS_FILE_CLASS, */ WIKIPACK_SCRIPT_ID } from "../constant"
 
-
+/*
 export async function getNewFileHandle() {
     return await window.showSaveFilePicker({
         types: [
@@ -46,6 +46,7 @@ export async function saveAsHtml(state:TopStateType) {
     await writable.write('<!DOCTYPE html>\n' + document.documentElement.outerHTML)    
     await writable.close()    
 }
+*/
 
 export async function createPack(template:string, state:TopStateType):Promise<Blob> {
     const parser = new DOMParser()

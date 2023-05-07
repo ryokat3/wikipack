@@ -56,6 +56,9 @@ export function getFile<FT extends FileTreeFileType>(folder:FileTreeFolderType<F
     else if ((pathName.length > 1) && (pathName[0] in folder.children) && (folder.children[pathName[0]].type === "folder")) {
         return getFile(folder.children[pathName[0]] as FileTreeFolderType<FT>, pathName.slice(1))
     }
+    else if (pathName.length == 0) {
+        return folder
+    }
     else {
         return undefined
     }
