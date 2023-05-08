@@ -48,6 +48,7 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
         props.fileWorker.addEventHandler("updateMarkdownFile", (payload)=>dispatcher.updateMarkdownFile(payload))
         props.fileWorker.addEventHandler("updateCssFile", (payload)=>dispatcher.updateCssFile(payload))
         props.fileWorker.addEventHandler("updateDataFile", (payload)=>dispatcher.updateDataFile(payload))
+        props.fileWorker.addEventHandler("deleteFile", (payload)=>dispatcher.deleteFile(payload))
         setupDragAndDrop(props.fileWorker, dispatcher, props.config)
         _open_markdown = function(name:string) {
             dispatcher.updateCurrentPage({ name:name })

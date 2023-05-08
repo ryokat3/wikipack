@@ -1,9 +1,9 @@
 import { FileWorkerMessageType } from "./FileWorkerMessageType"
 import { WorkerThreadHandler, PostEvent } from "../utils/WorkerMessage"
 import { getMarkdownFile} from "../markdown/converter"
-import { collectFiles, getHandle, isFileHandle } from "./fileRW"
-import { makeFileRegexChecker } from "../utils/appUtils"
-import { createRootFolder, FileTreeFolderType, getFile, updateFile } from "../data/FileTree"
+import { collectFiles, getHandle, getHandleMap, isFileHandle } from "./fileRW"
+import { addPath, makeFileRegexChecker } from "../utils/appUtils"
+import { createRootFolder, FileTreeFolderType, getFile, updateFile, deleteFile } from "../data/FileTree"
 
 type FileWorkerFileType = {
     markdown: {
@@ -97,14 +97,14 @@ async function readDataFile(handle: FileSystemFileHandle, fileName: string): Pro
     })
 }
 
-async function updateDataFileList(rootHandle:FileSystemDirectoryHandle, fileNameList:string[], root:FileTreeFolderType<FileWorkerFileType>, postEvent:PostEvent<FileWorkerMessageType>) {
+async function updateDataFileList(rootHandle:FileSystemDirectoryHandle, fileNameList:string[], rootFolder:FileTreeFolderType<FileWorkerFileType>, postEvent:PostEvent<FileWorkerMessageType>) {
     for (const fileName of fileNameList) {
         const handle = await getHandle(rootHandle, fileName)
         if ((handle !== undefined) && isFileHandle(handle)) {
-            const prev = getFile(root, fileName)
+            const prev = getFile(rootFolder, fileName)
             const current = await handle.getFile()
             if ((prev === undefined) || (prev.type === "folder") || (current.lastModified > prev.timestamp)) {
-                updateFile(root, fileName, {
+                updateFile(rootFolder, fileName, {
                     type: "data",
                     timestamp: current.lastModified,
                     handle: handle
@@ -117,6 +117,18 @@ async function updateDataFileList(rootHandle:FileSystemDirectoryHandle, fileName
     }
 }
 
+async function* deletedFileGenerator(dirHandle:FileSystemDirectoryHandle, folder:FileTreeFolderType<FileWorkerFileType>, folderPath:string=""):AsyncGenerator<string> {
+    const currentChildren = await getHandleMap(dirHandle)    
+    for (const [name, value] of Object.entries(folder.children)) {
+        if (!(name in currentChildren)) {            
+            yield addPath(folderPath, name)
+        }
+        else if ((currentChildren[name].kind === "directory") && (value.type === "folder")) {            
+            yield* deletedFileGenerator(currentChildren[name] as FileSystemDirectoryHandle, value, addPath(folderPath, name))            
+        }
+    }
+}
+
 self.onmessage = new WorkerThreadHandler<FileWorkerMessageType>()
     .addRequestHandler("openFile", async (payload, postEvent) => {
         const isMarkdownFile = makeFileRegexChecker(payload.markdownFileRegex)
@@ -125,17 +137,17 @@ self.onmessage = new WorkerThreadHandler<FileWorkerMessageType>()
     })
     .addRequestHandler("openDirectory", async (payload, postEvent)=>{                
 
-        const root = createRootFolder<FileWorkerFileType>()
-        const dirHandle = payload.handle
+        const rootFolder = createRootFolder<FileWorkerFileType>()
+        const rootHandle = payload.handle
         const isMarkdownFile = makeFileRegexChecker(payload.markdownFileRegex)
         const isCssFile = makeFileRegexChecker(payload.cssFileRegex)
 
         while (true) {
-            for (const [name, handle] of Object.entries(await collectFiles(dirHandle, isMarkdownFile))) {       
-                if (await isFileUpdated(root, name, handle)) {
+            for (const [name, handle] of Object.entries(await collectFiles(rootHandle, isMarkdownFile))) {       
+                if (await isFileUpdated(rootFolder, name, handle)) {
                     const result = await readMarkdownFile(handle, isMarkdownFile, name)
                     const current = await handle.getFile()
-                    updateFile(root, name, {
+                    updateFile(rootFolder, name, {
                         type: "markdown",
                         timestamp: current.lastModified,
                         handle: handle,
@@ -143,19 +155,22 @@ self.onmessage = new WorkerThreadHandler<FileWorkerMessageType>()
                         linkList: result.markdownFile.linkList
                     })               
                     postEvent.send("updateMarkdownFile", result)
-                    await updateDataFileList(dirHandle, result.markdownFile.imageList, root, postEvent)
-                    await updateDataFileList(dirHandle, result.markdownFile.linkList, root, postEvent)
+                    await updateDataFileList(rootHandle, result.markdownFile.imageList, rootFolder, postEvent)
+                    await updateDataFileList(rootHandle, result.markdownFile.linkList, rootFolder, postEvent)
                 }
                 else {
-                    const current = getFile(root, name) as FileWorkerFileType['markdown']
-                    await updateDataFileList(dirHandle, current.imageList, root, postEvent)
-                    await updateDataFileList(dirHandle, current.linkList, root, postEvent)
-                }
-                
+                    const current = getFile(rootFolder, name) as FileWorkerFileType['markdown']
+                    await updateDataFileList(rootHandle, current.imageList, rootFolder, postEvent)
+                    await updateDataFileList(rootHandle, current.linkList, rootFolder, postEvent)
+                }                
             }
-            for (const [name, handle] of Object.entries(await collectFiles(dirHandle, isCssFile))) {
+            for (const [name, handle] of Object.entries(await collectFiles(rootHandle, isCssFile))) {
                 const result = await readCssFile(handle, name)
                 postEvent.send("updateCssFile", result)
+            }
+            for await (const fileName of deletedFileGenerator(rootHandle, rootFolder)) {
+                deleteFile(rootFolder, fileName)
+                postEvent.send("deleteFile", { fileName: fileName })
             }
 
             // TODO: necessary ??

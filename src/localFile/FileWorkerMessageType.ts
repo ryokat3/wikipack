@@ -36,4 +36,9 @@ export type FileWorkerMessageType = {
             data: ArrayBuffer
         }
     },
+    deleteFile: {
+        response: {
+            fileName: string  
+        }
+    }
 }

@@ -1,6 +1,6 @@
 {
     "topPage": "Welcome.md",
-    "markdownFileRegex": [ ".*\\.(md|markdown)" ],
-    "cssFileRegex": [ ".*\\.css" ],
+    "markdownFileRegex": [ ".*\\.(md|markdown)$" ],
+    "cssFileRegex": [ ".*\\.css$" ],
     "initialConfig": true
 }

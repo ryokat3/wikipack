@@ -1,6 +1,17 @@
 
 import { splitPath } from "../utils/appUtils"
 
+export async function getHandleMap(dirHandle:FileSystemDirectoryHandle):Promise<{ [name:string]:FileSystemHandle }> {
+    let result = Object.create(null)
+    for await (const [name, handle] of dirHandle.entries()) {
+        result = {
+            ...result,
+            [name]:handle
+        }
+    }
+    return result
+}
+
 export async function getHandle(dirHandle:FileSystemDirectoryHandle, pathName:string[]|string):Promise<FileSystemHandle|undefined> {
     if (typeof pathName === 'string') {
         return getHandle(dirHandle, splitPath(pathName))        

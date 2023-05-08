@@ -1,6 +1,6 @@
 import { Reducer } from "../utils/FdtFlux"
 import { TopFdt } from "./TopFdt"
-import { getFile, updateFile, createRootFolder } from "../data/FileTree"
+import { getFile, updateFile, createRootFolder, deleteFile } from "../data/FileTree"
 import { FolderType } from "../data/FileTreeType"
 import { normalizePath } from "../utils/appUtils"
 import { ConfigType } from "../config"
@@ -75,6 +75,15 @@ export const topReducer = new Reducer<TopFdt, TopStateType>()
             ...state,
             currentCss: currentCss,
             currentPage: filePath
+        }
+    })
+    .add("deleteFile", (state, payload)=>{
+        const filePath = normalizePath(payload.fileName)
+        console.log(`deleteFile: ${filePath}`)
+        deleteFile(state.rootFolder, filePath)
+        return {
+            ...state,
+            seq: state.seq + 1        
         }
     })
     .add("resetRootFolder", (state) => {
