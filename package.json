@@ -5,8 +5,9 @@
   "main": "index.js",
   "scripts": {
     "build": "NODE_OPTIONS='--openssl-legacy-provider' webpack-cli",
+    "build-prod": "NODE_OPTIONS='--openssl-legacy-provider' webpack-cli --mode='production'",
     "test": "mocha --exit -r ts-node/register test/**/*.ts",
-    "clean": "shx rm -rf dist wikipack.html src/tmp"
+    "clean": "shx rm -rf dist src/tmp"
   },
   "author": "https://github.com/ryokat3",
   "license": "MIT",
