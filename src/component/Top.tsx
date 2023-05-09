@@ -89,9 +89,10 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
 
     return <TopContext.Provider value={context}>
         <SearchAppBar
-            title={title}            
-            extract={async () => extract(state.rootFolder)}
+            title={title}
+            packFileName={state.packFileName}
             pack={async () => await createPack(props.templateHtml, state)}
+            unpack={async () => extract(state.rootFolder)}            
         ></SearchAppBar>
         <Grid container spacing={2}>
             <Grid item xs={3}>

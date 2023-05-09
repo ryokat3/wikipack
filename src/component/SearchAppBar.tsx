@@ -55,9 +55,10 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 }));
 
 export interface SearchAppBarProps {
-    title: string,    
-    extract: ()=>Promise<void>,
-    pack: ()=>Promise<Blob>
+    title: string,
+    packFileName: string,  
+    pack: ()=>Promise<Blob>,
+    unpack: ()=>Promise<void>    
 }
 
 export const SearchAppBar: React.FunctionComponent<SearchAppBarProps> = (props: SearchAppBarProps) => {
@@ -71,9 +72,9 @@ export const SearchAppBar: React.FunctionComponent<SearchAppBarProps> = (props: 
     const handleClose = () => {
         setAnchorEl(null);
     }
-    const handleExtract = async () => {
+    const handleUnpack = async () => {
         setAnchorEl(null)
-        await props.extract()
+        await props.unpack()
     }
 
     const handlePack = async () => {
@@ -83,7 +84,7 @@ export const SearchAppBar: React.FunctionComponent<SearchAppBarProps> = (props: 
         const dataRef = URL.createObjectURL(blob)
     
         const link = document.createElement("a")
-        link.download = 'download.html'
+        link.download = `${props.packFileName}.html`
         link.href = dataRef
         link.click()
     }
@@ -119,8 +120,7 @@ export const SearchAppBar: React.FunctionComponent<SearchAppBarProps> = (props: 
                         }}
                     >
                         <MenuItem onClick={handlePack}>Pack...</MenuItem>
-                        <MenuItem onClick={handleExtract}>Extract...</MenuItem>
-                        <MenuItem onClick={handleClose}>close</MenuItem>
+                        <MenuItem onClick={handleUnpack}>Unpack...</MenuItem>                        
                     </Menu>
                     <Typography
                         variant="h6"

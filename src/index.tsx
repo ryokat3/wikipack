@@ -44,6 +44,7 @@ window.onload = async function () {
         rootFolder: rootFolder,
         currentPage: config.topPage,
         currentCss: Object.fromEntries(collectCssFiles(rootFolder, config.topPage).map((name)=>[name, 0])),
+        packFileName: "wikipack",
         seq: 0
     }
 

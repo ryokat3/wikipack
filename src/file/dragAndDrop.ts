@@ -39,8 +39,9 @@ async function ondropped(fileWorker:WorkerInvoke<FileWorkerMessageType>, dispatc
             })   
         }
         else if (handle.kind === 'directory') {            
-            const rootHandle = handle as FileSystemDirectoryHandle
+            const rootHandle = handle as FileSystemDirectoryHandle            
             dispatcher.resetRootFolder()
+            dispatcher.updatePackFileName({ name:rootHandle.name } )
             fileWorker.request("openDirectory", { 
                 handle: rootHandle,
                 markdownFileRegex: config.markdownFileRegex,

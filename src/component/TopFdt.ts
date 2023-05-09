@@ -8,5 +8,8 @@ export type TopFdt = {
     updateCurrentPage: {
         name: string
     },
+    updatePackFileName: {
+        name: string
+    },
     resetRootFolder: void
 }

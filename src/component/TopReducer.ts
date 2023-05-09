@@ -10,8 +10,9 @@ import { collectCssFiles } from "../element/styleElement"
 export type TopStateType = {
     config: ConfigType
     rootFolder: FolderType
-    currentPage: string,
-    currentCss: { [fileName:string]:number }, // entry for fileName and seq
+    currentPage: string
+    currentCss: { [fileName:string]:number } // entry for fileName and seq
+    packFileName: string
     seq: number
 }
 
@@ -68,6 +69,14 @@ export const topReducer = new Reducer<TopFdt, TopStateType>()
             return state
         }
     })
+    .add("deleteFile", (state, payload)=>{
+        const filePath = normalizePath(payload.fileName)        
+        deleteFile(state.rootFolder, filePath)
+        return {
+            ...state,
+            seq: state.seq + 1        
+        }
+    })
     .add("updateCurrentPage", (state, payload)=>{
         const filePath = normalizePath(payload.name)
         const currentCss = updateCurrentCss(state.currentCss, collectCssFiles(state.rootFolder, filePath))
@@ -77,13 +86,10 @@ export const topReducer = new Reducer<TopFdt, TopStateType>()
             currentPage: filePath
         }
     })
-    .add("deleteFile", (state, payload)=>{
-        const filePath = normalizePath(payload.fileName)
-        console.log(`deleteFile: ${filePath}`)
-        deleteFile(state.rootFolder, filePath)
+    .add("updatePackFileName", (state, payload)=>{            
         return {
             ...state,
-            seq: state.seq + 1        
+            packFileName: payload.name            
         }
     })
     .add("resetRootFolder", (state) => {

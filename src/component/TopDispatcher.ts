@@ -7,6 +7,7 @@ export const topDispatcher = new Dispatcher<TopFdt>()
     .addParameterAction("updateCssFile")    
     .addParameterAction("updateDataFile")
     .addParameterAction("updateCurrentPage")
+    .addParameterAction("updatePackFileName")
     .addParameterAction("deleteFile")
     .addAction("resetRootFolder")
 
