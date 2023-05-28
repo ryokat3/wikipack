@@ -4,6 +4,8 @@ import { Configuration } from "webpack"
 import { Configuration as DevServerConfiguration } from "webpack-dev-server"
 import HtmlWebpackPlugin from "html-webpack-plugin"
 
+const outputDir="tmp"
+
 const browserTestConfig:Configuration = {
     mode: "development",
     devtool: "inline-source-map",
@@ -21,7 +23,7 @@ const browserTestConfig:Configuration = {
         extensions: ['.tsx', '.ts', '.js']
     },
     output: {
-        path: path.resolve(__dirname, 'tmp'),
+        path: path.resolve(__dirname, outputDir),
         filename: "[name].js"
     },
     plugins: [
@@ -37,9 +39,9 @@ const devServerConfig:DevServerConfiguration = {
     host: '0.0.0.0',
     hot: true,
     open: true,
-    port: 18080,
+    port: 18080,    
     static: {
-        directory: "tmp",        
+        directory: outputDir,
         watch: true
     }
 }

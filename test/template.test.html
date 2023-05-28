@@ -14,8 +14,8 @@
     <script src="https://unpkg.com/mocha/mocha.js"></script>
 
     <script class="mocha-init">
-      mocha.setup('bdd');
-      mocha.checkLeaks();
+      mocha.setup('bdd')
+      mocha.checkLeaks();      
     </script>
     <% for (const idx in htmlWebpackPlugin.files.js) { %>
     <script src="<%= htmlWebpackPlugin.files.js[idx]%>"></script>
