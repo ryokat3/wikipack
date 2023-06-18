@@ -1,13 +1,26 @@
+import * as E from "fp-ts/Either"
 import * as TE from "fp-ts/TaskEither"
 import { identity } from "fp-ts/lib/function"
 
-type DEFAULT_SUCCESS_CALLBACK = "c5b93655-3f5d-4928-8782-39df4b168351"
-type DEFAULT_FAILURE_CALLBACK = "4df8e939-7111-4125-a228-63fdc5122157"
 
-export const DEFAULT_SUCCESS_CALLBACK:DEFAULT_SUCCESS_CALLBACK = "c5b93655-3f5d-4928-8782-39df4b168351"
-export const DEFAULT_FAILURE_CALLBACK:DEFAULT_FAILURE_CALLBACK = "4df8e939-7111-4125-a228-63fdc5122157"
+export const DEFAULT_SUCCESS_CALLBACK:unique symbol = Symbol('SUCCESS')
+export const DEFAULT_FAILURE_CALLBACK:unique symbol = Symbol('FAILURE')
+export const NO_CALLBACK:unique symbol = Symbol('NO')
 
-export const DEFAULT_ON_CALLBACK = {
+type DEFAULT_SUCCESS_CALLBACK = typeof DEFAULT_SUCCESS_CALLBACK
+type DEFAULT_FAILURE_CALLBACK = typeof DEFAULT_FAILURE_CALLBACK
+type NO_CALLBACK = typeof NO_CALLBACK
+
+
+type DEFAULT_ON_CALLBACK = {
+    readonly onsuccess: typeof DEFAULT_SUCCESS_CALLBACK,
+    readonly oncomplete: typeof DEFAULT_SUCCESS_CALLBACK,
+    readonly onerror: typeof DEFAULT_FAILURE_CALLBACK,
+    readonly onfailure: typeof DEFAULT_FAILURE_CALLBACK,
+    readonly onabort: typeof DEFAULT_SUCCESS_CALLBACK
+}
+
+export const DEFAULT_ON_CALLBACK:DEFAULT_ON_CALLBACK = {
     onsuccess: DEFAULT_SUCCESS_CALLBACK,
     oncomplete: DEFAULT_SUCCESS_CALLBACK,
     onerror: DEFAULT_FAILURE_CALLBACK,
@@ -15,102 +28,56 @@ export const DEFAULT_ON_CALLBACK = {
     onabort: DEFAULT_SUCCESS_CALLBACK
 }
 
-type GetValue<T, K> = T[K extends keyof T ? K : never]
 
-const SUCCESS_TYPE = Symbol("SUCCESS_TYPE")
-type SUCCESS_TYPE = typeof SUCCESS_TYPE
+type SUCCESS<T> = E.Right<T>
 
-const FAILURE_TYPE = Symbol("FAILURE_TYPE")
-type FAILURE_TYPE = typeof FAILURE_TYPE
-
-
-
-type SUCCESS<T> = {
-    _result: SUCCESS_TYPE,
-    _value: T
-}
-
-type FAILURE<T> = {
-    _result: FAILURE_TYPE,
-    _value: T
-}
+type FAILURE<T> = E.Left<T>
 
 export function isSuccess(target:any):target is SUCCESS<any> {
-    return ((typeof target === 'object') && ('_result' in target) && ('_value' in target) && (target['_result'] === SUCCESS_TYPE))
+    return E.isRight(target)
 }
 
 
 export function isFailure(target:any):target is FAILURE<any> {
-    return ((typeof target === 'object') && ('_result' in target) && ('_value' in target) && (target['_result'] === FAILURE_TYPE))
+    return E.isLeft(target)
 }
 
-export function Success<T>(value:T):SUCCESS<T> {
-    return {
-        _result: SUCCESS_TYPE,
-        _value: value
-    }
-}
+type GetValue<T, K> = T[K extends keyof T ? K : never]
 
-export function Failure<T>(value:T):FAILURE<T> {
-    return {
-        _result: FAILURE_TYPE,
-        _value: value
-    }
-}
+type OnCallbackFilter<T> = T extends (e:infer Ev)=>any ? ((x:Ev)=>unknown) : never
 
-export class OnCallbackResult<T> {
+type OnCallbackType<T> = { readonly [ Key in { [K in keyof T]: K extends `on${infer _Name}` ? NonNullable<T[K]> extends (x:any)=>any ? K : never : never }[keyof T] ]: (OnCallbackFilter<NonNullable<T[Key]>> | DEFAULT_SUCCESS_CALLBACK | DEFAULT_FAILURE_CALLBACK | NO_CALLBACK ) }
 
-    constructor(
-        readonly name:string,
-        readonly value:T
-    ) {}
-
-    toString():string {
-        return `[${this.name}] ${this.value}`
-    }
-}
-
-export function isOnCallbackResult(target:any):target is OnCallbackResult<any> {
-    return target instanceof OnCallbackResult
-}
-
-type CallbackReturnType<T, U, K> = GetValue<U,K> extends DEFAULT_SUCCESS_CALLBACK ? NonNullable<GetValue<T,K>> extends (ev:infer SEV)=>any ? SUCCESS<SEV> : never : 
+type ConvertOnCallbackType<T, U, K> = GetValue<U,K> extends DEFAULT_SUCCESS_CALLBACK ? NonNullable<GetValue<T,K>> extends (ev:infer SEV)=>any ? SUCCESS<SEV> : never : 
                                         GetValue<U,K> extends DEFAULT_FAILURE_CALLBACK ? NonNullable<GetValue<T,K>> extends (ev:infer FEV)=>any ? FAILURE<FEV> : never :                                         
-                                        GetValue<U,K> extends (ev:any)=>any ? Awaited<ReturnType<GetValue<U,K>>> extends SUCCESS<unknown>|FAILURE<unknown> ? Awaited<ReturnType<GetValue<U,K>>> : never : never
-                                        
-type CallbackType<T> = T extends (e:infer Ev)=>any ? ((x:Ev)=>Promise<SUCCESS<unknown>|FAILURE<unknown>>) | ((x:Ev)=>SUCCESS<unknown>|FAILURE<unknown>) | ((x:Ev)=>void) : never
-
-type Nullable<T> = Exclude<T, NonNullable<T>>
-
-type OnCallbackType<T> = { [ Key in { [K in keyof T]: K extends `on${infer _Name}` ? NonNullable<T[K]> extends (x:any)=>any ? K : never : never }[keyof T] ]: (CallbackType<NonNullable<T[Key]>> | DEFAULT_SUCCESS_CALLBACK | DEFAULT_FAILURE_CALLBACK | Nullable<T[Key]>) }
-
-type OnCallbackReturnType<T, U> = { [ Key in { [K in keyof U]: K extends keyof OnCallbackType<T> ? K : never }[keyof U] ]: CallbackReturnType<T, U, Key> }
+                                        GetValue<U,K> extends (ev:any)=>any ? Awaited<ReturnType<GetValue<U,K>>> extends E.Either<unknown,unknown> ? Awaited<ReturnType<GetValue<U,K>>> : never : never
+                                       
+type OnCallbackReturnType<T, U> = { [ Key in { [K in keyof U]: K extends keyof OnCallbackType<T> ? K : never }[keyof U] ]: ConvertOnCallbackType<T, U, Key> }
 
 type ValueType<T> = T[keyof T]
 
 
-export function promiseOnCallback<T, U extends OnCallbackType<T>, R = ValueType<OnCallbackReturnType<T,U>> extends SUCCESS<infer A>|FAILURE<infer _B> ? A : never>(obj:T, callbacks:U): Promise<OnCallbackResult<R>> {
-
-    return new Promise((resolve, reject)=>{
-        for (const [name, cb] of Object.entries(callbacks)) {
-            if (obj[name as keyof T] !== undefined) {
+export function promiseOnCallback<T, U extends OnCallbackType<T>, R = ValueType<OnCallbackReturnType<T,U>> extends E.Either<unknown, infer R> ? R : never>(obj:T, callbacks:U): Promise<R> {        
+    return new Promise((resolve, reject)=>{                
+        for (const [name, cb] of Object.entries(callbacks)) {            
+            if (obj[name as keyof T] !== undefined) {                
                 if (cb instanceof Function) {
-                    obj[name as keyof T] = ((e:any)=>{
-                        Promise.resolve(cb(e)).then((result)=>{
+                    obj[name as keyof T] = ((e:any)=>{                                                                                           
+                        Promise.resolve(cb(e)).then((result)=>{                            
                             if (isSuccess(result)) {
-                                resolve(new OnCallbackResult(name, result._value))
+                                resolve(result.right)
                             }
                             else if (isFailure(result)) {
-                                reject(new OnCallbackResult(name, result._value))
+                                reject([result.left, name])
                             }
-                        })
+                        }).catch((reason)=>reject(reason))
                     }) as any
                 }
-                else if (cb === SUCCESS_TYPE) {
-                    obj[name as keyof T] = ((e:any)=>resolve(new OnCallbackResult(name, e))) as any
+                else if (cb === DEFAULT_SUCCESS_CALLBACK) {
+                    obj[name as keyof T] = ((e:any)=>resolve(e)) as any
                 }
-                else if (cb === FAILURE_TYPE) {
-                    obj[name as keyof T] = ((e:any)=>reject(new OnCallbackResult(name, e))) as any
+                else if (cb === DEFAULT_FAILURE_CALLBACK) {
+                    obj[name as keyof T] = ((e:any)=>reject([e,name])) as any
                 }
             }
         }        
@@ -118,8 +85,8 @@ export function promiseOnCallback<T, U extends OnCallbackType<T>, R = ValueType<
 }
 
 export function taskifyOnCallback<T, U extends OnCallbackType<T>,
-        R = ValueType<OnCallbackReturnType<T,U>> extends SUCCESS<infer A>|FAILURE<infer _B> ? A : never,
-        L = ValueType<OnCallbackReturnType<T,U>> extends SUCCESS<infer _A>|FAILURE<infer B> ? B : never>
-    (obj:T, callbacks:U): TE.TaskEither<OnCallbackResult<L>,OnCallbackResult<R>> {    
-    return TE.tryCatch<OnCallbackResult<L>, OnCallbackResult<R>>(()=>promiseOnCallback(obj, callbacks), identity as (x:unknown)=>OnCallbackResult<L>)
+        R = ValueType<OnCallbackReturnType<T,U>> extends E.Either<unknown, infer R> ? R : never,
+        L = ValueType<OnCallbackReturnType<T,U>> extends E.Either<infer L, unknown> ? L : never>
+    (obj:T, callbacks:U): TE.TaskEither<[L,string], R> {          
+        return TE.tryCatch<[L, string] , R>(()=>promiseOnCallback(obj, callbacks), identity as (x:unknown)=>[L,string])
 }
