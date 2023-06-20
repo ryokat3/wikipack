@@ -1,7 +1,7 @@
 import * as E from "fp-ts/Either"
 import * as TE from "fp-ts/TaskEither"
 import { pipe } from "fp-ts/function"
-import { taskifyOnCallback, DEFAULT_ON_CALLBACK, DEFAULT_FAILURE_CALLBACK, NO_CALLBACK } from "./OnCallback"
+import * as OC from "./OnCallback"
 
 
 function createOnUpgradeNeeded(idbSetup:(db:IDBDatabase)=>Promise<void>) {
@@ -12,7 +12,7 @@ function createOnUpgradeNeeded(idbSetup:(db:IDBDatabase)=>Promise<void>) {
         TE.bind("db", (e)=>TE.of(e.req.result)), 
         TE.tapTask(({db})=>()=>idbSetup(db)),
         TE.bind("txn", (e)=>TE.fromNullable("IDBOpenDBRequest transaction is null")(e.req.transaction)),
-        TE.tap(({txn})=>taskifyOnCallback(txn, DEFAULT_ON_CALLBACK)),            
+        TE.tap(({txn})=>OC.taskify(txn, OC.defaultSet)),            
         TE.map(({db})=>db)
     )()
 }
@@ -28,11 +28,11 @@ export class IDBCreator {
 
         return pipe(                
             TE.right(indexedDB.open(dbName, dbVersion)),               
-            TE.chain((req)=>taskifyOnCallback(req, {
-                ...DEFAULT_ON_CALLBACK,
+            TE.chain((req)=>OC.taskify(req, {
+                ...OC.defaultSet,
                 onupgradeneeded: onUpgradeNeeded,                    
                 onsuccess: (ev:Event)=>E.right((ev.target as IDBOpenDBRequest).result),
-                onblocked: DEFAULT_FAILURE_CALLBACK
+                onblocked: OC.failureCallback
             }))            
         )                                  
     }
@@ -53,10 +53,10 @@ export class IDB<DbData> {
 
     delete() {
         const db = this.db  
-        return taskifyOnCallback(window.indexedDB.deleteDatabase(db.name), {
-            ...DEFAULT_ON_CALLBACK,
+        return OC.taskify(window.indexedDB.deleteDatabase(db.name), {
+            ...OC.defaultSet,
             onblocked: (e) => { db.close(); return E.right(e) },
-            onupgradeneeded: NO_CALLBACK
+            onupgradeneeded: OC.noCallback
         })
     }
 }
@@ -75,17 +75,14 @@ class IDBStore<StoreData> {
     
     put(value: StoreData) {        
         const store = this.getStore("readwrite")
-        return taskifyOnCallback(store.put(value), DEFAULT_ON_CALLBACK)
+        return OC.taskify(store.put(value), OC.defaultSet)
     }
 
-    get(key: IDBValidKey|IDBKeyRange) {
+    get(...keys: Extract<IDBValidKey, any[]>) {
         const store = this.getStore("readonly")
-        return taskifyOnCallback(store.get(key), {
-            ...DEFAULT_ON_CALLBACK,
-            onsuccess: (ev)=> {
-                console.log(`Success: ${JSON.stringify((ev.target as IDBRequest).result)}`)
-                return (ev.target != null) ? E.right((ev.target as IDBRequest).result as StoreData) : E.left(ev)            
-            }
+        return OC.taskify(store.get(keys), {
+            ...OC.defaultSet,
+            onsuccess: (ev)=> (ev.target != null) ? E.right((ev.target as IDBRequest).result as StoreData) : E.left(ev)            
         })
     }
 }
@@ -93,7 +90,7 @@ class IDBStore<StoreData> {
 type OnUpgradeNeededType = {
     [storeName: string]: {
         autoIncrement: boolean,
-        keyPath: string[],
+        keyPath: string[][],
         index: {
             [indexName: string]: {
                 keyPath: string[],
@@ -108,7 +105,7 @@ function createOnUpgradeNeededCallback(storeInfo: OnUpgradeNeededType) {
     return async (db: IDBDatabase):Promise<void> => {            
         for (const [storeName, storeOption] of Object.entries(storeInfo)) {
             const storeParam: IDBObjectStoreParameters = (storeOption.keyPath.length > 0) ? {
-                keyPath: storeOption.keyPath.join('.'),
+                keyPath: storeOption.keyPath.map((kp)=>kp.join('.')),
                 autoIncrement: storeOption.autoIncrement
             } : {
                 autoIncrement: storeOption.autoIncrement
@@ -198,16 +195,20 @@ class IDBStoreConstructor<DbData, StoreNameList extends keyof DbData & string, S
         }, this.storeName)
     }
 
-    keyPath<K1 extends keyof StoreData & string>(k1:K1): IDBStoreConstructor<DbData,StoreNameList,StoreData>
-    keyPath<K1 extends keyof StoreData & string, K2 extends keyof StoreData[K1] & string>(k1:K1, k2:K2): IDBStoreConstructor<DbData,StoreNameList,StoreData>
-    keyPath<K1 extends keyof StoreData & string, K2 extends keyof StoreData[K1] & string, K3 extends keyof StoreData[K1][K2] & string>(k1:K1, k2:K2, k3:K3): IDBStoreConstructor<DbData,StoreNameList,StoreData>
+    keyPath<K1 extends keyof StoreData & string>(k1:StoreData[K1] extends IDBValidKey ? K1 : never): IDBStoreConstructor<DbData,StoreNameList,StoreData>
+    keyPath<K1 extends keyof StoreData & string, K2 extends keyof StoreData[K1] & string>(k1:K1, k2:StoreData[K1][K2] extends IDBValidKey ? K2 : never): IDBStoreConstructor<DbData,StoreNameList,StoreData>
+    keyPath<K1 extends keyof StoreData & string, K2 extends keyof StoreData[K1] & string, K3 extends keyof StoreData[K1][K2] & string>(k1:K1, k2:K2, k3:StoreData[K1][K2][K3] extends IDBValidKey ? K3 : never): IDBStoreConstructor<DbData,StoreNameList,StoreData>
     keyPath(...keyPath:string[]):IDBStoreConstructor<DbData,StoreNameList,StoreData> {
         const storeOption = this.upgradeData[this.storeName]
+        const currentKeyPath = this.upgradeData[this.storeName]['keyPath']
         return new IDBStoreConstructor<DbData, StoreNameList, StoreData>({
             ...this.upgradeData,
             [this.storeName]: {
                 ...storeOption,
-                keyPath: keyPath
+                keyPath: [                    
+                    ...currentKeyPath,
+                    keyPath
+                ]
             }
         }, this.storeName)
     }
