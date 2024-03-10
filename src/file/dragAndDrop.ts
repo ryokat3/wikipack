@@ -23,30 +23,38 @@ async function ondropped(fileWorker:WorkerInvoke<FileWorkerMessageType>, dispatc
         console.log("item doesn't have kind property")        
     }
     else if (item.kind === 'file') {
-        const handle = await item.getAsFileSystemHandle()
+        // TODO: 2024-03-10 Firefox doesn't support getAsFileSystemHandle
+        //
+        if (typeof item['getAsFileSystemHandle'] === 'function') {            
+            const handle = await item.getAsFileSystemHandle()
 
-        if (handle === null) {
-            console.log("handle is null")
+            if (handle === null) {
+                console.log("handle is null")
+            }
+            else if (!('kind' in handle)) {
+                console.log("handle doesn't have kind property")
+            }
+            else if (handle.kind === 'file') {            
+                dispatcher.resetRootFolder()
+                fileWorker.request("openFile", {
+                    handle: handle as FileSystemFileHandle,
+                    markdownFileRegex: config.markdownFileRegex,
+                })   
+            }
+            else if (handle.kind === 'directory') {            
+                const rootHandle = handle as FileSystemDirectoryHandle            
+                dispatcher.resetRootFolder()
+                dispatcher.updatePackFileName({ name:rootHandle.name } )
+                fileWorker.request("openDirectory", { 
+                    handle: rootHandle,
+                    markdownFileRegex: config.markdownFileRegex,
+                    cssFileRegex: config.cssFileRegex
+                })
+            }
         }
-        else if (!('kind' in handle)) {
-            console.log("handle doesn't have kind property")
-        }
-        else if (handle.kind === 'file') {            
-            dispatcher.resetRootFolder()
-            fileWorker.request("openFile", {
-                handle: handle as FileSystemFileHandle,
-                markdownFileRegex: config.markdownFileRegex,
-            })   
-        }
-        else if (handle.kind === 'directory') {            
-            const rootHandle = handle as FileSystemDirectoryHandle            
-            dispatcher.resetRootFolder()
-            dispatcher.updatePackFileName({ name:rootHandle.name } )
-            fileWorker.request("openDirectory", { 
-                handle: rootHandle,
-                markdownFileRegex: config.markdownFileRegex,
-                cssFileRegex: config.cssFileRegex
-            })
+        else {
+            console.log(`"${navigator.userAgent}" not support getAsFileSystemHandle`)
+            alert(`"${navigator.userAgent}" not support getAsFileSystemHandle`)
         }
     }
     else if (item.kind === 'string') {        
