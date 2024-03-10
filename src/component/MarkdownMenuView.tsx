@@ -3,7 +3,7 @@ import { MarkdownMenuFolderType } from "../data/MarkdownMenu"
 import { getFile } from "../data/FileTree"
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
-import { TreeView, TreeItem } from '@mui/lab'
+import { TreeView, TreeItem } from '@mui/x-tree-view'
 import { addPath, getFileName } from "../utils/appUtils"
 
 

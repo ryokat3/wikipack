@@ -6,7 +6,7 @@
   "scripts": {
     "build": "webpack-cli",
     "build-prod": "webpack-cli --mode='production'",
-    "test": "mocha --exit -r ts-node/register test/**/*.ts",    
+    "test": "mocha --exit -r ts-node/register test/**/*.ts",
     "test:browser": "webpack-cli serve --config='webpack.config.test.ts'",
     "clean": "shx rm -rf dist/* src/tmp tmp"
   },
@@ -42,6 +42,7 @@
     "@mui/icons-material": "^5.11.11",
     "@mui/lab": "^5.0.0-alpha.127",
     "@mui/material": "^5.11.14",
+    "@mui/x-tree-view": "^6.17.0",
     "boost-ts": "^2.2.0",
     "flux-standard-action": "^2.1.2",
     "fp-ts": "^2.13.1",

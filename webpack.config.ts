@@ -15,7 +15,10 @@ function newInlineSourcePlugin (assetFileName:string, rootPath:string, template:
 }
 
 const commonRules:RuleSetRule[] = [
-  { test: /\.tsx?$/, loader: "ts-loader" },  
+  {
+    test: /\.tsx?$/,
+    loader: "ts-loader"
+  },  
   {
     test: /\.(asdata|md|html)$/i,
     type: 'asset/source'
