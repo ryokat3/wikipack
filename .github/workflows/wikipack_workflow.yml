@@ -27,8 +27,7 @@ jobs:
       - name: Collect artifact
         run: |
           mkdir ./_site
-          cp ./dist/index.html ./_site
-          cp -r ./map ./_site
+          cp ./dist/index.html ./_site          
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
 
