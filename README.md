@@ -8,9 +8,9 @@ A portable HTML file to pack markdown, image, css, and any data files into itsel
 
 2. Drag-and-drop the directory (not a file [^1]) holding your markdown and image files
 
-3. Select 'Pack...' from the pull-down menu
+3. Select 'Pack...' from the pull-down menu, then all files under the directory will be packed in a single HTML file.
 
-4. Open the saved HTML file. You can find that the saved HTML file embeds all your markdown and image files.
+4. Open the saved HTML file. You can find that the saved HTML file packs all your markdown and image files.
    You can transfer it to anyone as a file, as an attachment of mail, via file server, memory device etc.
 
 ## CSS

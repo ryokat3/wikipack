@@ -1,0 +1,48 @@
+name: WikiPack Build and Deployment
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build WikiPack
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install modules
+        run: npm install
+      - name: Build WikiPack
+        run: npm run build
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v3
+      - name: Collect artifact
+        run: |
+          mkdir ./_site
+          cp ./dist/index.html ./_site
+          cp -r ./map ./_site
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+
+  deploy:
+    name: Deploy WikiPack
+    permissions:  
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{steps.deployment.outputs.page_url}}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
