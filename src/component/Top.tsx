@@ -7,7 +7,7 @@ import { MarkdownMenuView } from "./MarkdownMenuView"
 import { SearchAppBar } from "./SearchAppBar"
 import { setupDragAndDrop } from "../file/dragAndDrop"
 import { WorkerInvoke } from "../utils/WorkerMessage"
-import { FileWorkerMessageType } from "../localFile/FileWorkerMessageType"
+import { WorkerMessageType } from "../worker/WorkerMessageType"
 import { getFile } from "../data/FileTree"
 import { getMarkdownMenu, MarkdownMenuFileType } from "../data/MarkdownMenu"
 import { createRootFolder } from "../data/FileTree"
@@ -22,13 +22,13 @@ import Grid from "@mui/material/Grid"
 
 export interface TopContextType {
     dispatcher: TopDispatcherType,
-    fileWorker: WorkerInvoke<FileWorkerMessageType>       
+    worker: WorkerInvoke<WorkerMessageType>       
 }
 
 export const TopContext = createContext<TopContextType>(Object.create(null))
 
 export interface TopProps {
-    fileWorker: WorkerInvoke<FileWorkerMessageType>
+    worker: WorkerInvoke<WorkerMessageType>
     config: ConfigType,
     templateHtml: string,
     initialState: TopStateType
@@ -38,18 +38,18 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
 
     const [state, dispatch] = React.useReducer(topReducer, props.initialState)
     const dispatcher = topDispatcher.build(dispatch)    
-    const context = {
+    const context:TopContextType = {
         dispatcher: dispatcher,
-        fileWorker: props.fileWorker    
+        worker: props.worker
     }
 
     // Call once
     useEffect(() => {
-        props.fileWorker.addEventHandler("updateMarkdownFile", (payload)=>dispatcher.updateMarkdownFile(payload))
-        props.fileWorker.addEventHandler("updateCssFile", (payload)=>dispatcher.updateCssFile(payload))
-        props.fileWorker.addEventHandler("updateDataFile", (payload)=>dispatcher.updateDataFile(payload))
-        props.fileWorker.addEventHandler("deleteFile", (payload)=>dispatcher.deleteFile(payload))
-        setupDragAndDrop(props.fileWorker, dispatcher, props.config)
+        props.worker.addEventHandler("updateMarkdownFile", (payload)=>dispatcher.updateMarkdownFile(payload))
+        props.worker.addEventHandler("updateCssFile", (payload)=>dispatcher.updateCssFile(payload))
+        props.worker.addEventHandler("updateDataFile", (payload)=>dispatcher.updateDataFile(payload))
+        props.worker.addEventHandler("deleteFile", (payload)=>dispatcher.deleteFile(payload))
+        setupDragAndDrop(props.worker, dispatcher, props.config)
         _open_markdown = function(name:string) {
             dispatcher.updateCurrentPage({ name:name })
         }

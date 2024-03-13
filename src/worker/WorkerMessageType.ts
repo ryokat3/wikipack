@@ -1,6 +1,6 @@
 import { MarkdownFileType } from "../data/FileTreeType"
 
-export type FileWorkerMessageType = {
+export type WorkerMessageType = {
     openFile : {
         request: {
             handle: FileSystemFileHandle,

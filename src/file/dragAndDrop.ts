@@ -1,9 +1,9 @@
 import { WorkerInvoke } from "../utils/WorkerMessage"
-import { FileWorkerMessageType } from "../localFile/FileWorkerMessageType"
+import { WorkerMessageType } from "../worker/WorkerMessageType"
 import { ConfigType } from "../config"
 import { TopDispatcherType } from "../component/TopDispatcher"
 
-async function ondropped(fileWorker:WorkerInvoke<FileWorkerMessageType>, dispatcher:TopDispatcherType, config:ConfigType, ev: Event) {    
+async function ondropped(fileWorker:WorkerInvoke<WorkerMessageType>, dispatcher:TopDispatcherType, config:ConfigType, ev: Event) {    
     if (!(ev instanceof DragEvent)) {
         return
     }
@@ -68,7 +68,7 @@ async function ondropped(fileWorker:WorkerInvoke<FileWorkerMessageType>, dispatc
     }
 }
 
-export function setupDragAndDrop(fileWorker:WorkerInvoke<FileWorkerMessageType>, dispatcher:TopDispatcherType, config:ConfigType) {
+export function setupDragAndDrop(fileWorker:WorkerInvoke<WorkerMessageType>, dispatcher:TopDispatcherType, config:ConfigType) {
     window.addEventListener('dragenter', function (e: Event) {
         e.stopPropagation()
         e.preventDefault()

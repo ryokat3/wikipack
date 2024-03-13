@@ -1,5 +1,5 @@
-import { FileWorkerMessageType } from "./FileWorkerMessageType"
-import { WorkerThreadHandler, PostEvent } from "../utils/WorkerMessage"
+import { WorkerMessageType } from "../worker/WorkerMessageType"
+import { PostEvent } from "../utils/WorkerMessage"
 import { getMarkdownFile} from "../markdown/converter"
 import { collectFiles, getHandle, getHandleMap, isFileHandle } from "./fileRW"
 import { addPath, makeFileRegexChecker } from "../utils/appUtils"
@@ -39,8 +39,8 @@ async function isFileUpdated(root:FileTreeFolderType<FileWorkerFileType>, fileNa
     }
 }
 
-async function readMarkdownFile(handle: FileSystemFileHandle, isMarkdownFile:(fileName:string)=>boolean, fileName: string|undefined = undefined ): Promise<FileWorkerMessageType["updateMarkdownFile"]["response"]> {
-    return await new Promise<FileWorkerMessageType["updateMarkdownFile"]["response"]>(async (resolve) => {
+async function readMarkdownFile(handle: FileSystemFileHandle, isMarkdownFile:(fileName:string)=>boolean, fileName: string|undefined = undefined ): Promise<WorkerMessageType["updateMarkdownFile"]["response"]> {
+    return await new Promise<WorkerMessageType["updateMarkdownFile"]["response"]>(async (resolve) => {
         const blob = await handle.getFile()
 
         const reader = new FileReader()
@@ -59,8 +59,8 @@ async function readMarkdownFile(handle: FileSystemFileHandle, isMarkdownFile:(fi
     })    
 }
 
-async function readCssFile(handle: FileSystemFileHandle, fileName: string|undefined = undefined ): Promise<FileWorkerMessageType["updateCssFile"]["response"]> {
-    return await new Promise<FileWorkerMessageType["updateCssFile"]["response"]>(async (resolve) => {
+async function readCssFile(handle: FileSystemFileHandle, fileName: string|undefined = undefined ): Promise<WorkerMessageType["updateCssFile"]["response"]> {
+    return await new Promise<WorkerMessageType["updateCssFile"]["response"]>(async (resolve) => {
         const blob = await handle.getFile()
 
         const reader = new FileReader()
@@ -78,8 +78,8 @@ async function readCssFile(handle: FileSystemFileHandle, fileName: string|undefi
     })    
 }
 
-async function readDataFile(handle: FileSystemFileHandle, fileName: string): Promise<FileWorkerMessageType["updateDataFile"]["response"]> {
-    return await new Promise<FileWorkerMessageType["updateDataFile"]["response"]>(async (resolve) => {
+async function readDataFile(handle: FileSystemFileHandle, fileName: string): Promise<WorkerMessageType["updateDataFile"]["response"]> {
+    return await new Promise<WorkerMessageType["updateDataFile"]["response"]>(async (resolve) => {
         const blob = await handle.getFile()         
         
         const reader = new FileReader()
@@ -97,7 +97,7 @@ async function readDataFile(handle: FileSystemFileHandle, fileName: string): Pro
     })
 }
 
-async function updateDataFileList(rootHandle:FileSystemDirectoryHandle, fileNameList:string[], rootFolder:FileTreeFolderType<FileWorkerFileType>, postEvent:PostEvent<FileWorkerMessageType>) {
+async function updateDataFileList(rootHandle:FileSystemDirectoryHandle, fileNameList:string[], rootFolder:FileTreeFolderType<FileWorkerFileType>, postEvent:PostEvent<WorkerMessageType>) {
     for (const fileName of fileNameList) {
         const handle = await getHandle(rootHandle, fileName)
         if ((handle !== undefined) && isFileHandle(handle)) {
@@ -129,52 +129,55 @@ async function* deletedFileGenerator(dirHandle:FileSystemDirectoryHandle, folder
     }
 }
 
-self.onmessage = new WorkerThreadHandler<FileWorkerMessageType>()
-    .addRequestHandler("openFile", async (payload, postEvent) => {
-        const isMarkdownFile = makeFileRegexChecker(payload.markdownFileRegex)
-        const result = await readMarkdownFile(payload.handle, isMarkdownFile)
-        postEvent.send("updateMarkdownFile",  result)        
-    })
-    .addRequestHandler("openDirectory", async (payload, postEvent)=>{                
+////////////////////////////////////////////////////////////////////////
+// Worker
+////////////////////////////////////////////////////////////////////////
 
-        const rootFolder = createRootFolder<FileWorkerFileType>()
-        const rootHandle = payload.handle
-        const isMarkdownFile = makeFileRegexChecker(payload.markdownFileRegex)
-        const isCssFile = makeFileRegexChecker(payload.cssFileRegex)
+export async function openFileWorkerCallback(payload:WorkerMessageType['openFile']['request'], postEvent:PostEvent<WorkerMessageType>) {
+    const isMarkdownFile = makeFileRegexChecker(payload.markdownFileRegex)
+    const result = await readMarkdownFile(payload.handle, isMarkdownFile)
+    postEvent.send("updateMarkdownFile", result)
+}
 
-        while (true) {
-            for (const [name, handle] of Object.entries(await collectFiles(rootHandle, isMarkdownFile))) {       
-                if (await isFileUpdated(rootFolder, name, handle)) {
-                    const result = await readMarkdownFile(handle, isMarkdownFile, name)
-                    const current = await handle.getFile()
-                    updateFile(rootFolder, name, {
-                        type: "markdown",
-                        timestamp: current.lastModified,
-                        handle: handle,
-                        imageList: result.markdownFile.imageList,
-                        linkList: result.markdownFile.linkList
-                    })               
-                    postEvent.send("updateMarkdownFile", result)
-                    await updateDataFileList(rootHandle, result.markdownFile.imageList, rootFolder, postEvent)
-                    await updateDataFileList(rootHandle, result.markdownFile.linkList, rootFolder, postEvent)
-                }
-                else {
-                    const current = getFile(rootFolder, name) as FileWorkerFileType['markdown']
-                    await updateDataFileList(rootHandle, current.imageList, rootFolder, postEvent)
-                    await updateDataFileList(rootHandle, current.linkList, rootFolder, postEvent)
-                }                
-            }
-            for (const [name, handle] of Object.entries(await collectFiles(rootHandle, isCssFile))) {
-                const result = await readCssFile(handle, name)
-                postEvent.send("updateCssFile", result)
-            }
-            for await (const fileName of deletedFileGenerator(rootHandle, rootFolder)) {
-                deleteFile(rootFolder, fileName)
-                postEvent.send("deleteFile", { fileName: fileName })
-            }
+export async function openDirectoryWorkerCallback(payload:WorkerMessageType['openDirectory']['request'], postEvent:PostEvent<WorkerMessageType>){                
 
-            // TODO: necessary ??
-            await new Promise((resolve, _)=> setTimeout(resolve, 1000))
+    const rootFolder = createRootFolder<FileWorkerFileType>()
+    const rootHandle = payload.handle
+    const isMarkdownFile = makeFileRegexChecker(payload.markdownFileRegex)
+    const isCssFile = makeFileRegexChecker(payload.cssFileRegex)
+
+    while (true) {
+        for (const [name, handle] of Object.entries(await collectFiles(rootHandle, isMarkdownFile))) {       
+            if (await isFileUpdated(rootFolder, name, handle)) {
+                const result = await readMarkdownFile(handle, isMarkdownFile, name)
+                const current = await handle.getFile()
+                updateFile(rootFolder, name, {
+                    type: "markdown",
+                    timestamp: current.lastModified,
+                    handle: handle,
+                    imageList: result.markdownFile.imageList,
+                    linkList: result.markdownFile.linkList
+                })               
+                postEvent.send("updateMarkdownFile", result)
+                await updateDataFileList(rootHandle, result.markdownFile.imageList, rootFolder, postEvent)
+                await updateDataFileList(rootHandle, result.markdownFile.linkList, rootFolder, postEvent)
+            }
+            else {
+                const current = getFile(rootFolder, name) as FileWorkerFileType['markdown']
+                await updateDataFileList(rootHandle, current.imageList, rootFolder, postEvent)
+                await updateDataFileList(rootHandle, current.linkList, rootFolder, postEvent)
+            }                
         }
-    })
-    .build()    
+        for (const [name, handle] of Object.entries(await collectFiles(rootHandle, isCssFile))) {
+            const result = await readCssFile(handle, name)
+            postEvent.send("updateCssFile", result)
+        }
+        for await (const fileName of deletedFileGenerator(rootHandle, rootFolder)) {
+            deleteFile(rootFolder, fileName)
+            postEvent.send("deleteFile", { fileName: fileName })
+        }
+
+        // TODO: necessary ??
+        await new Promise((resolve, _)=> setTimeout(resolve, 1000))
+    }
+}

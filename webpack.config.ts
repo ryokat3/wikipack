@@ -40,13 +40,13 @@ const commonConfig: (mode: "development" | "production") => Configuration = (mod
   }
 }
 
-const fileWorkerConfig: (mode: "development" | "production") => Configuration = (mode: "development" | "production") => {
+const workerConfig: (mode: "development" | "production") => Configuration = (mode: "development" | "production") => {
   return {
     ...commonConfig(mode),
-    name: 'fileWorker',
-    entry: './src/localFile/fileWorker.ts',
+    name: 'worker',
+    entry: './src/worker/worker.ts',
     output: {
-      filename: 'fileWorker.bundle.js.asdata',
+      filename: 'worker.bundle.js.asdata',
       path: path.join(__dirname, 'src/tmp'),
       publicPath: ''
     }
@@ -64,7 +64,7 @@ const mainConfig: (mode: "development" | "production") => Configuration = (mode:
       libraryTarget: 'umd',
       publicPath: ''
     },
-    dependencies: ['fileWorker'],
+    dependencies: ['worker'],
     plugins: [
       newInlineSourcePlugin('wikipack.js', 'src', 'src/template.html', './dist/index.html', mode === "production")
     ]
@@ -74,5 +74,5 @@ const mainConfig: (mode: "development" | "production") => Configuration = (mode:
 // module.exports = [ fileWorkerConfig, mainConfig ]
 module.exports = (_env:any, _mode:"development" | "production" | "none" | undefined) => {
   const mode:"development" | "production" = (_mode === "production") ? "production" : "development"
-  return [ fileWorkerConfig(mode), mainConfig(mode) ]
+  return [ workerConfig(mode), mainConfig(mode) ]
 }

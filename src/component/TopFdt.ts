@@ -1,10 +1,10 @@
-import { FileWorkerMessageType } from "../localFile/FileWorkerMessageType"
+import { WorkerMessageType } from "../worker/WorkerMessageType"
 
 export type TopFdt = {
-    updateMarkdownFile: FileWorkerMessageType["updateMarkdownFile"]['response'],
-    updateCssFile: FileWorkerMessageType["updateCssFile"]['response'],
-    updateDataFile: FileWorkerMessageType['updateDataFile']['response'],
-    deleteFile: FileWorkerMessageType['deleteFile']['response'],
+    updateMarkdownFile: WorkerMessageType["updateMarkdownFile"]['response'],
+    updateCssFile: WorkerMessageType["updateCssFile"]['response'],
+    updateDataFile: WorkerMessageType['updateDataFile']['response'],
+    deleteFile: WorkerMessageType['deleteFile']['response'],
     updateCurrentPage: {
         name: string
     },

@@ -2,7 +2,7 @@ import React from "react"
 import { createRoot } from "react-dom/client"
 import { Top } from "./component/Top"
 import { WorkerInvoke } from "./utils/WorkerMessage"
-import { FileWorkerMessageType } from "./localFile/FileWorkerMessageType"
+import { WorkerMessageType } from "./worker/WorkerMessageType"
 import { readConfig } from "./config"
 import { TopStateType } from "./component/TopReducer"
 import { FileType } from "./data/FileTreeType"
@@ -12,14 +12,14 @@ import { TOP_COMPONENT_ID } from "./constant"
 import { makeFileRegexChecker } from "./utils/appUtils"
 import { collectCssFiles } from "./element/styleElement"
 
-import fileWorkerJS from "./tmp/fileWorker.bundle.js.asdata"
+import workerJS from "./tmp/worker.bundle.js.asdata"
 import defaultMarkdown from "./defaultMarkdown.md"
 import templateHtml from "./template.html"
 
 window.onload = async function () {
 
-    const fileWorkerBlob = new Blob([fileWorkerJS], { type: 'application/javascript'})
-    const fileWorker = new WorkerInvoke<FileWorkerMessageType>(new Worker(URL.createObjectURL(fileWorkerBlob)))
+    const workerBlob = new Blob([workerJS], { type: 'application/javascript'})
+    const worker = new WorkerInvoke<WorkerMessageType>(new Worker(URL.createObjectURL(workerBlob)))
     const config = readConfig()
     const container = document.getElementById(TOP_COMPONENT_ID)
     const isMarkdownFile = makeFileRegexChecker(config.markdownFileRegex)
@@ -50,7 +50,7 @@ window.onload = async function () {
 
     if (container !== null) {     
         const root = createRoot(container)
-        root.render(<Top fileWorker={fileWorker} config={config} templateHtml={templateHtml} initialState={initialState}/>)
+        root.render(<Top worker={worker} config={config} templateHtml={templateHtml} initialState={initialState}/>)
     }
     else {
         // TODO: do something like : body.innerHTML = ...
