@@ -1,6 +1,6 @@
 import React from "react"
 import { getRenderer } from "../markdown/converter"
-import { FolderType } from "../data/FileTreeType"
+import { FolderType } from "../fileTree/FileTreeType"
 // import { useMemo, useState } from "react"
 
 export interface MarkdownViewProps {

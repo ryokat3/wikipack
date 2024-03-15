@@ -3,7 +3,7 @@ import { PostEvent } from "../utils/WorkerMessage"
 import { getMarkdownFile} from "../markdown/converter"
 import { collectFiles, getHandle, getHandleMap, isFileHandle } from "./fileRW"
 import { addPath, makeFileRegexChecker } from "../utils/appUtils"
-import { createRootFolder, FileTreeFolderType, getFile, updateFile, deleteFile } from "../data/FileTree"
+import { createRootFolder, FileTreeFolderType, getFile, updateFile, deleteFile } from "../fileTree/FileTree"
 
 type FileWorkerFileType = {
     markdown: {
@@ -139,15 +139,15 @@ export async function openFileWorkerCallback(payload:WorkerMessageType['openFile
     postEvent.send("updateMarkdownFile", result)
 }
 
-export async function openDirectoryWorkerCallback(payload:WorkerMessageType['openDirectory']['request'], postEvent:PostEvent<WorkerMessageType>){                
+export async function searchDirectoryWorkerCallback(payload:WorkerMessageType['searchDirectory']['request'], postEvent:PostEvent<WorkerMessageType>){                
 
     const rootFolder = createRootFolder<FileWorkerFileType>()
     const rootHandle = payload.handle
     const isMarkdownFile = makeFileRegexChecker(payload.markdownFileRegex)
     const isCssFile = makeFileRegexChecker(payload.cssFileRegex)
 
-    while (true) {
-        for (const [name, handle] of Object.entries(await collectFiles(rootHandle, isMarkdownFile))) {       
+    try {
+        for (const [name, handle] of Object.entries(await collectFiles(rootHandle, isMarkdownFile))) {
             if (await isFileUpdated(rootFolder, name, handle)) {
                 const result = await readMarkdownFile(handle, isMarkdownFile, name)
                 const current = await handle.getFile()
@@ -157,7 +157,7 @@ export async function openDirectoryWorkerCallback(payload:WorkerMessageType['ope
                     handle: handle,
                     imageList: result.markdownFile.imageList,
                     linkList: result.markdownFile.linkList
-                })               
+                })
                 postEvent.send("updateMarkdownFile", result)
                 await updateDataFileList(rootHandle, result.markdownFile.imageList, rootFolder, postEvent)
                 await updateDataFileList(rootHandle, result.markdownFile.linkList, rootFolder, postEvent)
@@ -166,7 +166,7 @@ export async function openDirectoryWorkerCallback(payload:WorkerMessageType['ope
                 const current = getFile(rootFolder, name) as FileWorkerFileType['markdown']
                 await updateDataFileList(rootHandle, current.imageList, rootFolder, postEvent)
                 await updateDataFileList(rootHandle, current.linkList, rootFolder, postEvent)
-            }                
+            }
         }
         for (const [name, handle] of Object.entries(await collectFiles(rootHandle, isCssFile))) {
             const result = await readCssFile(handle, name)
@@ -176,8 +176,8 @@ export async function openDirectoryWorkerCallback(payload:WorkerMessageType['ope
             deleteFile(rootFolder, fileName)
             postEvent.send("deleteFile", { fileName: fileName })
         }
-
-        // TODO: necessary ??
-        await new Promise((resolve, _)=> setTimeout(resolve, 1000))
+    }
+    finally {
+        postEvent.send("searchDirectoryDone", { handle: rootHandle })
     }
 }

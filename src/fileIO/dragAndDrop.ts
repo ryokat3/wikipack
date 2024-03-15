@@ -1,9 +1,7 @@
-import { WorkerInvoke } from "../utils/WorkerMessage"
-import { WorkerMessageType } from "../worker/WorkerMessageType"
-import { ConfigType } from "../config"
-import { TopDispatcherType } from "../component/TopDispatcher"
+import { TopDispatcherType } from "../gui/TopDispatcher"
+import { WorkerAgent } from "../worker/WorkerAgent"
 
-async function ondropped(fileWorker:WorkerInvoke<WorkerMessageType>, dispatcher:TopDispatcherType, config:ConfigType, ev: Event) {    
+async function ondropped(workerAgent: WorkerAgent, dispatcher:TopDispatcherType, ev: Event) {    
     if (!(ev instanceof DragEvent)) {
         return
     }
@@ -24,7 +22,7 @@ async function ondropped(fileWorker:WorkerInvoke<WorkerMessageType>, dispatcher:
     }
     else if (item.kind === 'file') {
         // TODO: 2024-03-10 Firefox doesn't support getAsFileSystemHandle
-        //
+        //        
         if (typeof item['getAsFileSystemHandle'] === 'function') {            
             const handle = await item.getAsFileSystemHandle()
 
@@ -34,22 +32,15 @@ async function ondropped(fileWorker:WorkerInvoke<WorkerMessageType>, dispatcher:
             else if (!('kind' in handle)) {
                 console.log("handle doesn't have kind property")
             }
-            else if (handle.kind === 'file') {            
+            else if (handle.kind === 'file') {                      
                 dispatcher.resetRootFolder()
-                fileWorker.request("openFile", {
-                    handle: handle as FileSystemFileHandle,
-                    markdownFileRegex: config.markdownFileRegex,
-                })   
+                workerAgent.openFile(handle as FileSystemFileHandle)   
             }
-            else if (handle.kind === 'directory') {            
+            else if (handle.kind === 'directory') {                
                 const rootHandle = handle as FileSystemDirectoryHandle            
                 dispatcher.resetRootFolder()
                 dispatcher.updatePackFileName({ name:rootHandle.name } )
-                fileWorker.request("openDirectory", { 
-                    handle: rootHandle,
-                    markdownFileRegex: config.markdownFileRegex,
-                    cssFileRegex: config.cssFileRegex
-                })
+                workerAgent.searchDirectory(rootHandle)
             }
         }
         else {
@@ -68,7 +59,7 @@ async function ondropped(fileWorker:WorkerInvoke<WorkerMessageType>, dispatcher:
     }
 }
 
-export function setupDragAndDrop(fileWorker:WorkerInvoke<WorkerMessageType>, dispatcher:TopDispatcherType, config:ConfigType) {
+export function setupDragAndDrop(workerAgent:WorkerAgent, dispatcher:TopDispatcherType) {
     window.addEventListener('dragenter', function (e: Event) {
         e.stopPropagation()
         e.preventDefault()
@@ -84,6 +75,6 @@ export function setupDragAndDrop(fileWorker:WorkerInvoke<WorkerMessageType>, dis
     window.addEventListener("drop", (e: Event) => {
         e.stopPropagation()
         e.preventDefault()
-        ondropped(fileWorker, dispatcher, config, e)
+        ondropped(workerAgent, dispatcher, e)
     }, false)   
 }

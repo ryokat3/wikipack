@@ -11,5 +11,9 @@ export type TopFdt = {
     updatePackFileName: {
         name: string
     },
-    resetRootFolder: void
+    resetRootFolder: void,
+    startSearchDirectory: FileSystemDirectoryHandle,
+    startSearchURL: string,
+    searchDirectoryDone: WorkerMessageType["searchDirectoryDone"]["response"],
+    searchURLDone: WorkerMessageType["searchURLDone"]["response"]
 }

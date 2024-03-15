@@ -1,9 +1,9 @@
-import { DataFileType, CssFileType, MarkdownFileType } from "../data/FileTreeType"
+import { DataFileType, CssFileType, MarkdownFileType } from "../fileTree/FileTreeType"
 import { EMBEDDED_FILE_ID_PREFIX, EMBEDDED_DATA_FILE_CLASS, EMBEDDED_MARKDOWN_FILE_CLASS, EMBEDDED_CSS_FILE_CLASS } from "../constant"
 import { dataUrlDecode, dataUrlDecodeAsBlob } from "../utils/appUtils"
 import { getMarkdownFile } from "../markdown/converter"
-import { updateFile } from "../data/FileTree"
-import { FolderType } from "../data/FileTreeType"
+import { updateFile } from "../fileTree/FileTree"
+import { FolderType } from "../fileTree/FileTreeType"
 
 export function getElementFile(fileName:string):HTMLElement|null {
     return document.getElementById(EMBEDDED_FILE_ID_PREFIX + fileName)

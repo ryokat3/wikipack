@@ -1,10 +1,11 @@
 import { Reducer } from "../utils/FdtFlux"
 import { TopFdt } from "./TopFdt"
-import { getFile, updateFile, createRootFolder, deleteFile } from "../data/FileTree"
-import { FolderType } from "../data/FileTreeType"
+import { getFile, updateFile, createRootFolder, deleteFile } from "../fileTree/FileTree"
+import { FileType, FolderType } from "../fileTree/FileTreeType"
 import { normalizePath } from "../utils/appUtils"
 import { ConfigType } from "../config"
-import { collectCssFiles } from "../element/styleElement"
+import { collectCssFiles } from "../dataElement/styleElement"
+
 
 
 export type TopStateType = {
@@ -13,7 +14,7 @@ export type TopStateType = {
     currentPage: string
     currentCss: { [fileName:string]:number } // entry for fileName and seq
     packFileName: string
-    seq: number
+    seq: number    
 }
 
 function updateCurrentCss(currentCss: { [fileName:string]:number }, cssList:string[]): { [fileName:string]:number } {
@@ -23,43 +24,70 @@ function updateCurrentCss(currentCss: { [fileName:string]:number }, cssList:stri
     }, Object.fromEntries(Object.entries(currentCss).filter(([name, _]) => name in cssList)))
 }
 
+function isSameFile(oldF:FolderType|FileType[keyof FileType], newF:FileType[keyof FileType]):boolean {         
+    return (oldF.type == newF.type) && (oldF.timestamp == newF.timestamp)
+}
+
 export const topReducer = new Reducer<TopFdt, TopStateType>()
     .add("updateMarkdownFile", (state, payload)=>{
         const fileName = normalizePath(payload.fileName)
-        updateFile(state.rootFolder, fileName, payload.markdownFile)        
-        return {
-            ...state,
-            currentPage: getFile(state.rootFolder, state.currentPage) === undefined ? fileName : state.currentPage,
-            seq: state.seq + 1
+        const isSame = updateFile(state.rootFolder, fileName, payload.markdownFile, isSameFile) 
+        const isCurrentPageExist = getFile(state.rootFolder, state.currentPage) !== undefined        
+
+        if (!isCurrentPageExist) {
+            return {
+                ...state,
+                currentPage: fileName,
+                seq: state.seq + 1
+            }
+        }
+        else if ((state.currentPage === fileName) && (!isSame)) {
+            return {
+                ...state,
+                seq: state.seq + 1
+            }
+        }
+        else {
+            return state
         }
     })
     .add("updateCssFile", (state, payload)=>{
         const fileName = normalizePath(payload.fileName)
-        updateFile(state.rootFolder, fileName, {
+        const isSame = updateFile(state.rootFolder, fileName, {
             type: "css",
             timestamp: payload.timestamp,
             css: payload.data
-        })
+        }, isSameFile)
+        
         const currentCss = updateCurrentCss({ ...state.currentCss, [fileName]: state.seq }, collectCssFiles(state.rootFolder, state.currentPage))
-        return {
-            ...state,
-            currentCss: currentCss,
-            seq: state.seq + 1
+        if (isSame) {
+            return state
+        }        
+        else {
+            return {
+                ...state,
+                currentCss: currentCss,
+                seq: (fileName in currentCss && !isSame) ? state.seq + 1 : state.seq
+            }
         }
     })
     .add("updateDataFile", (state, payload)=>{        
         const fileName = normalizePath(payload.fileName)
         const blob = new Blob( [payload.data], { type: payload.mime })
         const dataRef = URL.createObjectURL(blob)        
-        updateFile(state.rootFolder, fileName, {
+        const isSame = updateFile(state.rootFolder, fileName, {
             type: "data",
             dataRef: dataRef,
             buffer: payload.data,
             mime: payload.mime,
             timestamp: payload.timestamp
-        })
+        }, isSameFile)
+        
         const markdownFile = getFile(state.rootFolder, state.currentPage)
-        if ((markdownFile !== undefined) && (markdownFile.type === "markdown") && (markdownFile.imageList.includes(fileName) || markdownFile.linkList.includes(fileName))) {            
+        if (isSame) {
+            return state
+        }
+        else if ((markdownFile !== undefined) && (markdownFile.type === "markdown") && (markdownFile.imageList.includes(fileName) || markdownFile.linkList.includes(fileName))) {            
             return {
                 ...state,
                 seq: state.seq + 1

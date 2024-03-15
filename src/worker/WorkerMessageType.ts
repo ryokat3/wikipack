@@ -1,4 +1,4 @@
-import { MarkdownFileType } from "../data/FileTreeType"
+import { MarkdownFileType } from "../fileTree/FileTreeType"
 
 export type WorkerMessageType = {
     openFile : {
@@ -7,11 +7,28 @@ export type WorkerMessageType = {
             markdownFileRegex: string[]
         }
     },
-    openDirectory: {
+    searchDirectory: {
         request: {
             handle: FileSystemDirectoryHandle,
             markdownFileRegex: string[],
             cssFileRegex: string[]
+        }
+    },
+    searchDirectoryDone: {
+        response: {
+            handle: FileSystemDirectoryHandle                        
+        }
+    },
+    searchURL: {
+        request: {
+            url: string,
+            markdownFileRegex: string[],
+            cssFileRegex: string[]             
+        }
+    }
+    searchURLDone: {
+        response: {
+            url: string         
         }
     },
     updateMarkdownFile: {

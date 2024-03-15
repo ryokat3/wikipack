@@ -1,5 +1,5 @@
-import { TopStateType } from "../component/TopReducer"
-import { saveFolderToElement, saveJsonToElement } from "../element/dataToElement"
+import { TopStateType } from "../gui/TopReducer"
+import { saveFolderToElement, saveJsonToElement } from "../dataElement/dataToElement"
 import { CONFIG_ID, WIKIPACK_SCRIPT_ID } from "../constant"
 
 export async function createPack(template:string, state:TopStateType):Promise<Blob> {

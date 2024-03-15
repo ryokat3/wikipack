@@ -1,6 +1,6 @@
 import { CURRENT_CSS_FILE_CLASS, FILE_NAME_ATTR, SEQ_NUMBER_ATTR } from "../constant"
-import { getFile } from "../data/FileTree"
-import { CssFileType, FolderType } from "../data/FileTreeType"
+import { getFile } from "../fileTree/FileTree"
+import { CssFileType, FolderType } from "../fileTree/FileTreeType"
 import { getDir, addPath } from "../utils/appUtils"
 
 export function getCurrentCssElement(): Element[] {    

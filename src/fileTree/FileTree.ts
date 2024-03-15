@@ -34,15 +34,22 @@ function getOrCreateFolder<FT extends FileTreeFileType>(folder:FileTreeFolderTyp
     return folder.children[name] as FileTreeFolderType<FT>
 }
 
-export function updateFile<FT extends FileTreeFileType>(folder:FileTreeFolderType<FT>, pathName:string|string[], file:FT[keyof FT]):void {
+export function updateFile<FT extends FileTreeFileType>(
+        folder:FileTreeFolderType<FT>,
+        pathName:string|string[],
+        file:FT[keyof FT],
+        isSameFunction:(oldF:FileTreeFolderType<FT>|FT[keyof FT], newF:FT[keyof FT])=>boolean = (_o, _f)=>false
+    ):boolean {
     if (typeof pathName === 'string') {
-        return updateFile(folder, splitPath(pathName), file)
+        return updateFile(folder, splitPath(pathName), file, isSameFunction)
     }
-    else if (pathName.length == 1) {        
+    else if (pathName.length == 1) {
+        const result = (pathName[0] in folder.children) && isSameFunction(folder.children[pathName[0]], file)
         folder.children[pathName[0]] = file
+        return result
     }
     else {
-        return updateFile(getOrCreateFolder(folder, pathName[0]), pathName.slice(1), file)
+        return updateFile(getOrCreateFolder(folder, pathName[0]), pathName.slice(1), file, isSameFunction)
     }
 }
 

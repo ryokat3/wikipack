@@ -2,8 +2,8 @@
 import marked, { Marked } from 'marked'
 import { markedHighlight } from "marked-highlight"
 import hljs from 'highlight.js'
-import { getFile } from "../data/FileTree"
-import { MarkdownFileType, FolderType } from "../data/FileTreeType"
+import { getFile } from "../fileTree/FileTree"
+import { MarkdownFileType, FolderType } from "../fileTree/FileTreeType"
 import { splitPath, getDir, addPath } from "../utils/appUtils"
 
 function isURL(url:string):boolean {

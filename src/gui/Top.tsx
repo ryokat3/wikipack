@@ -4,18 +4,19 @@ import { createContext, useEffect/*, useLayoutEffect */} from "react"
 import { topReducer, TopStateType } from "./TopReducer"
 import { MarkdownView } from "./MarkdownView"
 import { MarkdownMenuView } from "./MarkdownMenuView"
+import { WorkerAgent } from "../worker/WorkerAgent"
 import { SearchAppBar } from "./SearchAppBar"
-import { setupDragAndDrop } from "../file/dragAndDrop"
+import { setupDragAndDrop } from "../fileIO/dragAndDrop"
 import { WorkerInvoke } from "../utils/WorkerMessage"
 import { WorkerMessageType } from "../worker/WorkerMessageType"
-import { getFile } from "../data/FileTree"
-import { getMarkdownMenu, MarkdownMenuFileType } from "../data/MarkdownMenu"
-import { createRootFolder } from "../data/FileTree"
+import { getFile } from "../fileTree/FileTree"
+import { getMarkdownMenu, MarkdownMenuFileType } from "../fileTree/MarkdownMenu"
+import { createRootFolder } from "../fileTree/FileTree"
 import { makeFileRegexChecker } from "../utils/appUtils"
 import { ConfigType } from "../config"
-import { createPack } from "../file/saveAsHtml"
-import { extract } from "../file/extract"
-import { getCurrentCssElement, addCssElement } from "../element/styleElement"
+import { createPack } from "../fileIO/saveAsHtml"
+import { extract } from "../fileIO/extract"
+import { getCurrentCssElement, addCssElement } from "../dataElement/styleElement"
 import { FILE_NAME_ATTR, SEQ_NUMBER_ATTR } from "../constant"
 import Grid from "@mui/material/Grid"
 
@@ -31,7 +32,8 @@ export interface TopProps {
     worker: WorkerInvoke<WorkerMessageType>
     config: ConfigType,
     templateHtml: string,
-    initialState: TopStateType
+    initialState: TopStateType,
+    searchState: WorkerAgent
 }
 
 export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
@@ -44,12 +46,13 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
     }
 
     // Call once
-    useEffect(() => {
+    useEffect(() => {        
         props.worker.addEventHandler("updateMarkdownFile", (payload)=>dispatcher.updateMarkdownFile(payload))
         props.worker.addEventHandler("updateCssFile", (payload)=>dispatcher.updateCssFile(payload))
         props.worker.addEventHandler("updateDataFile", (payload)=>dispatcher.updateDataFile(payload))
         props.worker.addEventHandler("deleteFile", (payload)=>dispatcher.deleteFile(payload))
-        setupDragAndDrop(props.worker, dispatcher, props.config)
+
+        setupDragAndDrop(props.searchState, dispatcher)
         _open_markdown = function(name:string) {
             dispatcher.updateCurrentPage({ name:name })
         }
@@ -81,11 +84,11 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
             }
         })     
     }, [ state.currentCss ])
+    
 
     const currentFile = getFile(state.rootFolder, state.currentPage)    
 
     const [title, markdown] = ((currentFile !== undefined) && (currentFile.type === "markdown")) ? [ state.currentPage, currentFile.markdown] : [ "ERROR", `${state.currentPage} not found`]
-
 
     return <TopContext.Provider value={context}>
         <SearchAppBar

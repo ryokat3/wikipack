@@ -9,7 +9,7 @@ export const topDispatcher = new Dispatcher<TopFdt>()
     .addParameterAction("updateCurrentPage")
     .addParameterAction("updatePackFileName")
     .addParameterAction("deleteFile")
-    .addAction("resetRootFolder")
+    .addAction("resetRootFolder")    
 
 export type TopDispatcherType = DispatcherType<typeof topDispatcher>
 
