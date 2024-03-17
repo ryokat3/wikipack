@@ -34,14 +34,14 @@ function getOrCreateFolder<FT extends FileTreeFileType>(folder:FileTreeFolderTyp
     return folder.children[name] as FileTreeFolderType<FT>
 }
 
-export function updateFile<FT extends FileTreeFileType>(
+export function updateFileOfTree<FT extends FileTreeFileType>(
         folder:FileTreeFolderType<FT>,
         pathName:string|string[],
         file:FT[keyof FT],
         isSameFunction:(oldF:FileTreeFolderType<FT>|FT[keyof FT], newF:FT[keyof FT])=>boolean = (_o, _f)=>false
     ):boolean {
     if (typeof pathName === 'string') {
-        return updateFile(folder, splitPath(pathName), file, isSameFunction)
+        return updateFileOfTree(folder, splitPath(pathName), file, isSameFunction)
     }
     else if (pathName.length == 1) {
         const result = (pathName[0] in folder.children) && isSameFunction(folder.children[pathName[0]], file)
@@ -49,19 +49,19 @@ export function updateFile<FT extends FileTreeFileType>(
         return result
     }
     else {
-        return updateFile(getOrCreateFolder(folder, pathName[0]), pathName.slice(1), file, isSameFunction)
+        return updateFileOfTree(getOrCreateFolder(folder, pathName[0]), pathName.slice(1), file, isSameFunction)
     }
 }
 
-export function getFile<FT extends FileTreeFileType>(folder:FileTreeFolderType<FT>, pathName:string|string[]):FT[keyof FT] | FileTreeFolderType<FT> |undefined {
+export function getFileFromTree<FT extends FileTreeFileType>(folder:FileTreeFolderType<FT>, pathName:string|string[]):FT[keyof FT] | FileTreeFolderType<FT> |undefined {
     if (typeof pathName === 'string') {
-        return getFile(folder, splitPath(pathName))
+        return getFileFromTree(folder, splitPath(pathName))
     }
     else if ((pathName.length == 1) && (pathName[0] in folder.children)) {
         return folder.children[pathName[0]]
     }
     else if ((pathName.length > 1) && (pathName[0] in folder.children) && (folder.children[pathName[0]].type === "folder")) {
-        return getFile(folder.children[pathName[0]] as FileTreeFolderType<FT>, pathName.slice(1))
+        return getFileFromTree(folder.children[pathName[0]] as FileTreeFolderType<FT>, pathName.slice(1))
     }
     else if (pathName.length == 0) {
         return folder
@@ -71,14 +71,14 @@ export function getFile<FT extends FileTreeFileType>(folder:FileTreeFolderType<F
     }
 }
 
-export function deleteFile<FT extends FileTreeFileType>(folder:FileTreeFolderType<FT>, pathName:string|string[]):void {
+export function deleteFileFromTree<FT extends FileTreeFileType>(folder:FileTreeFolderType<FT>, pathName:string|string[]):void {
     if (typeof pathName === 'string') {
-        deleteFile(folder, splitPath(pathName))
+        deleteFileFromTree(folder, splitPath(pathName))
     }
     else if ((pathName.length == 1) && (pathName[0] in folder.children)) {
         delete folder.children[pathName[0]]
     }
     else if ((pathName.length > 1) && (pathName[0] in folder.children) && (folder.children[pathName[0]].type === "folder")) {
-        deleteFile(folder.children[pathName[0]] as FileTreeFolderType<FT>, pathName.slice(1))
+        deleteFileFromTree(folder.children[pathName[0]] as FileTreeFolderType<FT>, pathName.slice(1))
     }
 }

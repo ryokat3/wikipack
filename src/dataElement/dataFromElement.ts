@@ -2,7 +2,7 @@ import { DataFileType, CssFileType, MarkdownFileType } from "../fileTree/FileTre
 import { EMBEDDED_FILE_ID_PREFIX, EMBEDDED_DATA_FILE_CLASS, EMBEDDED_MARKDOWN_FILE_CLASS, EMBEDDED_CSS_FILE_CLASS } from "../constant"
 import { dataUrlDecode, dataUrlDecodeAsBlob } from "../utils/appUtils"
 import { getMarkdownFile } from "../markdown/converter"
-import { updateFile } from "../fileTree/FileTree"
+import { updateFileOfTree } from "../fileTree/FileTree"
 import { FolderType } from "../fileTree/FileTreeType"
 
 export function getElementFile(fileName:string):HTMLElement|null {
@@ -82,7 +82,7 @@ export async function injectAllMarkdownFileFromElement(root:FolderType, isMarkdo
         if (elem !== null) {
             const fileData = await getMarkdownFileFromElement(elem, isMarkdownFile)
             if (fileData !== undefined) {                                
-                updateFile(root, fileData[0], fileData[1])
+                updateFileOfTree(root, fileData[0], fileData[1])
             }
         }
     }    
@@ -94,7 +94,7 @@ export async function injectAllCssFileFromElement(root:FolderType) {
         if (elem !== null) {
             const fileData = await getCssFileFromElement(elem)
             if (fileData !== undefined) {                                
-                updateFile(root, fileData[0], fileData[1])
+                updateFileOfTree(root, fileData[0], fileData[1])
             }
         }
     }    
@@ -106,7 +106,7 @@ export async function injectAllDataFileFromElement(root:FolderType) {
         if (elem !== null) {
             const fileData = await getDataFileFromElement(elem)
             if (fileData !== undefined) {
-                updateFile(root, fileData[0], fileData[1])
+                updateFileOfTree(root, fileData[0], fileData[1])
             }
         }
     }  

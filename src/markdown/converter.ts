@@ -2,7 +2,7 @@
 import marked, { Marked } from 'marked'
 import { markedHighlight } from "marked-highlight"
 import hljs from 'highlight.js'
-import { getFile } from "../fileTree/FileTree"
+import { getFileFromTree } from "../fileTree/FileTree"
 import { MarkdownFileType, FolderType } from "../fileTree/FileTreeType"
 import { splitPath, getDir, addPath } from "../utils/appUtils"
 
@@ -68,7 +68,7 @@ function getRendererExtension(
 
         image(href:string, title:string|null, text:string) {      
             const fileName = addPath(dirPath, href)
-            const imageFile = getFile(rootFolder, fileName)
+            const imageFile = getFileFromTree(rootFolder, fileName)
             if ((imageFile !== undefined) && (imageFile.type === 'data')) {
                 return renderer.image(imageFile.dataRef, title, text)
             }

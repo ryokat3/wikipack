@@ -1,8 +1,8 @@
-import { TopStateType } from "../gui/TopReducer"
+import { WorkerAgent } from "../worker/WorkerAgent"
 import { saveFolderToElement, saveJsonToElement } from "../dataElement/dataToElement"
 import { CONFIG_ID, WIKIPACK_SCRIPT_ID } from "../constant"
 
-export async function createPack(template:string, state:TopStateType):Promise<Blob> {
+export async function createPack(template:string, workerAgent:WorkerAgent):Promise<Blob> {
     const parser = new DOMParser()
     const doc = parser.parseFromString(template, 'text/html')
     const scriptElem = doc.getElementById(WIKIPACK_SCRIPT_ID)
@@ -11,11 +11,11 @@ export async function createPack(template:string, state:TopStateType):Promise<Bl
         scriptElem.removeAttribute('inline')
         scriptElem.innerHTML = document.getElementById(WIKIPACK_SCRIPT_ID)?.innerHTML || ""
     }
-    await saveFolderToElement(doc, state.rootFolder, "")
+    await saveFolderToElement(doc, workerAgent.rootFolder, "")
 
     doc.head.appendChild(saveJsonToElement(CONFIG_ID, {
-        ...state.config,
-        topPage: state.currentPage,
+        ...workerAgent.config,
+        topPage: workerAgent.currentPage,
         initialConfig: false
     }, 0))
 

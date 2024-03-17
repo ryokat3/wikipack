@@ -33,14 +33,14 @@ async function ondropped(workerAgent: WorkerAgent, dispatcher:TopDispatcherType,
                 console.log("handle doesn't have kind property")
             }
             else if (handle.kind === 'file') {                      
-                dispatcher.resetRootFolder()
+                workerAgent.resetRootFolder()
                 workerAgent.openFile(handle as FileSystemFileHandle)   
             }
             else if (handle.kind === 'directory') {                
-                const rootHandle = handle as FileSystemDirectoryHandle            
-                dispatcher.resetRootFolder()
-                dispatcher.updatePackFileName({ name:rootHandle.name } )
+                const rootHandle = handle as FileSystemDirectoryHandle      
+                workerAgent.resetRootFolder()                
                 workerAgent.searchDirectory(rootHandle)
+                dispatcher.updatePackFileName({ name:rootHandle.name } )
             }
         }
         else {

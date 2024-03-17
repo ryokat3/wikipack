@@ -1,6 +1,6 @@
 import React from "react"
 import { MarkdownMenuFolderType } from "../fileTree/MarkdownMenu"
-import { getFile } from "../fileTree/FileTree"
+import { getFileFromTree } from "../fileTree/FileTree"
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import { TreeView, TreeItem } from '@mui/x-tree-view'
@@ -30,7 +30,7 @@ export const MarkdownMenuView: React.FunctionComponent<MarkdownMenuViewProps> = 
 
     const onNodeSelect = (_: React.SyntheticEvent, nodeIds: Array<string>|string):void =>{
         if (typeof nodeIds === "string") {
-            const node = getFile(props.root, nodeIds)
+            const node = getFileFromTree(props.root, nodeIds)
             if ((node !== undefined) && (node.type === "markdown")) {
                 _open_markdown(nodeIds)
             }

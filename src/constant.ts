@@ -11,9 +11,10 @@ export const EMBEDDED_FILE_CONFIG_ID="embedded-file-config"
 export const TOP_COMPONENT_ID="top-component"
 export const WIKIPACK_SCRIPT_ID="wikipack-script"
 
-export const CURRENT_CSS_FILE_CLASS = "current-css-file"
+export const MARKDOWN_CSS_FILE_CLASS = "markdown-css-file"
 
 export const FILE_NAME_ATTR = "file-name"
 export const SEQ_NUMBER_ATTR = "sequence-number"
 
 export const APPLICATION_DATA_MIME_TYPE = "text/x-this-application"
+

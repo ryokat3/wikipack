@@ -6,12 +6,10 @@ import { WorkerMessageType } from "./worker/WorkerMessageType"
 import { WorkerAgent } from "./worker/WorkerAgent"
 import { readConfig } from "./config"
 import { TopStateType } from "./gui/TopReducer"
-import { FileType } from "./fileTree/FileTreeType"
-import { createRootFolder, updateFile } from "./fileTree/FileTree"
+import { updateFileOfTree } from "./fileTree/FileTree"
 import { injectAllMarkdownFileFromElement, injectAllCssFileFromElement, injectAllDataFileFromElement } from "./dataElement/dataFromElement"
 import { TOP_COMPONENT_ID } from "./constant"
 import { makeFileRegexChecker } from "./utils/appUtils"
-import { collectCssFiles } from "./dataElement/styleElement"
 
 import workerJS from "./tmp/worker.bundle.js.asdata"
 import defaultMarkdown from "./defaultMarkdown.md"
@@ -24,16 +22,15 @@ window.onload = async function () {
     const worker = new WorkerInvoke<WorkerMessageType>(new Worker(URL.createObjectURL(workerBlob)))    
     const config = readConfig()
     const container = document.getElementById(TOP_COMPONENT_ID)
-    const searchState = new WorkerAgent(worker, config)
+    const workerAgent = new WorkerAgent(worker, config)
     const isMarkdownFile = makeFileRegexChecker(config.markdownFileRegex)
-
-    const rootFolder = createRootFolder<FileType>()
-    await injectAllMarkdownFileFromElement(rootFolder, isMarkdownFile)
-    await injectAllCssFileFromElement(rootFolder)
-    await injectAllDataFileFromElement(rootFolder)
+    
+    await injectAllMarkdownFileFromElement(workerAgent.rootFolder, isMarkdownFile)
+    await injectAllCssFileFromElement(workerAgent.rootFolder)
+    await injectAllDataFileFromElement(workerAgent.rootFolder)
 
     if (config.initialConfig) {
-        updateFile(rootFolder, config.topPage, {
+        updateFileOfTree(workerAgent.rootFolder, config.topPage, {
             type: "markdown",
             markdown: defaultMarkdown,
             timestamp: 0,
@@ -43,17 +40,15 @@ window.onload = async function () {
     }
 
     const initialState:TopStateType = {
-        config: config,
-        rootFolder: rootFolder,
-        currentPage: config.topPage,
-        currentCss: Object.fromEntries(collectCssFiles(rootFolder, config.topPage).map((name)=>[name, 0])),
+        title: config.topPage,
+        html: workerAgent.convertToHtml(config.topPage) || '<h1>Error</h1>',
         packFileName: "wikipack",
         seq: 0        
     }
 
     if (container !== null) {     
         const root = createRoot(container)
-        root.render(<Top worker={worker} config={config} templateHtml={templateHtml} initialState={initialState} searchState={searchState}/>)
+        root.render(<Top worker={worker} config={config} templateHtml={templateHtml} initialState={initialState} workerAgent={workerAgent}/>)
     }
     else {
         // TODO: do something like : body.innerHTML = ...

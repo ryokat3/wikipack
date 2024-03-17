@@ -3,7 +3,7 @@ import { PostEvent } from "../utils/WorkerMessage"
 import { getMarkdownFile} from "../markdown/converter"
 import { collectFiles, getHandle, getHandleMap, isFileHandle } from "./fileRW"
 import { addPath, makeFileRegexChecker } from "../utils/appUtils"
-import { createRootFolder, FileTreeFolderType, getFile, updateFile, deleteFile } from "../fileTree/FileTree"
+import { createRootFolder, FileTreeFolderType, getFileFromTree, updateFileOfTree, deleteFileFromTree } from "../fileTree/FileTree"
 
 type FileWorkerFileType = {
     markdown: {
@@ -26,7 +26,7 @@ type FileWorkerFileType = {
 }
 
 async function isFileUpdated(root:FileTreeFolderType<FileWorkerFileType>, fileName:string, handle:FileSystemFileHandle):Promise<boolean> {
-    const prev = getFile(root, fileName)    
+    const prev = getFileFromTree(root, fileName)    
     if (prev === undefined) {
         return true
     }
@@ -101,10 +101,10 @@ async function updateDataFileList(rootHandle:FileSystemDirectoryHandle, fileName
     for (const fileName of fileNameList) {
         const handle = await getHandle(rootHandle, fileName)
         if ((handle !== undefined) && isFileHandle(handle)) {
-            const prev = getFile(rootFolder, fileName)
+            const prev = getFileFromTree(rootFolder, fileName)
             const current = await handle.getFile()
             if ((prev === undefined) || (prev.type === "folder") || (current.lastModified > prev.timestamp)) {
-                updateFile(rootFolder, fileName, {
+                updateFileOfTree(rootFolder, fileName, {
                     type: "data",
                     timestamp: current.lastModified,
                     handle: handle
@@ -151,7 +151,7 @@ export async function searchDirectoryWorkerCallback(payload:WorkerMessageType['s
             if (await isFileUpdated(rootFolder, name, handle)) {
                 const result = await readMarkdownFile(handle, isMarkdownFile, name)
                 const current = await handle.getFile()
-                updateFile(rootFolder, name, {
+                updateFileOfTree(rootFolder, name, {
                     type: "markdown",
                     timestamp: current.lastModified,
                     handle: handle,
@@ -163,7 +163,7 @@ export async function searchDirectoryWorkerCallback(payload:WorkerMessageType['s
                 await updateDataFileList(rootHandle, result.markdownFile.linkList, rootFolder, postEvent)
             }
             else {
-                const current = getFile(rootFolder, name) as FileWorkerFileType['markdown']
+                const current = getFileFromTree(rootFolder, name) as FileWorkerFileType['markdown']
                 await updateDataFileList(rootHandle, current.imageList, rootFolder, postEvent)
                 await updateDataFileList(rootHandle, current.linkList, rootFolder, postEvent)
             }
@@ -173,7 +173,7 @@ export async function searchDirectoryWorkerCallback(payload:WorkerMessageType['s
             postEvent.send("updateCssFile", result)
         }
         for await (const fileName of deletedFileGenerator(rootHandle, rootFolder)) {
-            deleteFile(rootFolder, fileName)
+            deleteFileFromTree(rootFolder, fileName)
             postEvent.send("deleteFile", { fileName: fileName })
         }
     }
