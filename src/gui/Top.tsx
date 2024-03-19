@@ -4,7 +4,7 @@ import { createContext, useEffect　} from "react"
 import { topReducer, TopStateType } from "./TopReducer"
 import { MarkdownView } from "./MarkdownView"
 import { MarkdownMenuView } from "./MarkdownMenuView"
-import { WorkerAgent } from "../worker/WorkerAgent"
+import { MediatorProxy } from "../Mediator"
 import { SearchAppBar } from "./SearchAppBar"
 import { setupDragAndDrop } from "../fileIO/dragAndDrop"
 import { WorkerInvoke } from "../utils/WorkerMessage"
@@ -28,37 +28,35 @@ export interface TopProps {
     worker: WorkerInvoke<WorkerMessageType>
     config: ConfigType,
     templateHtml: string,
-    initialState: TopStateType,
-    workerAgent: WorkerAgent
+    initialState: TopStateType,    
 }
 
 export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
 
     const [state, dispatch] = React.useReducer(topReducer, props.initialState)
-    const dispatcher = topDispatcher.build(dispatch)    
-    const rootFolder = props.workerAgent.rootFolder
+    const dispatcher = topDispatcher.build(dispatch)
+    const mediator = new MediatorProxy(props.worker, props.config, dispatcher)   
+    const rootFolder = mediator.rootFolder
     const context:TopContextType = {
         dispatcher: dispatcher,
         worker: props.worker
     }
 
     // Call once
-    useEffect(() => {        
-        props.workerAgent.setDispatcher(dispatcher)    
-        props.workerAgent.updateSeq()
-        
-        setupDragAndDrop(props.workerAgent, dispatcher)
+    useEffect(() => {                
+        mediator.updateCurrentPage(props.config.topPage)
+        mediator.updateSeq()        
+        setupDragAndDrop(mediator, dispatcher)
         _open_markdown = function(name:string) {
-            props.workerAgent.updateCurrentPage(name)
-        }
-        
+            mediator.updateCurrentPage(name)
+        }        
     }, [])
     
     return <TopContext.Provider value={context}>
         <SearchAppBar
             title={state.title}
             packFileName={state.packFileName}
-            pack={async () => await createPack(props.templateHtml, props.workerAgent)}
+            pack={async () => await createPack(props.templateHtml, mediator)}
             unpack={async () => extract(rootFolder)}            
         ></SearchAppBar>
         <Grid container spacing={2}>

@@ -1,8 +1,8 @@
-import { WorkerAgent } from "../worker/WorkerAgent"
+import { Mediator } from "../Mediator"
 import { saveFolderToElement, saveJsonToElement } from "../dataElement/dataToElement"
 import { CONFIG_ID, WIKIPACK_SCRIPT_ID } from "../constant"
 
-export async function createPack(template:string, workerAgent:WorkerAgent):Promise<Blob> {
+export async function createPack(template:string, workerAgent:Mediator):Promise<Blob> {
     const parser = new DOMParser()
     const doc = parser.parseFromString(template, 'text/html')
     const scriptElem = doc.getElementById(WIKIPACK_SCRIPT_ID)

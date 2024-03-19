@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client"
 import { Top } from "./gui/Top"
 import { WorkerInvoke } from "./utils/WorkerMessage"
 import { WorkerMessageType } from "./worker/WorkerMessageType"
-import { WorkerAgent } from "./worker/WorkerAgent"
+import { mediatorData } from "./Mediator"
 import { readConfig } from "./config"
 import { TopStateType } from "./gui/TopReducer"
 import { updateFileOfTree } from "./fileTree/FileTree"
@@ -22,15 +22,14 @@ window.onload = async function () {
     const worker = new WorkerInvoke<WorkerMessageType>(new Worker(URL.createObjectURL(workerBlob)))    
     const config = readConfig()
     const container = document.getElementById(TOP_COMPONENT_ID)
-    const workerAgent = new WorkerAgent(worker, config)
     const isMarkdownFile = makeFileRegexChecker(config.markdownFileRegex)
     
-    await injectAllMarkdownFileFromElement(workerAgent.rootFolder, isMarkdownFile)
-    await injectAllCssFileFromElement(workerAgent.rootFolder)
-    await injectAllDataFileFromElement(workerAgent.rootFolder)
+    await injectAllMarkdownFileFromElement(mediatorData.rootFolder, isMarkdownFile)
+    await injectAllCssFileFromElement(mediatorData.rootFolder)
+    await injectAllDataFileFromElement(mediatorData.rootFolder)
 
     if (config.initialConfig) {
-        updateFileOfTree(workerAgent.rootFolder, config.topPage, {
+        updateFileOfTree(mediatorData.rootFolder, config.topPage, {
             type: "markdown",
             markdown: defaultMarkdown,
             timestamp: 0,
@@ -40,15 +39,15 @@ window.onload = async function () {
     }
 
     const initialState:TopStateType = {
-        title: config.topPage,
-        html: workerAgent.convertToHtml(config.topPage) || '<h1>Error</h1>',
+        title: "",
+        html: "",
         packFileName: "wikipack",
         seq: 0        
     }
 
     if (container !== null) {     
         const root = createRoot(container)
-        root.render(<Top worker={worker} config={config} templateHtml={templateHtml} initialState={initialState} workerAgent={workerAgent}/>)
+        root.render(<Top worker={worker} config={config} templateHtml={templateHtml} initialState={initialState}/>)
     }
     else {
         // TODO: do something like : body.innerHTML = ...

@@ -1,7 +1,7 @@
 import { TopDispatcherType } from "../gui/TopDispatcher"
-import { WorkerAgent } from "../worker/WorkerAgent"
+import { Mediator } from "../Mediator"
 
-async function ondropped(workerAgent: WorkerAgent, dispatcher:TopDispatcherType, ev: Event) {    
+async function ondropped(workerAgent: Mediator, dispatcher:TopDispatcherType, ev: Event) {    
     if (!(ev instanceof DragEvent)) {
         return
     }
@@ -59,7 +59,7 @@ async function ondropped(workerAgent: WorkerAgent, dispatcher:TopDispatcherType,
     }
 }
 
-export function setupDragAndDrop(workerAgent:WorkerAgent, dispatcher:TopDispatcherType) {
+export function setupDragAndDrop(workerAgent:Mediator, dispatcher:TopDispatcherType) {
     window.addEventListener('dragenter', function (e: Event) {
         e.stopPropagation()
         e.preventDefault()

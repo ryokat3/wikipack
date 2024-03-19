@@ -1,13 +1,14 @@
-import { WorkerInvoke } from "../utils/WorkerMessage"
-import { WorkerMessageType } from "../worker/WorkerMessageType"
-import { ConfigType } from "../config"
-import { TopDispatcherType } from "../gui/TopDispatcher"
-import { FolderType, FileType } from "../fileTree/FileTreeType"
-import { createRootFolder, getFileFromTree, updateFileOfTree, deleteFileFromTree } from "../fileTree/FileTree"
-import { collectCssFiles, CssInfo, updateCssInfo, applyCssInfo } from "../dataElement/styleElement"
-import { normalizePath } from "../utils/appUtils"
-import { getRenderer } from "../markdown/converter"
-import { makeFileRegexChecker } from "../utils/appUtils"
+import { WorkerInvoke } from "./utils/WorkerMessage"
+import { WorkerMessageType } from "./worker/WorkerMessageType"
+import { ConfigType } from "./config"
+import { TopDispatcherType } from "./gui/TopDispatcher"
+import { FolderType, FileType } from "./fileTree/FileTreeType"
+import { createRootFolder, getFileFromTree, updateFileOfTree, deleteFileFromTree } from "./fileTree/FileTree"
+import { collectCssFiles, CssInfo, updateCssInfo, applyCssInfo } from "./dataElement/styleElement"
+import { normalizePath } from "./utils/appUtils"
+import { getRenderer } from "./markdown/converter"
+import { makeFileRegexChecker } from "./utils/appUtils"
+import { getProxyDataClass } from "./utils/proxyData"
 
 const NO_CURRENT_PAGE = ""
 
@@ -15,42 +16,30 @@ function isSameFile(oldF:FolderType|FileType[keyof FileType], newF:FileType[keyo
     return (oldF.type == newF.type) && (oldF.timestamp == newF.timestamp)
 }
 
-
-
-export class WorkerAgent {
-    readonly worker: WorkerInvoke<WorkerMessageType>
-    readonly config: ConfigType
-    
-
-    readonly isMarkdown: (name:string)=>boolean
-
-    dispatcher: TopDispatcherType | undefined
-
-    rootFolder: FolderType
-    currentPage: string
-    currentCss: CssInfo
-
+class MediatorData {
+    rootFolder: FolderType = createRootFolder<FileType>()
+    currentPage: string = ""
+    currentCss: CssInfo = {}
     mode: 'directory' | 'url' | undefined = undefined
     directory: FileSystemDirectoryHandle | undefined = undefined
-    URL: string | undefined  = undefined
+    URL: string | undefined = undefined
     seq: number = 0
+}
 
-    constructor(worker:WorkerInvoke<WorkerMessageType>, config:ConfigType) {
+export class Mediator extends MediatorData {
+    readonly worker: WorkerInvoke<WorkerMessageType>
+    readonly config: ConfigType
+    readonly dispatcher: TopDispatcherType
+    readonly isMarkdown: (name:string)=>boolean
+
+    constructor(worker:WorkerInvoke<WorkerMessageType>, config:ConfigType, dispatcher: TopDispatcherType) {
+        super()
+
         this.worker = worker
         this.config = config
+        this.dispatcher = dispatcher
 
         this.isMarkdown = makeFileRegexChecker(this.config.markdownFileRegex)
-
-        this.rootFolder = createRootFolder<FileType>()
-        this.currentPage = config.topPage        
-        this.currentCss = Object.fromEntries(collectCssFiles(this.rootFolder, config.topPage).map((name)=>[name, 0])),
-        updateFileOfTree(this.rootFolder, this.currentPage, {
-            type: "markdown",
-            markdown: 'Hello, world!!',
-            timestamp: 0,
-            imageList: [],
-            linkList: []
-        })
 
         this.worker.addEventHandler("searchDirectoryDone", (payload)=>this.searchDirectoryDone(payload))
         this.worker.addEventHandler("searchURLDone", (payload)=>this.searchURLDone(payload))
@@ -63,10 +52,6 @@ export class WorkerAgent {
     convertToHtml(fileName:string):string|undefined {
         const currentFile = getFileFromTree(this.rootFolder, fileName)
         return (currentFile !== undefined && currentFile.type === "markdown") ? getRenderer(this.rootFolder, fileName, this.isMarkdown)(currentFile.markdown) : undefined
-    }
-
-    setDispatcher(dispatcher:TopDispatcherType):void {
-        this.dispatcher = dispatcher        
     }
 
     searchDirectory(handle:FileSystemDirectoryHandle):void {        
@@ -102,25 +87,16 @@ export class WorkerAgent {
         this.currentCss = updateCssInfo(this.currentCss, collectCssFiles(this.rootFolder, this.currentPage))
 
         // Update HTML
-        const html = this.convertToHtml(this.currentPage)
-        if (this.dispatcher !== undefined) {
-            if (html !== undefined) {
-                this.dispatcher.updateHtml({ title: this.currentPage, html: html})
-            }
-            else {
-                this.dispatcher.updateHtml({ title: this.currentPage, html: `${this.currentPage} not found`})
-            }
-        } 
+        const html = this.convertToHtml(this.currentPage)        
+        this.dispatcher.updateHtml({ title: this.currentPage, html: (html !== undefined) ? html : `${this.currentPage} not found`})
         
         // Update CSS
         applyCssInfo(this.rootFolder, this.currentCss)
     }
 
     updateSeq(): void {
-        this.seq = this.seq + 1
-        if (this.dispatcher !== undefined) {
-            this.dispatcher.updateSeq({ seq:this.seq })
-        }
+        this.seq = this.seq + 1        
+        this.dispatcher.updateSeq({ seq:this.seq })        
     }
 
     resetRootFolder():void {
@@ -150,7 +126,7 @@ export class WorkerAgent {
             this.currentPage = fileName            
             const html = this.convertToHtml(this.currentPage)
             if (html !== undefined) {                
-                this.dispatcher?.updateHtml({ title: this.currentPage, html: html})
+                this.dispatcher.updateHtml({ title: this.currentPage, html: html})
             }
         }
     }
@@ -167,7 +143,7 @@ export class WorkerAgent {
             this.seq = this.seq + 1
             this.currentCss = updateCssInfo({ ...this.currentCss, [fileName]: this.seq }, collectCssFiles(this.rootFolder, this.currentPage))
             if (fileName in Object.keys(this.currentCss)) {
-                this.dispatcher?.updateSeq({ seq: this.seq })
+                this.dispatcher.updateSeq({ seq: this.seq })
             }
         }    
     }
@@ -189,7 +165,7 @@ export class WorkerAgent {
             if ((markdownFile !== undefined) && (markdownFile.type === "markdown") && (markdownFile.imageList.includes(fileName) || markdownFile.linkList.includes(fileName))) {
                 const html = this.convertToHtml(this.currentPage)
                 if (html !== undefined) {
-                    this.dispatcher?.updateHtml({ title: this.currentPage, html: html })
+                    this.dispatcher.updateHtml({ title: this.currentPage, html: html })
                 }
             }
         }
@@ -200,3 +176,6 @@ export class WorkerAgent {
         deleteFileFromTree(this.rootFolder, filePath)        
     }    
 }
+
+export const mediatorData = new MediatorData()
+export const MediatorProxy = getProxyDataClass(Mediator, mediatorData)

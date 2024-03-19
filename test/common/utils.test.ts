@@ -79,8 +79,12 @@ describe("singleton", ()=>{
     })
 
     it("getProxyDataClass", () => {
-        const data = {
-            value: 1
+        class Data {
+            value: number
+
+            constructor(value:number) {
+                this.value = value
+            }
         }
         class Test {
             value:number = 2 // proxied
@@ -90,6 +94,7 @@ describe("singleton", ()=>{
                 this.value2 = value2
             }
         }
+        const data = new Data(1)
         const ProxyTest = getProxyDataClass(Test, data)
         const nt1 = new ProxyTest(3)
 
@@ -101,7 +106,6 @@ describe("singleton", ()=>{
         chai.assert.equal(nt1.value, 5)
 
         chai.assert.equal(nt1.value2, 3)
-        chai.assert.equal(nt2.value2, 4)
-        
+        chai.assert.equal(nt2.value2, 4)        
     })
 })
