@@ -40,10 +40,10 @@ export async function collectFiles(dirHandle:FileSystemDirectoryHandle, pred:(fi
     
     const result = Object.create(null) as { [name:string]: FileSystemFileHandle }
     for await (const [name, handle] of dirHandle.entries()) {
-        if (pred(name) && (handle.kind === 'file')) {
+        if (pred(name) && isFileHandle(handle)) {
             result[name] = handle
         }
-        else if (handle.kind === 'directory') {
+        else if (isDirectoryHandle(handle)) {
             Object.entries((await collectFiles(handle, pred))).forEach(([name1, handle1])=>{
                 result[splitPath(name + "/" + name1).join("/")] = handle1
             })
@@ -56,6 +56,6 @@ export function isFileHandle(handle:FileSystemHandle):handle is FileSystemFileHa
     return handle.kind === "file"
 }
 
-export function isDirectoryHandle(handle:FileSystemHandle):handle is FileSystemFileHandle {
+export function isDirectoryHandle(handle:FileSystemHandle):handle is FileSystemDirectoryHandle {
     return handle.kind === "directory"
 }

@@ -9,7 +9,7 @@ const outputDir="tmp"
 const browserTestConfig:Configuration = {
     mode: "development",
     devtool: "inline-source-map",
-    entry : Object.fromEntries(glob.sync(path.resolve(__dirname, 'test/*.ts')).map((filePath)=> [path.basename(filePath, path.extname(filePath)), filePath])),
+    entry : Object.fromEntries(glob.sync(path.resolve(__dirname, 'test/**/*.ts')).map((filePath)=> [path.basename(filePath, path.extname(filePath)), filePath])),
     module: {
         rules: [
             {

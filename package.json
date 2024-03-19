@@ -6,7 +6,7 @@
   "scripts": {
     "build": "webpack-cli",
     "build-prod": "webpack-cli --mode='production'",
-    "test": "mocha --exit -r ts-node/register test/**/*.ts",
+    "test": "mocha --exit -r ts-node/register test/common/*.ts",    
     "test:browser": "webpack-cli serve --config='webpack.config.test.ts'",
     "clean": "shx rm -rf dist/* src/tmp tmp"
   },
