@@ -71,8 +71,7 @@ const mainConfig: (mode: "development" | "production") => Configuration = (mode:
   }
 }
 
-// module.exports = [ fileWorkerConfig, mainConfig ]
 module.exports = (_env:any, _mode:"development" | "production" | "none" | undefined) => {
-  const mode:"development" | "production" = (_mode === "production") ? "production" : "development"
+  const mode:"development" | "production" = (_mode === "production") ? "production" : "development"  
   return [ workerConfig(mode), mainConfig(mode) ]
 }

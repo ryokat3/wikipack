@@ -1,6 +1,6 @@
 import * as chai from "chai"
-import { splitPath } from "../../src/utils/appUtils"
-import { addProxyProperty, getProxyDataFunction, getProxyDataClass } from "../../src/utils/proxyData"
+import { splitPath } from "../src/utils/appUtils"
+import { addProxyProperty, getProxyDataFunction, getProxyDataClass } from "../src/utils/proxyData"
 
 describe("Javascript common", ()=>{
     it("splitPath", ()=>{        
@@ -21,7 +21,7 @@ describe("Javascript common", ()=>{
     })
 })
 
-describe("singleton", ()=>{
+describe("ProxyData", ()=>{
 
     it("addProxyProperty", () => {
 

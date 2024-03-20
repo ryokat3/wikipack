@@ -1,4 +1,4 @@
-import { createIDBInitializer, IDBCreator, IDB } from "../../src/utils/typesafe-idb"
+import { createIDBInitializer, IDBCreator, IDB } from "../src/utils/typesafe-idb"
 import * as chai from "chai"
 import * as E from "fp-ts/Either"
 import * as TE from "fp-ts/TaskEither"
