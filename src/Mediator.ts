@@ -9,6 +9,7 @@ import { normalizePath } from "./utils/appUtils"
 import { getRenderer } from "./markdown/converter"
 import { makeFileRegexChecker } from "./utils/appUtils"
 import { getProxyDataClass } from "./utils/proxyData"
+import { getMarkdownMenu, MarkdownMenuFileType } from "./fileTree/MarkdownMenu"
 
 const NO_CURRENT_PAGE = ""
 
@@ -119,16 +120,24 @@ export class Mediator extends MediatorData {
 
     updateMarkdownFile(payload:WorkerMessageType['updateMarkdownFile']['response']):void {        
         const fileName = normalizePath(payload.fileName)
+        const isNewFile = getFileFromTree(this.rootFolder, fileName) === undefined
         const isSame = updateFileOfTree(this.rootFolder, fileName, payload.markdownFile, isSameFile)
         const isCurrentPageExist = getFileFromTree(this.rootFolder, this.currentPage) !== undefined
         
+        if (isNewFile) {
+            const menuRoot = getMarkdownMenu(this.rootFolder) || createRootFolder<MarkdownMenuFileType>()
+            this.dispatcher.updateMenuRoot({ menuRoot:menuRoot })
+        }
+
         if ((this.currentPage === NO_CURRENT_PAGE) || (isCurrentPageExist && this.currentPage === fileName && !isSame)) {            
             this.currentPage = fileName            
             const html = this.convertToHtml(this.currentPage)
             if (html !== undefined) {                
                 this.dispatcher.updateHtml({ title: this.currentPage, html: html})
             }
-        }
+        }  
+        
+
     }
 
     updateCssFile(payload:WorkerMessageType['updateCssFile']['response']):void {

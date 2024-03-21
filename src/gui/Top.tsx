@@ -9,8 +9,6 @@ import { SearchAppBar } from "./SearchAppBar"
 import { setupDragAndDrop } from "../fileIO/dragAndDrop"
 import { WorkerInvoke } from "../utils/WorkerMessage"
 import { WorkerMessageType } from "../worker/WorkerMessageType"
-import { getMarkdownMenu, MarkdownMenuFileType } from "../fileTree/MarkdownMenu"
-import { createRootFolder } from "../fileTree/FileTree"
 import { ConfigType } from "../config"
 import { createPack } from "../fileIO/saveAsHtml"
 import { extract } from "../fileIO/extract"
@@ -60,8 +58,8 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
             unpack={async () => extract(rootFolder)}            
         ></SearchAppBar>
         <Grid container spacing={2}>
-            <Grid item xs={3}>
-                <MarkdownMenuView root={getMarkdownMenu(rootFolder) || createRootFolder<MarkdownMenuFileType>()}></MarkdownMenuView>
+            <Grid item xs={3}>                
+                <MarkdownMenuView root={state.menuRoot}></MarkdownMenuView>
             </Grid>
             <Grid item xs={6}>
                 <MarkdownView html={state.html}></MarkdownView>

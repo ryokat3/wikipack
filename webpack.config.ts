@@ -3,6 +3,8 @@ import * as path from "path"
 import { Compiler, Configuration, RuleSetRule } from "webpack"
 import { inlineSource } from "inline-source"
 
+const OUTPUT_DIR = 'dist'
+
 function newInlineSourcePlugin (assetFileName:string, rootPath:string, template:string, target:string, compress:boolean) {
     return (compiler:Compiler) => {
         compiler.hooks.assetEmitted.tap('Inline Source', async (fileName:string) => {
@@ -56,10 +58,11 @@ const workerConfig: (mode: "development" | "production") => Configuration = (mod
 const mainConfig: (mode: "development" | "production") => Configuration = (mode: "development" | "production") => {
   return {
     ...commonConfig(mode),
+    name: 'main',
     entry: './src/index.tsx',
     output: {
       filename: 'wikipack.js',
-      path: path.join(__dirname, 'dist'),
+      path: path.join(__dirname, OUTPUT_DIR),
       library: 'wikipack',
       libraryTarget: 'umd',
       publicPath: ''

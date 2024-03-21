@@ -10,6 +10,8 @@ import { updateFileOfTree } from "./fileTree/FileTree"
 import { injectAllMarkdownFileFromElement, injectAllCssFileFromElement, injectAllDataFileFromElement } from "./dataElement/dataFromElement"
 import { TOP_COMPONENT_ID } from "./constant"
 import { makeFileRegexChecker } from "./utils/appUtils"
+import { createRootFolder } from "./fileTree/FileTree"
+import { MarkdownMenuFileType } from "./fileTree/MarkdownMenu"
 
 import workerJS from "./tmp/worker.bundle.js.asdata"
 import defaultMarkdown from "./defaultMarkdown.md"
@@ -42,7 +44,8 @@ window.onload = async function () {
         title: "",
         html: "",
         packFileName: "wikipack",
-        seq: 0        
+        seq: 0,
+        menuRoot: createRootFolder<MarkdownMenuFileType>()      
     }
 
     if (container !== null) {     

@@ -1,3 +1,5 @@
+import { MarkdownMenuFolderType} from "../fileTree/MarkdownMenu"
+
 export type TopFdt = {
     updatePackFileName: {
         name: string
@@ -8,5 +10,8 @@ export type TopFdt = {
     },
     updateSeq: {        
         seq: number
+    },
+    updateMenuRoot: {
+        menuRoot: MarkdownMenuFolderType
     }
 }
