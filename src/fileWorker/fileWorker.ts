@@ -1,32 +1,13 @@
 import { WorkerMessageType } from "../worker/WorkerMessageType"
 import { PostEvent } from "../utils/WorkerMessage"
 import { getMarkdownFile} from "../markdown/converter"
-import { collectFiles, getHandle, getHandleMap, isFileHandle } from "./fileRW"
-import { addPath, makeFileRegexChecker } from "../utils/appUtils"
-import { createRootFolder, FileTreeFolderType, getFileFromTree, updateFileOfTree, deleteFileFromTree } from "../fileTree/FileTree"
+import { collectFiles, getHandle, /*getHandleMap,*/ isFileHandle } from "./fileRW"
+import { /*addPath,*/ makeFileRegexChecker } from "../utils/appUtils"
+import { /* createRootFolder,　FileTreeFolderType, */ getFileFromTree, /* updateFileOfTree, deleteFileFromTree*/ } from "../fileTree/FileTree"
+import { FileTagFolderType } from "../fileTree/FileTagTree"
 
-type FileWorkerFileType = {
-    markdown: {
-        type: "markdown",
-        timestamp: number,
-        handle: FileSystemFileHandle,
-        imageList: string[],
-        linkList: string[]
-    },
-    css: {
-        type: "css",
-        timestamp: number,
-        handle: FileSystemFileHandle
-    },
-    data: {
-        type: "data",
-        timestamp: number,
-        handle: FileSystemFileHandle
-    }
-}
-
-async function isFileUpdated(root:FileTreeFolderType<FileWorkerFileType>, fileName:string, handle:FileSystemFileHandle):Promise<boolean> {
-    const prev = getFileFromTree(root, fileName)    
+async function isFileUpdated(rootTagTree:FileTagFolderType, fileName:string, handle:FileSystemFileHandle):Promise<boolean> {
+    const prev = getFileFromTree(rootTagTree, fileName)    
     if (prev === undefined) {
         return true
     }
@@ -35,7 +16,7 @@ async function isFileUpdated(root:FileTreeFolderType<FileWorkerFileType>, fileNa
     }
     else {
         const current = await handle.getFile()
-        return  current.lastModified > prev.timestamp
+        return  current.lastModified !== prev.timestamp
     }
 }
 
@@ -97,34 +78,16 @@ async function readDataFile(handle: FileSystemFileHandle, fileName: string): Pro
     })
 }
 
-async function updateDataFileList(rootHandle:FileSystemDirectoryHandle, fileNameList:string[], rootFolder:FileTreeFolderType<FileWorkerFileType>, postEvent:PostEvent<WorkerMessageType>) {
+async function updateDataFileList(rootHandle:FileSystemDirectoryHandle, fileNameList:string[], rootTagTree:FileTagFolderType, postEvent:PostEvent<WorkerMessageType>) {
     for (const fileName of fileNameList) {
         const handle = await getHandle(rootHandle, fileName)
         if ((handle !== undefined) && isFileHandle(handle)) {
-            const prev = getFileFromTree(rootFolder, fileName)
+            const prev = getFileFromTree(rootTagTree, fileName)
             const current = await handle.getFile()
-            if ((prev === undefined) || (prev.type === "folder") || (current.lastModified > prev.timestamp)) {
-                updateFileOfTree(rootFolder, fileName, {
-                    type: "data",
-                    timestamp: current.lastModified,
-                    handle: handle
-                })              
+            if ((prev === undefined) || (prev.type === "folder") || (current.lastModified !== prev.timestamp)) {              
                 const dataFile = await readDataFile(handle as FileSystemFileHandle, fileName)
                 postEvent.send("updateDataFile", dataFile, [dataFile.data])
             }
-        }
-        // TODO: handle the case of file deleted
-    }
-}
-
-async function* deletedFileGenerator(dirHandle:FileSystemDirectoryHandle, folder:FileTreeFolderType<FileWorkerFileType>, folderPath:string=""):AsyncGenerator<string> {
-    const currentChildren = await getHandleMap(dirHandle)    
-    for (const [name, value] of Object.entries(folder.children)) {
-        if (!(name in currentChildren)) {            
-            yield addPath(folderPath, name)
-        }
-        else if ((currentChildren[name].kind === "directory") && (value.type === "folder")) {            
-            yield* deletedFileGenerator(currentChildren[name] as FileSystemDirectoryHandle, value, addPath(folderPath, name))            
         }
     }
 }
@@ -140,42 +103,35 @@ export async function openFileWorkerCallback(payload:WorkerMessageType['openFile
 }
 
 export async function searchDirectoryWorkerCallback(payload:WorkerMessageType['searchDirectory']['request'], postEvent:PostEvent<WorkerMessageType>){                
-
-    const rootFolder = createRootFolder<FileWorkerFileType>()
     const rootHandle = payload.handle
+    const rootTagTree = payload.tagTree    
     const isMarkdownFile = makeFileRegexChecker(payload.markdownFileRegex)
     const isCssFile = makeFileRegexChecker(payload.cssFileRegex)
 
     try {
+        const dataFileList:Set<string> = new Set([])
         for (const [name, handle] of Object.entries(await collectFiles(rootHandle, isMarkdownFile))) {
-            if (await isFileUpdated(rootFolder, name, handle)) {
-                const result = await readMarkdownFile(handle, isMarkdownFile, name)
-                const current = await handle.getFile()
-                updateFileOfTree(rootFolder, name, {
-                    type: "markdown",
-                    timestamp: current.lastModified,
-                    handle: handle,
-                    imageList: result.markdownFile.imageList,
-                    linkList: result.markdownFile.linkList
-                })
+            const result = await readMarkdownFile(handle, isMarkdownFile, name)
+            if (await isFileUpdated(rootTagTree, name, handle)) {                
                 postEvent.send("updateMarkdownFile", result)
-                await updateDataFileList(rootHandle, result.markdownFile.imageList, rootFolder, postEvent)
-                await updateDataFileList(rootHandle, result.markdownFile.linkList, rootFolder, postEvent)
             }
-            else {
-                const current = getFileFromTree(rootFolder, name) as FileWorkerFileType['markdown']
-                await updateDataFileList(rootHandle, current.imageList, rootFolder, postEvent)
-                await updateDataFileList(rootHandle, current.linkList, rootFolder, postEvent)
-            }
-        }
+            result.markdownFile.imageList.forEach(dataFileList.add, dataFileList)
+            result.markdownFile.linkList.forEach(dataFileList.add, dataFileList)
+        }        
+        await updateDataFileList(rootHandle, Array.from(dataFileList.values()), rootTagTree, postEvent)
+
         for (const [name, handle] of Object.entries(await collectFiles(rootHandle, isCssFile))) {
-            const result = await readCssFile(handle, name)
-            postEvent.send("updateCssFile", result)
+            if (await isFileUpdated(rootTagTree, name, handle)) {
+                const result = await readCssFile(handle, name)
+                postEvent.send("updateCssFile", result)
+            }
         }
+        /*
         for await (const fileName of deletedFileGenerator(rootHandle, rootFolder)) {
             deleteFileFromTree(rootFolder, fileName)
             postEvent.send("deleteFile", { fileName: fileName })
         }
+        */
     }
     finally {
         postEvent.send("searchDirectoryDone", { handle: rootHandle })

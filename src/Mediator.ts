@@ -10,6 +10,8 @@ import { getRenderer } from "./markdown/converter"
 import { makeFileRegexChecker } from "./utils/appUtils"
 import { getProxyDataClass } from "./utils/proxyData"
 import { getMarkdownMenu, MarkdownMenuFileType } from "./fileTree/MarkdownMenu"
+import { convertToFileTagFolder } from "./fileTree/FileTagTree"
+
 
 const NO_CURRENT_PAGE = ""
 
@@ -60,6 +62,7 @@ export class Mediator extends MediatorData {
         this.directory = handle
         this.worker.request("searchDirectory", { 
             handle: handle,
+            tagTree: convertToFileTagFolder(this.rootFolder),
             markdownFileRegex: this.config.markdownFileRegex,
             cssFileRegex: this.config.cssFileRegex               
         })        
@@ -129,15 +132,13 @@ export class Mediator extends MediatorData {
             this.dispatcher.updateMenuRoot({ menuRoot:menuRoot })
         }
 
-        if ((this.currentPage === NO_CURRENT_PAGE) || (isCurrentPageExist && this.currentPage === fileName && !isSame)) {            
+        if ((this.currentPage === NO_CURRENT_PAGE) || (isCurrentPageExist && this.currentPage === fileName && !isSame)) {                        
             this.currentPage = fileName            
             const html = this.convertToHtml(this.currentPage)
             if (html !== undefined) {                
                 this.dispatcher.updateHtml({ title: this.currentPage, html: html})
             }
-        }  
-        
-
+        }          
     }
 
     updateCssFile(payload:WorkerMessageType['updateCssFile']['response']):void {
@@ -169,9 +170,9 @@ export class Mediator extends MediatorData {
             timestamp: payload.timestamp
         }, isSameFile)
         
-        if (!isSame) {
+        if (!isSame) {        
             const markdownFile = getFileFromTree(this.rootFolder, this.currentPage)
-            if ((markdownFile !== undefined) && (markdownFile.type === "markdown") && (markdownFile.imageList.includes(fileName) || markdownFile.linkList.includes(fileName))) {
+            if ((markdownFile !== undefined) && (markdownFile.type === "markdown") && (markdownFile.imageList.includes(fileName) || markdownFile.linkList.includes(fileName))) {        
                 const html = this.convertToHtml(this.currentPage)
                 if (html !== undefined) {
                     this.dispatcher.updateHtml({ title: this.currentPage, html: html })

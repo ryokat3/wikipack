@@ -14,6 +14,10 @@ export type FileTreeFolderType<FT extends FileTreeFileType> = {
     }
 }
 
+export function isFileTreeFolder<FT extends FileTreeFileType>(target:FT[keyof FT] | FileTreeFolderType<FT>):target is FileTreeFolderType<FT> {
+    return target.type === 'folder'
+}
+
 export function createRootFolder<FT extends FileTreeFileType>():FileTreeFolderType<FT> {
     return {
         type: "folder",
@@ -81,4 +85,20 @@ export function deleteFileFromTree<FT extends FileTreeFileType>(folder:FileTreeF
     else if ((pathName.length > 1) && (pathName[0] in folder.children) && (folder.children[pathName[0]].type === "folder")) {
         deleteFileFromTree(folder.children[pathName[0]] as FileTreeFolderType<FT>, pathName.slice(1))
     }
+}
+
+export function convertFileTree<FT extends FileTreeFileType, FT2 extends FileTreeFileType>(
+    folder:FileTreeFolderType<FT>,
+    convert:(src:FT[keyof FT])=>FT2[keyof FT2],
+    parent:FileTreeFolderType<FT2>|undefined = undefined
+):FileTreeFolderType<FT2> {    
+    const newFolder:FileTreeFolderType<FT2> = {
+        ...folder,
+        parent: parent,
+        children: {}
+    }
+    newFolder.children = Object.fromEntries(Object.entries(folder.children).map(([fileName, fileInfo])=>{
+        return [fileName, isFileTreeFolder(fileInfo) ? convertFileTree(fileInfo, convert, newFolder) : convert(fileInfo)]
+    }))
+    return newFolder
 }

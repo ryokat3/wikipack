@@ -1,4 +1,5 @@
 import { MarkdownFileType } from "../fileTree/FileTreeType"
+import { FileTagFolderType } from "../fileTree/FileTagTree"
 
 export type WorkerMessageType = {
     openFile : {
@@ -10,6 +11,7 @@ export type WorkerMessageType = {
     searchDirectory: {
         request: {
             handle: FileSystemDirectoryHandle,
+            tagTree: FileTagFolderType,
             markdownFileRegex: string[],
             cssFileRegex: string[]
         }
