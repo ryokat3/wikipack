@@ -1,6 +1,6 @@
 {
   "name": "wikipack",
-  "version": "0.18.1",
+  "version": "0.18.2",
   "description": "A HTML to pack all markdown files and assets in a single HTML with viewer",
   "main": "index.js",
   "scripts": {
@@ -13,7 +13,7 @@
   "author": "https://github.com/ryokat3",
   "license": "MIT",
   "devDependencies": {
-    "@types/chai": "^4.3.13",
+    "@types/chai": "^4.3.14",
     "@types/glob": "^8.1.0",
     "@types/html-webpack-plugin": "^3.2.9",
     "@types/mime-db": "^1.43.5",
@@ -30,10 +30,10 @@
     "shx": "^0.3.4",
     "ts-loader": "^9.5.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5.4.2",
-    "webpack": "^5.90.3",
+    "typescript": "^5.4.3",
+    "webpack": "^5.91.0",
     "webpack-cli": "^5.1.4",
-    "webpack-dev-server": "^5.0.3"
+    "webpack-dev-server": "^5.0.4"
   },
   "dependencies": {
     "@emotion/react": "^11.11.4",

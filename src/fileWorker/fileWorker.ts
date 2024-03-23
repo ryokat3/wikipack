@@ -46,7 +46,7 @@ async function readCssFile(handle: FileSystemFileHandle, fileName: string|undefi
 
         const reader = new FileReader()
         reader.onload = (e: ProgressEvent<FileReader>) => {
-            if ((e.target !== null) && (e.target.result !== null) && (typeof e.target.result == 'string')) {
+            if ((e.target !== null) && (e.target.result !== null) && (typeof e.target.result == 'string')) {                
                 const cssFileName = (fileName !== undefined) ? fileName : blob.name                                
                 resolve({
                     fileName: cssFileName,

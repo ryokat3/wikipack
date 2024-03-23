@@ -17,4 +17,3 @@ export const FILE_NAME_ATTR = "file-name"
 export const SEQ_NUMBER_ATTR = "sequence-number"
 
 export const APPLICATION_DATA_MIME_TYPE = "text/x-this-application"
-

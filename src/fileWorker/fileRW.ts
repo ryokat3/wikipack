@@ -1,4 +1,3 @@
-
 import { splitPath } from "../utils/appUtils"
 
 export async function getHandleMap(dirHandle:FileSystemDirectoryHandle):Promise<{ [name:string]:FileSystemHandle }> {

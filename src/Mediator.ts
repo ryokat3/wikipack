@@ -54,7 +54,7 @@ export class Mediator extends MediatorData {
 
     convertToHtml(fileName:string):string|undefined {
         const currentFile = getFileFromTree(this.rootFolder, fileName)
-        return (currentFile !== undefined && currentFile.type === "markdown") ? getRenderer(this.rootFolder, fileName, this.isMarkdown)(currentFile.markdown) : undefined
+        return (currentFile !== undefined && currentFile.type === "markdown") ? `<div class="${this.config.markdownBodyClass}">${getRenderer(this.rootFolder, fileName, this.isMarkdown)(currentFile.markdown)}</div>` : undefined
     }
 
     searchDirectory(handle:FileSystemDirectoryHandle):void {        
@@ -142,7 +142,7 @@ export class Mediator extends MediatorData {
     }
 
     updateCssFile(payload:WorkerMessageType['updateCssFile']['response']):void {
-        const fileName = normalizePath(payload.fileName)
+        const fileName = normalizePath(payload.fileName)        
         const isSame = updateFileOfTree(this.rootFolder, fileName, {
             type: "css",
             timestamp: payload.timestamp,

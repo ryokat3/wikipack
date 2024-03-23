@@ -14,7 +14,6 @@ import { createPack } from "../fileIO/saveAsHtml"
 import { extract } from "../fileIO/extract"
 import Grid from "@mui/material/Grid"
 
-
 export interface TopContextType {
     dispatcher: TopDispatcherType,
     worker: WorkerInvoke<WorkerMessageType>       
