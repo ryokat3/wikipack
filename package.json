@@ -1,6 +1,6 @@
 {
   "name": "wikipack",
-  "version": "0.18.2",
+  "version": "0.18.3",
   "description": "A HTML to pack all markdown files and assets in a single HTML with viewer",
   "main": "index.js",
   "scripts": {
@@ -18,7 +18,7 @@
     "@types/html-webpack-plugin": "^3.2.9",
     "@types/mime-db": "^1.43.5",
     "@types/mocha": "^10.0.6",
-    "@types/react": "^18.2.67",
+    "@types/react": "^18.2.69",
     "@types/react-dom": "^18.2.22",
     "@types/webpack": "^5.28.5",
     "@types/wicg-file-system-access": "^2023.10.5",
@@ -40,7 +40,7 @@
     "@emotion/styled": "^11.11.0",
     "@mui/icons-material": "^5.15.14",
     "@mui/material": "^5.15.14",
-    "@mui/x-tree-view": "^6.17.0",
+    "@mui/x-tree-view": "^7.0.0",
     "boost-ts": "^2.2.0",
     "flux-standard-action": "^2.1.2",
     "fp-ts": "^2.16.4",

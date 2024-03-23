@@ -3,7 +3,7 @@ import { MarkdownMenuFolderType } from "../fileTree/MarkdownMenu"
 import { getFileFromTree } from "../fileTree/FileTree"
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
-import { TreeView, TreeItem } from '@mui/x-tree-view'
+import { SimpleTreeView, TreeItem } from '@mui/x-tree-view'
 import { addPath, getFileName } from "../utils/appUtils"
 
 
@@ -12,7 +12,7 @@ interface MarkdownMenuFileProps {
 }
 
 const MarkdownMenuFile: React.FunctionComponent<MarkdownMenuFileProps> = (props: MarkdownMenuFileProps) => {
-    return <TreeItem nodeId={props.pathName} label={getFileName(props.pathName)}></TreeItem>
+    return <TreeItem itemId={props.pathName} label={getFileName(props.pathName)}></TreeItem>
 }
 
 interface MarkdownMenuViewProps {
@@ -28,23 +28,22 @@ export const MarkdownMenuView: React.FunctionComponent<MarkdownMenuViewProps> = 
             : <MarkdownMenuView root={value} pathName={addPath(props.pathName, name)} key={name}></MarkdownMenuView>        
     })
 
-    const onNodeSelect = (_: React.SyntheticEvent, nodeIds: Array<string>|string):void =>{
-        if (typeof nodeIds === "string") {
-            const node = getFileFromTree(props.root, nodeIds)
+    const onNodeSelect = (_: React.SyntheticEvent, itemId: string, isSelected:boolean):void =>{
+        if (isSelected) {
+            const node = getFileFromTree(props.root, itemId)
             if ((node !== undefined) && (node.type === "markdown")) {
-                _open_markdown(nodeIds)
+                _open_markdown(itemId)
             }
         }
     }
 
-    return ((props.pathName === "") || (props.pathName === undefined)) ? <TreeView
+    return ((props.pathName === "") || (props.pathName === undefined)) ? <SimpleTreeView
             aria-label="file system navigator"
-            defaultCollapseIcon={<ExpandMoreIcon />}
-            defaultExpandIcon={<ChevronRightIcon />}
-            onNodeSelect={onNodeSelect}          
+            slots={{ collapseIcon: ChevronRightIcon, expandIcon: ExpandMoreIcon }}                    
+            onItemSelectionToggle={onNodeSelect}            
         >            
             {childrenView}
-        </TreeView> : <TreeItem nodeId={props.pathName} label={getFileName(props.pathName)}>
+        </SimpleTreeView> : <TreeItem itemId={props.pathName} label={getFileName(props.pathName) }>
             {childrenView}
         </TreeItem> 
 }
