@@ -1,6 +1,6 @@
 import React from "react"
-import { topDispatcher } from "./TopDispatcher"
-import { useEffect } from "react"
+import { topDispatcher, TopDispatcherType } from "./TopDispatcher"
+import { createContext, useEffect } from "react"
 import { topReducer, TopStateType } from "./TopReducer"
 import { MarkdownView } from "./MarkdownView"
 import { MarkdownMenuView } from "./MarkdownMenuView"
@@ -13,14 +13,14 @@ import { ConfigType } from "../config"
 import { createPack } from "../fileIO/saveAsHtml"
 import { extract } from "../fileIO/extract"
 import Grid from "@mui/material/Grid"
-/*
+
 export interface TopContextType {
     dispatcher: TopDispatcherType,
     worker: WorkerInvoke<WorkerMessageType>       
 }
 
 export const TopContext = createContext<TopContextType>(Object.create(null))
-*/
+
 export interface TopProps {
     worker: WorkerInvoke<WorkerMessageType>
     config: ConfigType,
@@ -33,13 +33,12 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
     const [state, dispatch] = React.useReducer(topReducer, props.initialState)
     const dispatcher = topDispatcher.build(dispatch)
     const mediator = new MediatorProxy(props.worker, props.config, dispatcher)   
-    const rootFolder = mediator.rootFolder
-    /*
+    const rootFolder = mediator.rootFolder    
     const context:TopContextType = {
         dispatcher: dispatcher,
         worker: props.worker
     }
-    */
+    
     // Call once
     useEffect(() => {                
         mediator.updateCurrentPage(props.config.topPage)
@@ -50,7 +49,7 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
         }        
     }, [])
     
-    return <>
+    return <TopContext.Provider value={context}>
         <SearchAppBar
             title={state.title}
             packFileName={state.packFileName}
@@ -67,5 +66,5 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
             <Grid item xs={3}>
             </Grid>
         </Grid>
-    </>
+    </TopContext.Provider>
 }
