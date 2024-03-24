@@ -11,12 +11,11 @@ import { injectAllMarkdownFileFromElement, injectAllCssFileFromElement, injectAl
 import { TOP_COMPONENT_ID } from "./constant"
 import { makeFileRegexChecker } from "./utils/appUtils"
 import { createRootFolder } from "./fileTree/FileTree"
-import { MarkdownMenuFileType } from "./fileTree/MarkdownMenu"
+import { MarkdownMenuFileType, getMarkdownMenu } from "./fileTree/MarkdownMenu"
 
 import workerJS from "./tmp/worker.bundle.js.asdata"
 import defaultMarkdown from "./defaultMarkdown.md"
 import templateHtml from "./template.html"
-
 
 window.onload = async function () {
 
@@ -29,6 +28,8 @@ window.onload = async function () {
     await injectAllMarkdownFileFromElement(mediatorData.rootFolder, isMarkdownFile)
     await injectAllCssFileFromElement(mediatorData.rootFolder)
     await injectAllDataFileFromElement(mediatorData.rootFolder)
+
+    const menuRoot = getMarkdownMenu(mediatorData.rootFolder) || createRootFolder<MarkdownMenuFileType>()     
 
     if (config.initialConfig) {
         updateFileOfTree(mediatorData.rootFolder, config.topPage, {
@@ -45,7 +46,7 @@ window.onload = async function () {
         html: "",
         packFileName: "wikipack",
         seq: 0,
-        menuRoot: createRootFolder<MarkdownMenuFileType>()      
+        menuRoot: menuRoot
     }
 
     if (container !== null) {     
