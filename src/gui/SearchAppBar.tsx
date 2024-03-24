@@ -10,7 +10,7 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import MenuIcon from '@mui/icons-material/Menu';
 import SearchIcon from '@mui/icons-material/Search';
-import { TopContext } from "./Top"
+// import { TopContext } from "./Top"
 
 const Search = styled('div')(({ theme }) => ({
     position: 'relative',
@@ -89,58 +89,53 @@ export const SearchAppBar: React.FunctionComponent<SearchAppBarProps> = (props: 
         link.click()
     }
 
-    // TODO: temporary
-    //@ts-ignore
-    return <TopContext.Consumer>{(context) =>
-
-        <Box sx={{ flexGrow: 1 }}>
-            <AppBar position="static">
-                <Toolbar>
-                    <IconButton
-                        size="large"
-                        edge="start"
-                        color="inherit"
-                        aria-label="open drawer"
-                        sx={{ mr: 2 }}
-                        id="basic-button"
-                        aria-controls={open ? 'basic-menu' : undefined}
-                        aria-haspopup="true"
-                        aria-expanded={open ? 'true' : undefined}
-                        onClick={handleClick}
-                    >
-                        <MenuIcon />
-                    </IconButton>
-                    <Menu
-                        id="basic-menu"
-                        anchorEl={anchorEl}
-                        open={open}
-                        onClose={handleClose}
-                        MenuListProps={{
-                            'aria-labelledby': 'basic-button',
-                        }}
-                    >
-                        <MenuItem onClick={handlePack}>Pack...</MenuItem>
-                        <MenuItem onClick={handleUnpack}>Unpack...</MenuItem>                        
-                    </Menu>
-                    <Typography
-                        variant="h6"
-                        noWrap
-                        component="div"
-                        sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' } }}
-                    >
-                        {props.title}
-                    </Typography>
-                    <Search>
-                        <SearchIconWrapper>
-                            <SearchIcon />
-                        </SearchIconWrapper>
-                        <StyledInputBase
-                            placeholder="Search…"
-                            inputProps={{ 'aria-label': 'search' }}
-                        />
-                    </Search>
-                </Toolbar>
-            </AppBar>
-        </Box>
-    }</TopContext.Consumer>
+    return <Box sx={{ flexGrow: 1 }}>
+        <AppBar position="static">
+            <Toolbar>
+                <IconButton
+                    size="large"
+                    edge="start"
+                    color="inherit"
+                    aria-label="open drawer"
+                    sx={{ mr: 2 }}
+                    id="basic-button"
+                    aria-controls={open ? 'basic-menu' : undefined}
+                    aria-haspopup="true"
+                    aria-expanded={open ? 'true' : undefined}
+                    onClick={handleClick}
+                >
+                    <MenuIcon />
+                </IconButton>
+                <Menu
+                    id="basic-menu"
+                    anchorEl={anchorEl}
+                    open={open}
+                    onClose={handleClose}
+                    MenuListProps={{
+                        'aria-labelledby': 'basic-button',
+                    }}
+                >
+                    <MenuItem onClick={handlePack}>Pack...</MenuItem>
+                    <MenuItem onClick={handleUnpack}>Unpack...</MenuItem>
+                </Menu>
+                <Typography
+                    variant="h6"
+                    noWrap
+                    component="div"
+                    sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' } }}
+                >
+                    {props.title}
+                </Typography>
+                <Search>
+                    <SearchIconWrapper>
+                        <SearchIcon />
+                    </SearchIconWrapper>
+                    <StyledInputBase
+                        placeholder="Search…"
+                        inputProps={{ 'aria-label': 'search' }}
+                    />
+                </Search>
+            </Toolbar>
+        </AppBar>
+    </Box>
 }

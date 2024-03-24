@@ -1,9 +1,9 @@
 import { WorkerMessageType } from "../worker/WorkerMessageType"
 import { PostEvent } from "../utils/WorkerMessage"
 import { getMarkdownFile} from "../markdown/converter"
-import { collectFiles, getHandle, /*getHandleMap,*/ isFileHandle } from "./fileRW"
-import { /*addPath,*/ makeFileRegexChecker } from "../utils/appUtils"
-import { /* createRootFolder,　FileTreeFolderType, */ getFileFromTree, /* updateFileOfTree, deleteFileFromTree*/ } from "../fileTree/FileTree"
+import { collectFiles, getHandle, isFileHandle } from "./fileRW"
+import { makeFileRegexChecker } from "../utils/appUtils"
+import { getFileFromTree } from "../fileTree/FileTree"
 import { FileTagFolderType } from "../fileTree/FileTagTree"
 
 async function isFileUpdated(rootTagTree:FileTagFolderType, fileName:string, handle:FileSystemFileHandle):Promise<boolean> {
@@ -120,8 +120,8 @@ export async function searchDirectoryWorkerCallback(payload:WorkerMessageType['s
         }        
         await updateDataFileList(rootHandle, Array.from(dataFileList.values()), rootTagTree, postEvent)
 
-        for (const [name, handle] of Object.entries(await collectFiles(rootHandle, isCssFile))) {
-            if (await isFileUpdated(rootTagTree, name, handle)) {
+        for (const [name, handle] of Object.entries(await collectFiles(rootHandle, isCssFile))) {            
+            if (await isFileUpdated(rootTagTree, name, handle)) {                
                 const result = await readCssFile(handle, name)
                 postEvent.send("updateCssFile", result)
             }

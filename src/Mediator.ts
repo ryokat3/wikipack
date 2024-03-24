@@ -91,11 +91,11 @@ export class Mediator extends MediatorData {
         this.currentCss = updateCssInfo(this.currentCss, collectCssFiles(this.rootFolder, this.currentPage))
 
         // Update HTML
-        const html = this.convertToHtml(this.currentPage)        
-        this.dispatcher.updateHtml({ title: this.currentPage, html: (html !== undefined) ? html : `${this.currentPage} not found`})
+        const html = this.convertToHtml(this.currentPage)
+        this.dispatcher.updateHtml({ title: this.currentPage, html: (html !== undefined) ? html : `${this.currentPage} not found` })
         
         // Update CSS
-        applyCssInfo(this.rootFolder, this.currentCss)
+        applyCssInfo(this.rootFolder, this.currentCss)        
     }
 
     updateSeq(): void {
@@ -148,12 +148,12 @@ export class Mediator extends MediatorData {
             timestamp: payload.timestamp,
             css: payload.data
         }, isSameFile)
-        
-        if (!isSame) {
+                
+        if (!isSame) {                    
             this.seq = this.seq + 1
-            this.currentCss = updateCssInfo({ ...this.currentCss, [fileName]: this.seq }, collectCssFiles(this.rootFolder, this.currentPage))
-            if (fileName in Object.keys(this.currentCss)) {
-                this.dispatcher.updateSeq({ seq: this.seq })
+            this.currentCss = updateCssInfo({ ...this.currentCss, [fileName]: this.seq }, collectCssFiles(this.rootFolder, this.currentPage))                                    
+            if (Object.keys(this.currentCss).includes(fileName)) {                       
+                applyCssInfo(this.rootFolder, this.currentCss)
             }
         }    
     }
