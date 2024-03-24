@@ -4,9 +4,13 @@ import { getMarkdownFile} from "../markdown/converter"
 import { collectFiles, getHandle, isFileHandle } from "./fileRW"
 import { makeFileRegexChecker } from "../utils/appUtils"
 import { getFileFromTree } from "../fileTree/FileTree"
-import { FileTagFolderType } from "../fileTree/FileTagTree"
+import { FileStampFolderType } from "../fileTree/FileStampTree"
 
-async function isFileUpdated(rootTagTree:FileTagFolderType, fileName:string, handle:FileSystemFileHandle):Promise<boolean> {
+function getFileStamp(fp:File):string {
+    return `lastModified=${fp.lastModified}:size=${fp.size}`
+}
+
+async function isFileUpdated(rootTagTree:FileStampFolderType, fileName:string, handle:FileSystemFileHandle):Promise<boolean> {
     const prev = getFileFromTree(rootTagTree, fileName)    
     if (prev === undefined) {
         return true
@@ -16,7 +20,7 @@ async function isFileUpdated(rootTagTree:FileTagFolderType, fileName:string, han
     }
     else {
         const current = await handle.getFile()
-        return  current.lastModified !== prev.timestamp
+        return  getFileStamp(current) !== prev.fileStamp
     }
 }
 
@@ -28,10 +32,10 @@ async function readMarkdownFile(handle: FileSystemFileHandle, isMarkdownFile:(fi
         reader.onload = (e: ProgressEvent<FileReader>) => {
             if ((e.target !== null) && (e.target.result !== null) && (typeof e.target.result == 'string')) {
                 const markdownFileName = (fileName !== undefined) ? fileName : blob.name
-                const markdownFile = getMarkdownFile(e.target.result, markdownFileName, blob.lastModified, isMarkdownFile)
+                const markdownFile = getMarkdownFile(e.target.result, markdownFileName, getFileStamp(blob), isMarkdownFile)
                 resolve({
                     fileName: markdownFileName,
-                    timestamp: blob.lastModified,
+                    fileStamp: getFileStamp(blob),
                     markdownFile: markdownFile
                 })                
             }
@@ -50,7 +54,7 @@ async function readCssFile(handle: FileSystemFileHandle, fileName: string|undefi
                 const cssFileName = (fileName !== undefined) ? fileName : blob.name                                
                 resolve({
                     fileName: cssFileName,
-                    timestamp: blob.lastModified,
+                    fileStamp: getFileStamp(blob),
                     data: e.target.result
                 })                
             }
@@ -68,7 +72,7 @@ async function readDataFile(handle: FileSystemFileHandle, fileName: string): Pro
             if ((e.target !== null) && (e.target.result !== null) && (typeof e.target.result == 'object')) {                
                 resolve({
                     fileName: fileName,
-                    timestamp: blob.lastModified,
+                    fileStamp: getFileStamp(blob),
                     mime: blob.type,
                     data: e.target.result
                 })
@@ -78,13 +82,13 @@ async function readDataFile(handle: FileSystemFileHandle, fileName: string): Pro
     })
 }
 
-async function updateDataFileList(rootHandle:FileSystemDirectoryHandle, fileNameList:string[], rootTagTree:FileTagFolderType, postEvent:PostEvent<WorkerMessageType>) {
+async function updateDataFileList(rootHandle:FileSystemDirectoryHandle, fileNameList:string[], rootTagTree:FileStampFolderType, postEvent:PostEvent<WorkerMessageType>) {
     for (const fileName of fileNameList) {
         const handle = await getHandle(rootHandle, fileName)
         if ((handle !== undefined) && isFileHandle(handle)) {
             const prev = getFileFromTree(rootTagTree, fileName)
             const current = await handle.getFile()
-            if ((prev === undefined) || (prev.type === "folder") || (current.lastModified !== prev.timestamp)) {              
+            if ((prev === undefined) || (prev.type === "folder") || (getFileStamp(current) !== prev.fileStamp)) {              
                 const dataFile = await readDataFile(handle as FileSystemFileHandle, fileName)
                 postEvent.send("updateDataFile", dataFile, [dataFile.data])
             }

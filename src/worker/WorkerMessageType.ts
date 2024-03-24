@@ -1,5 +1,5 @@
 import { MarkdownFileType } from "../fileTree/FileTreeType"
-import { FileTagFolderType } from "../fileTree/FileTagTree"
+import { FileStampFolderType } from "../fileTree/FileStampTree"
 
 export type WorkerMessageType = {
     openFile : {
@@ -11,7 +11,7 @@ export type WorkerMessageType = {
     searchDirectory: {
         request: {
             handle: FileSystemDirectoryHandle,
-            tagTree: FileTagFolderType,
+            tagTree: FileStampFolderType,
             markdownFileRegex: string[],
             cssFileRegex: string[]
         }
@@ -36,21 +36,21 @@ export type WorkerMessageType = {
     updateMarkdownFile: {
         response: {
             fileName: string,
-            timestamp: number,
+            fileStamp: string,
             markdownFile: MarkdownFileType
         }
     },
     updateCssFile: {
         response: {
             fileName: string,
-            timestamp: number,
+            fileStamp: string,
             data: string
         }
     },
     updateDataFile: {
         response: {
             fileName: string,
-            timestamp: number,
+            fileStamp: string,
             mime: string,
             data: ArrayBuffer
         }

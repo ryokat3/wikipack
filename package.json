@@ -1,6 +1,6 @@
 {
   "name": "wikipack",
-  "version": "0.18.4",
+  "version": "0.18.5",
   "description": "A HTML to pack all markdown files and assets in a single HTML with viewer",
   "main": "index.js",
   "scripts": {

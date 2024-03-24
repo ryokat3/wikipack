@@ -17,7 +17,7 @@ export async function createPack(template:string, workerAgent:Mediator):Promise<
         ...workerAgent.config,
         topPage: workerAgent.currentPage,
         initialConfig: false
-    }, 0))
+    }, ""))
 
     return new Blob([ '<!DOCTYPE html>', doc.documentElement.outerHTML ], { type: 'text/html'})    
 }

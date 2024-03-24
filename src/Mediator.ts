@@ -10,13 +10,13 @@ import { getRenderer } from "./markdown/converter"
 import { makeFileRegexChecker } from "./utils/appUtils"
 import { getProxyDataClass } from "./utils/proxyData"
 import { getMarkdownMenu, MarkdownMenuFileType } from "./fileTree/MarkdownMenu"
-import { convertToFileTagFolder } from "./fileTree/FileTagTree"
+import { convertToFileStampFolder } from "./fileTree/FileStampTree"
 
 
 const NO_CURRENT_PAGE = ""
 
 function isSameFile(oldF:FolderType|FileType[keyof FileType], newF:FileType[keyof FileType]):boolean {         
-    return (oldF.type == newF.type) && (oldF.timestamp == newF.timestamp)
+    return (oldF.type == newF.type) && (oldF.fileStamp == newF.fileStamp)
 }
 
 class MediatorData {
@@ -62,7 +62,7 @@ export class Mediator extends MediatorData {
         this.directory = handle
         this.worker.request("searchDirectory", { 
             handle: handle,
-            tagTree: convertToFileTagFolder(this.rootFolder),
+            tagTree: convertToFileStampFolder(this.rootFolder),
             markdownFileRegex: this.config.markdownFileRegex,
             cssFileRegex: this.config.cssFileRegex               
         })        
@@ -145,7 +145,7 @@ export class Mediator extends MediatorData {
         const fileName = normalizePath(payload.fileName)        
         const isSame = updateFileOfTree(this.rootFolder, fileName, {
             type: "css",
-            timestamp: payload.timestamp,
+            fileStamp: payload.fileStamp,
             css: payload.data
         }, isSameFile)
                 
@@ -167,7 +167,7 @@ export class Mediator extends MediatorData {
             dataRef: dataRef,
             buffer: payload.data,
             mime: payload.mime,
-            timestamp: payload.timestamp
+            fileStamp: payload.fileStamp
         }, isSameFile)
         
         if (!isSame) {        

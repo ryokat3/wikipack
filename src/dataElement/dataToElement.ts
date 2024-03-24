@@ -1,15 +1,15 @@
 
-import { EMBEDDED_MARKDOWN_FILE_CLASS, EMBEDDED_DATA_FILE_CLASS, EMBEDDED_CSS_FILE_CLASS, EMBEDDED_FILE_ID_PREFIX, APPLICATION_DATA_MIME_TYPE } from "../constant"
+import { EMBEDDED_MARKDOWN_FILE_CLASS, EMBEDDED_DATA_FILE_CLASS, EMBEDDED_CSS_FILE_CLASS, EMBEDDED_FILE_ID_PREFIX, APPLICATION_DATA_MIME_TYPE, FILE_STAMP_ATTR } from "../constant"
 import { MarkdownFileType, CssFileType, DataFileType, FolderType } from '../fileTree/FileTreeType'
 import { dataUrlEncode } from '../utils/appUtils'
 import { addPath } from "../utils/appUtils"
 
 
-function createFileElement(fileName:string, timestamp:number):HTMLScriptElement {
+function createFileElement(fileName:string, fileStamp:string):HTMLScriptElement {
     const elem = document.createElement('script')
     elem.setAttribute('id', `${EMBEDDED_FILE_ID_PREFIX}${fileName}`)    
     elem.setAttribute('type', APPLICATION_DATA_MIME_TYPE)
-    elem.setAttribute('timestamp', timestamp.toString())    
+    elem.setAttribute(FILE_STAMP_ATTR, fileStamp)    
 
     return elem
 }
@@ -17,7 +17,7 @@ function createFileElement(fileName:string, timestamp:number):HTMLScriptElement 
 async function saveMarkdownFileToElement(fileName:string, markdownFile:MarkdownFileType):Promise<HTMLScriptElement|undefined> {
     const dataUrl = await dataUrlEncode(markdownFile.markdown, 'text/plain')    
     if (dataUrl !== null) {
-        const elem = createFileElement(fileName, markdownFile.timestamp)        
+        const elem = createFileElement(fileName, markdownFile.fileStamp)        
         elem.setAttribute('class', EMBEDDED_MARKDOWN_FILE_CLASS)
         elem.innerHTML = dataUrl                
         return elem
@@ -30,7 +30,7 @@ async function saveMarkdownFileToElement(fileName:string, markdownFile:MarkdownF
 async function saveCssFileToElement(fileName:string, cssFile:CssFileType):Promise<HTMLScriptElement|undefined> {
     const dataUrl = await dataUrlEncode(cssFile.css, 'text/css')    
     if (dataUrl !== null) {
-        const elem = createFileElement(fileName, cssFile.timestamp)        
+        const elem = createFileElement(fileName, cssFile.fileStamp)        
         elem.setAttribute('class', EMBEDDED_CSS_FILE_CLASS)
         elem.innerHTML = dataUrl                
         return elem
@@ -44,7 +44,7 @@ async function saveDataFileToElement(fileName:string, dataFile:DataFileType):Pro
     if (typeof dataFile.buffer !== 'string') {
         const dataUrl = await dataUrlEncode(dataFile.buffer, dataFile.mime)        
         if (dataUrl !== null) {            
-            const elem = createFileElement(fileName, dataFile.timestamp)
+            const elem = createFileElement(fileName, dataFile.fileStamp)
             elem.setAttribute('class', EMBEDDED_DATA_FILE_CLASS)
             elem.setAttribute('mime', dataFile.mime)
             elem.innerHTML = dataUrl                        
@@ -55,7 +55,7 @@ async function saveDataFileToElement(fileName:string, dataFile:DataFileType):Pro
         }
     }    
     else {
-        const elem = createFileElement(fileName, dataFile.timestamp)
+        const elem = createFileElement(fileName, dataFile.fileStamp)
         elem.setAttribute('class', EMBEDDED_DATA_FILE_CLASS)
         elem.setAttribute('mime', dataFile.mime)
         elem.innerHTML = dataFile.buffer
@@ -63,8 +63,8 @@ async function saveDataFileToElement(fileName:string, dataFile:DataFileType):Pro
     }
 }
 
-export function saveJsonToElement(fileName:string, data:Object, timestamp:number) {
-    const elem = createFileElement(fileName, timestamp)
+export function saveJsonToElement(fileName:string, data:Object, fileStamp:string) {
+    const elem = createFileElement(fileName, fileStamp)
     elem.innerHTML = JSON.stringify(data)
     return elem
 }

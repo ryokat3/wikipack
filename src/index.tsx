@@ -34,7 +34,7 @@ window.onload = async function () {
         updateFileOfTree(mediatorData.rootFolder, config.topPage, {
             type: "markdown",
             markdown: defaultMarkdown,
-            timestamp: 0,
+            fileStamp: "",
             imageList: [],
             linkList: []
         })

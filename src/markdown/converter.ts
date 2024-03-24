@@ -15,12 +15,12 @@ function isURL(url:string):boolean {
     }   
 }
 
-export function getMarkdownFile(markdown:string, fileName:string, timestamp:number, isMarkdownFile:(fileName:string)=>boolean):MarkdownFileType {
+export function getMarkdownFile(markdown:string, fileName:string, fileStamp:string, isMarkdownFile:(fileName:string)=>boolean):MarkdownFileType {
 
     const result:MarkdownFileType = {
         type: "markdown",
         markdown: markdown,
-        timestamp: timestamp,
+        fileStamp: fileStamp,
         imageList: [],
         linkList: []
     }

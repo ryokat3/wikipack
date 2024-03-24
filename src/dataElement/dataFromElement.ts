@@ -1,5 +1,5 @@
 import { DataFileType, CssFileType, MarkdownFileType } from "../fileTree/FileTreeType"
-import { EMBEDDED_FILE_ID_PREFIX, EMBEDDED_DATA_FILE_CLASS, EMBEDDED_MARKDOWN_FILE_CLASS, EMBEDDED_CSS_FILE_CLASS } from "../constant"
+import { EMBEDDED_FILE_ID_PREFIX, EMBEDDED_DATA_FILE_CLASS, EMBEDDED_MARKDOWN_FILE_CLASS, EMBEDDED_CSS_FILE_CLASS, FILE_STAMP_ATTR } from "../constant"
 import { dataUrlDecode, dataUrlDecodeAsBlob } from "../utils/appUtils"
 import { getMarkdownFile } from "../markdown/converter"
 import { updateFileOfTree } from "../fileTree/FileTree"
@@ -24,10 +24,9 @@ async function getMarkdownFileFromElement(elem:Element, isMarkdownFile:(fileName
 
     if (fileName !== undefined) {    
         const markdown = await dataUrlDecode(elem.innerHTML)
-        const timestampStr = elem.getAttribute("timestamp")
-        const timestamp = (timestampStr !== null) ? parseInt(timestampStr) : 0    
+        const fileStamp = elem.getAttribute(FILE_STAMP_ATTR) || ""        
 
-        return [fileName, getMarkdownFile(markdown, fileName, timestamp, isMarkdownFile)]
+        return [fileName, getMarkdownFile(markdown, fileName, fileStamp, isMarkdownFile)]
     }
     else {
         return undefined
@@ -39,12 +38,11 @@ async function getCssFileFromElement(elem:Element):Promise<[string, CssFileType]
 
     if (fileName !== undefined) {    
         const css = await dataUrlDecode(elem.innerHTML)
-        const timestampStr = elem.getAttribute("timestamp")
-        const timestamp = (timestampStr !== null) ? parseInt(timestampStr) : 0    
+        const fileStamp = elem.getAttribute(FILE_STAMP_ATTR) || ""        
 
         return [fileName, {
             type: "css",
-            timestamp: timestamp,
+            fileStamp: fileStamp,
             css: css
         }]
     }
@@ -59,15 +57,14 @@ async function getDataFileFromElement(elem:Element):Promise<[string, DataFileTyp
     if (fileName !== undefined) {    
         const blob = await dataUrlDecodeAsBlob(elem.innerHTML)
         const dataRef = URL.createObjectURL(blob)
-        const timestampStr = elem.getAttribute("timestamp")
-        const timestamp = (timestampStr !== null) ? parseInt(timestampStr) : 0    
+        const fileStamp = elem.getAttribute(FILE_STAMP_ATTR) || ""        
         const mime = elem.getAttribute("mime") || blob.type
 
         return [fileName, {
             type: "data",
             dataRef: dataRef,
             buffer: elem.innerHTML,
-            timestamp: timestamp,
+            fileStamp: fileStamp,
             mime: mime
         }]
     }

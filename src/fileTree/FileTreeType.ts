@@ -4,20 +4,20 @@ export type FileType = {
     markdown: {
         type: "markdown",
         markdown: string,
-        timestamp: number,
+        fileStamp: string,
         imageList: string[],
         linkList: string[]
     },
     css: {
         type: "css",
         css: string,
-        timestamp: number  
+        fileStamp: string  
     },
     data: {
         type: "data",
         dataRef: string,
         buffer: ArrayBuffer | string,
-        timestamp: number,
+        fileStamp: string,
         mime: string        
     }
 }
