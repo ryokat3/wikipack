@@ -24,6 +24,7 @@ export type WorkerMessageType = {
     scanUrl: {
         request: {
             url: string,
+            topPage: string,
             rootStampTree: FileStampFolderType,
             markdownFileRegex: string[],
             cssFileRegex: string[]             

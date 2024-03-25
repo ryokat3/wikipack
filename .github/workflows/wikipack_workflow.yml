@@ -28,6 +28,7 @@ jobs:
         run: |
           mkdir ./_site
           cp ./dist/index.html ./_site          
+          cp ./README.md ./_site/index.md
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
 

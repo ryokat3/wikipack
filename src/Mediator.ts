@@ -133,7 +133,8 @@ export class Mediator extends MediatorData {
     scanUrl(url:URL):void {
         this.mode = "url"        
         this.worker.request("scanUrl", { 
-            url: url.href, // URL object is not cloned in Post
+            url: url.href, // URL object is not cloned in Post,
+            topPage: this.config.topPage,
             rootStampTree: convertToFileStampFolder(this.rootFolder),
             markdownFileRegex: this.config.markdownFileRegex,
             cssFileRegex: this.config.cssFileRegex

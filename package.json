@@ -4,7 +4,7 @@
   "description": "A HTML to pack all markdown files and assets in a single HTML with viewer",
   "main": "index.js",
   "scripts": {
-    "build": "webpack-cli",
+    "build": "webpack-cli && shx cp README.md dist/index.md",
     "build-prod": "webpack-cli --mode='production'",    
     "test": "webpack-cli --config='webpack.config.test.ts'",
     "dev-server": "webpack-cli serve --config='webpack.config.dev-server.ts'",
