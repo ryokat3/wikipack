@@ -73,6 +73,10 @@ async function getDataFileFromElement(elem:Element):Promise<[string, DataFileTyp
     }
 }
 
+export function hasMarkdownFileElement():boolean {
+    return document.getElementsByClassName(EMBEDDED_MARKDOWN_FILE_CLASS).length > 0
+}
+
 export async function injectAllMarkdownFileFromElement(root:FolderType, isMarkdownFile:(fileName:string)=>boolean) {
     const markdownElemList = document.getElementsByClassName(EMBEDDED_MARKDOWN_FILE_CLASS)    
     for (const elem of Array.from(markdownElemList)) {        

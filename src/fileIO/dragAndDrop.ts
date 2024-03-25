@@ -1,7 +1,6 @@
-import { TopDispatcherType } from "../gui/TopDispatcher"
 import { Mediator } from "../Mediator"
 
-async function ondropped(workerAgent: Mediator, dispatcher:TopDispatcherType, ev: Event) {    
+async function ondropped(mediator: Mediator, ev: Event) {    
     if (!(ev instanceof DragEvent)) {
         return
     }
@@ -33,14 +32,14 @@ async function ondropped(workerAgent: Mediator, dispatcher:TopDispatcherType, ev
                 console.log("handle doesn't have kind property")
             }
             else if (handle.kind === 'file') {                      
-                workerAgent.resetRootFolder()
-                workerAgent.openFile(handle as FileSystemFileHandle)   
+                mediator.resetRootFolder()
+                mediator.openFile(handle as FileSystemFileHandle)   
             }
             else if (handle.kind === 'directory') {                
                 const rootHandle = handle as FileSystemDirectoryHandle      
-                workerAgent.resetRootFolder()                
-                workerAgent.searchDirectory(rootHandle)
-                dispatcher.updatePackFileName({ name:rootHandle.name } )
+                mediator.resetRootFolder()                
+                mediator.scanDirectory(rootHandle)
+                mediator.updatePackFileName(rootHandle.name)
             }
         }
         else {
@@ -59,7 +58,7 @@ async function ondropped(workerAgent: Mediator, dispatcher:TopDispatcherType, ev
     }
 }
 
-export function setupDragAndDrop(workerAgent:Mediator, dispatcher:TopDispatcherType) {
+export function setupDragAndDrop(mediator:Mediator) {
     window.addEventListener('dragenter', function (e: Event) {
         e.stopPropagation()
         e.preventDefault()
@@ -75,6 +74,6 @@ export function setupDragAndDrop(workerAgent:Mediator, dispatcher:TopDispatcherT
     window.addEventListener("drop", (e: Event) => {
         e.stopPropagation()
         e.preventDefault()
-        ondropped(workerAgent, dispatcher, e)
+        ondropped(mediator, e)
     }, false)   
 }

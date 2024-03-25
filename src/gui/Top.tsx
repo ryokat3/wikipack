@@ -1,12 +1,11 @@
 import React from "react"
-import { topDispatcher, TopDispatcherType } from "./TopDispatcher"
+import { topDispatcher } from "./TopDispatcher"
 import { createContext, useEffect } from "react"
 import { topReducer, TopStateType } from "./TopReducer"
 import { MarkdownView } from "./MarkdownView"
 import { MarkdownMenuView } from "./MarkdownMenuView"
-import { MediatorProxy } from "../Mediator"
+import { Mediator, MediatorProxy } from "../Mediator"
 import { SearchAppBar } from "./SearchAppBar"
-import { setupDragAndDrop } from "../fileIO/dragAndDrop"
 import { WorkerInvoke } from "../utils/WorkerMessage"
 import { WorkerMessageType } from "../worker/WorkerMessageType"
 import { ConfigType } from "../config"
@@ -15,8 +14,7 @@ import { extract } from "../fileIO/extract"
 import Grid from "@mui/material/Grid"
 
 export interface TopContextType {
-    dispatcher: TopDispatcherType,
-    worker: WorkerInvoke<WorkerMessageType>       
+    mediator: Mediator
 }
 
 export const TopContext = createContext<TopContextType>(Object.create(null))
@@ -35,18 +33,12 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
     const mediator = new MediatorProxy(props.worker, props.config, dispatcher)   
     const rootFolder = mediator.rootFolder    
     const context:TopContextType = {
-        dispatcher: dispatcher,
-        worker: props.worker
+        mediator: mediator
     }
     
     // Call once
-    useEffect(() => {                
-        mediator.updateCurrentPage(props.config.topPage)
-        mediator.updateSeq()        
-        setupDragAndDrop(mediator, dispatcher)
-        _open_markdown = function(name:string) {
-            mediator.updateCurrentPage(name)
-        }        
+    useEffect(() => {
+        mediator.onGuiInitialized()       
     }, [])
     
     return <TopContext.Provider value={context}>

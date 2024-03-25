@@ -18,6 +18,10 @@ export function isFileTreeFolder<FT extends FileTreeFileType>(target:FT[keyof FT
     return target.type === 'folder'
 }
 
+export function isEmptyFileTreeFolder<FT extends FileTreeFileType>(folder:FileTreeFolderType<FT>):boolean {
+    return isFileTreeFolder(folder) && Object.keys(folder.children).length === 0
+}
+
 export function createRootFolder<FT extends FileTreeFileType>():FileTreeFolderType<FT> {
     return {
         type: "folder",

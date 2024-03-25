@@ -2,7 +2,7 @@ import { Mediator } from "../Mediator"
 import { saveFolderToElement, saveJsonToElement } from "../dataElement/dataToElement"
 import { CONFIG_ID, WIKIPACK_SCRIPT_ID } from "../constant"
 
-export async function createPack(template:string, workerAgent:Mediator):Promise<Blob> {
+export async function createPack(template:string, mediator:Mediator):Promise<Blob> {
     const parser = new DOMParser()
     const doc = parser.parseFromString(template, 'text/html')
     const scriptElem = doc.getElementById(WIKIPACK_SCRIPT_ID)
@@ -11,11 +11,11 @@ export async function createPack(template:string, workerAgent:Mediator):Promise<
         scriptElem.removeAttribute('inline')
         scriptElem.innerHTML = document.getElementById(WIKIPACK_SCRIPT_ID)?.innerHTML || ""
     }
-    await saveFolderToElement(doc, workerAgent.rootFolder, "")
+    await saveFolderToElement(doc, mediator.rootFolder, "")
 
     doc.head.appendChild(saveJsonToElement(CONFIG_ID, {
-        ...workerAgent.config,
-        topPage: workerAgent.currentPage,
+        ...mediator.config,
+        topPage: mediator.currentPage,
         initialConfig: false
     }, ""))
 

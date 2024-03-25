@@ -11,6 +11,8 @@ import { makeFileRegexChecker } from "./utils/appUtils"
 import { getProxyDataClass } from "./utils/proxyData"
 import { getMarkdownMenu, MarkdownMenuFileType } from "./fileTree/MarkdownMenu"
 import { convertToFileStampFolder } from "./fileTree/FileStampTree"
+import { setupDragAndDrop } from "./fileIO/dragAndDrop"
+import { hasMarkdownFileElement } from "./dataElement/dataFromElement"
 
 
 const NO_CURRENT_PAGE = ""
@@ -20,16 +22,17 @@ function isSameFile(oldF:FolderType|FileType[keyof FileType], newF:FileType[keyo
 }
 
 class MediatorData {
+    readonly rootUrl: URL = new URL(window.location.href)
     rootFolder: FolderType = createRootFolder<FileType>()
-    currentPage: string = ""
+    currentPage: string = NO_CURRENT_PAGE
     currentCss: CssInfo = {}
     mode: 'directory' | 'url' | undefined = undefined
-    directory: FileSystemDirectoryHandle | undefined = undefined
-    URL: string | undefined = undefined
+    directory: FileSystemDirectoryHandle | undefined = undefined    
     seq: number = 0
 }
 
 export class Mediator extends MediatorData {
+
     readonly worker: WorkerInvoke<WorkerMessageType>
     readonly config: ConfigType
     readonly dispatcher: TopDispatcherType
@@ -40,12 +43,12 @@ export class Mediator extends MediatorData {
 
         this.worker = worker
         this.config = config
-        this.dispatcher = dispatcher
+        this.dispatcher = dispatcher        
 
         this.isMarkdown = makeFileRegexChecker(this.config.markdownFileRegex)
 
-        this.worker.addEventHandler("searchDirectoryDone", (payload)=>this.searchDirectoryDone(payload))
-        this.worker.addEventHandler("searchURLDone", (payload)=>this.searchURLDone(payload))
+        this.worker.addEventHandler("scanDirectoryDone", (payload)=>this.scanDirectoryDone(payload))
+        this.worker.addEventHandler("scanUrlDone", (payload)=>this.scanUrlDone(payload))
         this.worker.addEventHandler("updateMarkdownFile", (payload)=>this.updateMarkdownFile(payload))
         this.worker.addEventHandler("updateCssFile", (payload)=>this.updateCssFile(payload))
         this.worker.addEventHandler("updateDataFile", (payload)=>this.updateDataFile(payload))
@@ -57,34 +60,33 @@ export class Mediator extends MediatorData {
         return (currentFile !== undefined && currentFile.type === "markdown") ? `<div class="${this.config.markdownBodyClass}">${getRenderer(this.rootFolder, fileName, this.isMarkdown)(currentFile.markdown)}</div>` : undefined
     }
 
-    searchDirectory(handle:FileSystemDirectoryHandle):void {        
-        this.mode = "directory"
-        this.directory = handle
-        this.worker.request("searchDirectory", { 
-            handle: handle,
-            tagTree: convertToFileStampFolder(this.rootFolder),
-            markdownFileRegex: this.config.markdownFileRegex,
-            cssFileRegex: this.config.cssFileRegex               
-        })        
+    resetRootFolder():void {
+        this.currentPage = NO_CURRENT_PAGE
+        this.currentCss = Object.create(null)
+        this.rootFolder = createRootFolder<FileType>()
     }
 
-    searchURL(url:string):void {
-        this.mode = "url"
-        this.URL = url
-        this.worker.request("searchURL", { 
-            url: url,
-            markdownFileRegex: this.config.markdownFileRegex,
-            cssFileRegex: this.config.cssFileRegex
-        })        
+    ////////////////////////////////////////////////////////////////////////
+    // Handler for Application Setup
+    ////////////////////////////////////////////////////////////////////////
+
+    onGuiInitialized(): void {
+        this.updateCurrentPage(this.config.topPage)
+        this.updateSeq()        
+        setupDragAndDrop(this)
+        const self = this
+        _open_markdown = function(name:string) {
+            self.updateCurrentPage(name)
+        }
+                
+        if (!hasMarkdownFileElement() && (this.rootUrl.protocol.toLowerCase() === 'http:' || this.rootUrl.protocol.toLowerCase() === 'https:')) {
+            this.scanUrl(this.rootUrl)
+        }
     }
 
-    openFile(handle:FileSystemFileHandle,):void {
-        this.mode = undefined
-        this.worker.request("openFile", { 
-            handle: handle,
-            markdownFileRegex: this.config.markdownFileRegex,
-        }) 
-    }
+    ////////////////////////////////////////////////////////////////////////
+    // Handler for React Dispatcher
+    ////////////////////////////////////////////////////////////////////////
 
     updateCurrentPage(filePath:string):void {
         this.currentPage = normalizePath(filePath)
@@ -98,28 +100,63 @@ export class Mediator extends MediatorData {
         applyCssInfo(this.rootFolder, this.currentCss)        
     }
 
-    updateSeq(): void {
+    updateSeq():void {
         this.seq = this.seq + 1        
         this.dispatcher.updateSeq({ seq:this.seq })        
     }
 
-    resetRootFolder():void {
-        this.currentPage = NO_CURRENT_PAGE
-        this.currentCss = Object.create(null)
-        this.rootFolder = createRootFolder<FileType>()
+    updatePackFileName(name:string):void {
+        this.dispatcher.updatePackFileName({ name:name } )
     }
 
-    searchDirectoryDone(_payload:WorkerMessageType['searchDirectoryDone']['response']):void {
+    ////////////////////////////////////////////////////////////////////////
+    // Handler for Worker Message Requests
+    ////////////////////////////////////////////////////////////////////////
+
+    scanDirectory(handle:FileSystemDirectoryHandle):void {        
+        this.mode = "directory"
+        this.directory = handle
+        this.worker.request("scanDirectory", { 
+            handle: handle,
+            rootStampTree: convertToFileStampFolder(this.rootFolder),
+            markdownFileRegex: this.config.markdownFileRegex,
+            cssFileRegex: this.config.cssFileRegex               
+        })        
+    }
+
+    scanDirectoryDone(_payload:WorkerMessageType['scanDirectoryDone']['response']):void {
         if (this.mode === "directory" && this.directory !== undefined) {
-            this.searchDirectory(this.directory)
+            this.scanDirectory(this.directory)
         }        
     }
 
-    searchURLDone(_payload:WorkerMessageType['searchURLDone']['response']):void {
-        if (this.mode === "url" && this.URL !== undefined) {
-            this.searchURL(this.URL)                
+    scanUrl(url:URL):void {
+        this.mode = "url"        
+        this.worker.request("scanUrl", { 
+            url: url.href, // URL object is not cloned in Post
+            rootStampTree: convertToFileStampFolder(this.rootFolder),
+            markdownFileRegex: this.config.markdownFileRegex,
+            cssFileRegex: this.config.cssFileRegex
+        })        
+    }
+
+    scanUrlDone(_payload:WorkerMessageType['scanUrlDone']['response']):void {
+        if (this.mode === "url") {
+            this.scanUrl(this.rootUrl)
         }        
     }
+
+    openFile(handle:FileSystemFileHandle,):void {
+        this.mode = undefined
+        this.worker.request("openFile", { 
+            handle: handle,
+            markdownFileRegex: this.config.markdownFileRegex,
+        }) 
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    // Handler for Worker Message Responses
+    ////////////////////////////////////////////////////////////////////////
 
     updateMarkdownFile(payload:WorkerMessageType['updateMarkdownFile']['response']):void {        
         const fileName = normalizePath(payload.fileName)

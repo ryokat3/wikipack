@@ -8,29 +8,30 @@ export type WorkerMessageType = {
             markdownFileRegex: string[]
         }
     },
-    searchDirectory: {
+    scanDirectory: {
         request: {
             handle: FileSystemDirectoryHandle,
-            tagTree: FileStampFolderType,
+            rootStampTree: FileStampFolderType,
             markdownFileRegex: string[],
             cssFileRegex: string[]
         }
     },
-    searchDirectoryDone: {
+    scanDirectoryDone: {
         response: {
             handle: FileSystemDirectoryHandle                        
         }
     },
-    searchURL: {
+    scanUrl: {
         request: {
             url: string,
+            rootStampTree: FileStampFolderType,
             markdownFileRegex: string[],
             cssFileRegex: string[]             
         }
     }
-    searchURLDone: {
+    scanUrlDone: {
         response: {
-            url: string         
+            url: URL        
         }
     },
     updateMarkdownFile: {

@@ -10,8 +10,8 @@ function getFileStamp(fp:File):string {
     return `lastModified=${fp.lastModified}:size=${fp.size}`
 }
 
-async function isFileUpdated(rootTagTree:FileStampFolderType, fileName:string, handle:FileSystemFileHandle):Promise<boolean> {
-    const prev = getFileFromTree(rootTagTree, fileName)    
+async function isFileUpdated(rootStampTree:FileStampFolderType, fileName:string, handle:FileSystemFileHandle):Promise<boolean> {
+    const prev = getFileFromTree(rootStampTree, fileName)    
     if (prev === undefined) {
         return true
     }
@@ -82,11 +82,11 @@ async function readDataFile(handle: FileSystemFileHandle, fileName: string): Pro
     })
 }
 
-async function updateDataFileList(rootHandle:FileSystemDirectoryHandle, fileNameList:string[], rootTagTree:FileStampFolderType, postEvent:PostEvent<WorkerMessageType>) {
+async function updateDataFileList(rootHandle:FileSystemDirectoryHandle, fileNameList:string[], rootStampTree:FileStampFolderType, postEvent:PostEvent<WorkerMessageType>) {
     for (const fileName of fileNameList) {
         const handle = await getHandle(rootHandle, fileName)
         if ((handle !== undefined) && isFileHandle(handle)) {
-            const prev = getFileFromTree(rootTagTree, fileName)
+            const prev = getFileFromTree(rootStampTree, fileName)
             const current = await handle.getFile()
             if ((prev === undefined) || (prev.type === "folder") || (getFileStamp(current) !== prev.fileStamp)) {              
                 const dataFile = await readDataFile(handle as FileSystemFileHandle, fileName)
@@ -106,9 +106,9 @@ export async function openFileWorkerCallback(payload:WorkerMessageType['openFile
     postEvent.send("updateMarkdownFile", result)
 }
 
-export async function searchDirectoryWorkerCallback(payload:WorkerMessageType['searchDirectory']['request'], postEvent:PostEvent<WorkerMessageType>){                
+export async function scanDirectoryWorkerCallback(payload:WorkerMessageType['scanDirectory']['request'], postEvent:PostEvent<WorkerMessageType>){                
     const rootHandle = payload.handle
-    const rootTagTree = payload.tagTree    
+    const rootStampTree = payload.rootStampTree    
     const isMarkdownFile = makeFileRegexChecker(payload.markdownFileRegex)
     const isCssFile = makeFileRegexChecker(payload.cssFileRegex)
 
@@ -116,16 +116,16 @@ export async function searchDirectoryWorkerCallback(payload:WorkerMessageType['s
         const dataFileList:Set<string> = new Set([])
         for (const [name, handle] of Object.entries(await collectFiles(rootHandle, isMarkdownFile))) {
             const result = await readMarkdownFile(handle, isMarkdownFile, name)
-            if (await isFileUpdated(rootTagTree, name, handle)) {                
+            if (await isFileUpdated(rootStampTree, name, handle)) {                
                 postEvent.send("updateMarkdownFile", result)
             }
             result.markdownFile.imageList.forEach(dataFileList.add, dataFileList)
             result.markdownFile.linkList.forEach(dataFileList.add, dataFileList)
         }        
-        await updateDataFileList(rootHandle, Array.from(dataFileList.values()), rootTagTree, postEvent)
+        await updateDataFileList(rootHandle, Array.from(dataFileList.values()), rootStampTree, postEvent)
 
         for (const [name, handle] of Object.entries(await collectFiles(rootHandle, isCssFile))) {            
-            if (await isFileUpdated(rootTagTree, name, handle)) {                
+            if (await isFileUpdated(rootStampTree, name, handle)) {                
                 const result = await readCssFile(handle, name)
                 postEvent.send("updateCssFile", result)
             }
@@ -138,6 +138,6 @@ export async function searchDirectoryWorkerCallback(payload:WorkerMessageType['s
         */
     }
     finally {
-        postEvent.send("searchDirectoryDone", { handle: rootHandle })
+        postEvent.send("scanDirectoryDone", { handle: rootHandle })
     }
 }
