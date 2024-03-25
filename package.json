@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "webpack-cli && shx cp README.md dist/index.md",
-    "build-prod": "webpack-cli --mode='production'",    
+    "build-prod": "webpack-cli --mode='production'",
     "test": "webpack-cli --config='webpack.config.test.ts'",
     "dev-server": "webpack-cli serve --config='webpack.config.dev-server.ts'",
     "clean": "shx rm -rf dist/* src/tmp tmp"
@@ -44,6 +44,7 @@
     "boost-ts": "^2.2.0",
     "flux-standard-action": "^2.1.2",
     "fp-ts": "^2.16.4",
+    "github-markdown-css": "^5.5.1",
     "highlight.js": "^11.9.0",
     "marked": "^12.0.1",
     "marked-highlight": "^2.1.1",

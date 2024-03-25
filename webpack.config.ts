@@ -22,7 +22,7 @@ const commonRules:RuleSetRule[] = [
     loader: "ts-loader"
   },  
   {
-    test: /\.(asdata|md|html)$/i,
+    test: /\.(asdata|md|html|css)$/i,
     type: 'asset/source'
   }  
 ]

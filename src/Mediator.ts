@@ -13,7 +13,15 @@ import { getMarkdownMenu, MarkdownMenuFileType } from "./fileTree/MarkdownMenu"
 import { convertToFileStampFolder } from "./fileTree/FileStampTree"
 import { setupDragAndDrop } from "./fileIO/dragAndDrop"
 import { hasMarkdownFileElement } from "./dataElement/dataFromElement"
+import { addCssElement } from "./dataElement/styleElement"
+import { DEFAULT_CSS_CLASS } from "./constant"
+import packageJson from "../package.json"
+import defaultHighlightCss from "../node_modules/highlight.js/styles/github.min.css"
+import defaultMarkdownCss from "../node_modules/github-markdown-css/github-markdown.css"
 
+export const VERSION:string = packageJson.version
+export const DEFAULT_HIGHLIGHTJS_CSS:string = defaultHighlightCss
+export const DEFAULT_MARKDOWN_CSS:string = defaultMarkdownCss
 
 const NO_CURRENT_PAGE = ""
 
@@ -28,7 +36,7 @@ class MediatorData {
     currentCss: CssInfo = {}
     mode: 'directory' | 'url' | undefined = undefined
     directory: FileSystemDirectoryHandle | undefined = undefined    
-    seq: number = 0
+    seq: number = 0    
 }
 
 export class Mediator extends MediatorData {
@@ -70,13 +78,18 @@ export class Mediator extends MediatorData {
     // Handler for Application Setup
     ////////////////////////////////////////////////////////////////////////
 
-    onGuiInitialized(): void {
+    onGuiInitialized(): void {        
         this.updateCurrentPage(this.config.topPage)
         this.updateSeq()        
         setupDragAndDrop(this)
         const self = this
         _open_markdown = function(name:string) {
             self.updateCurrentPage(name)
+        }
+
+        if (this.config.useDefaultCss) {
+            addCssElement(defaultMarkdownCss, DEFAULT_CSS_CLASS, {})
+            addCssElement(defaultHighlightCss, DEFAULT_CSS_CLASS, {})
         }
                 
         if (!hasMarkdownFileElement() && (this.rootUrl.protocol.toLowerCase() === 'http:' || this.rootUrl.protocol.toLowerCase() === 'https:')) {

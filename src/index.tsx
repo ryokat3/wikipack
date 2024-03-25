@@ -17,6 +17,7 @@ import workerJS from "./tmp/worker.bundle.js.asdata"
 import defaultMarkdown from "./defaultMarkdown.md"
 import templateHtml from "./template.html"
 
+
 window.onload = async function () {
 
     const workerBlob = new Blob([workerJS], { type: 'application/javascript'})

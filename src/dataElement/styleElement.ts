@@ -7,7 +7,25 @@ export function getMarkdownCssElement(): Element[] {
     return Array.from(document.getElementsByClassName(MARKDOWN_CSS_FILE_CLASS))
 }
 
+export function addCssElement(css:string, className:string, attrs:{ [attr:string]:string }): HTMLStyleElement {
+    const elem = document.createElement('style')
+
+    elem.classList.add(className)
+    Object.entries(attrs).forEach(([name, value])=>{
+        elem.setAttribute(name, value)
+    })
+    elem.innerHTML = css
+
+    document.head.appendChild(elem)
+    return elem
+}
+
 export function addMarkdownCssElement(fileName:string, css:string, seq:number): HTMLStyleElement {
+    return addCssElement(css, MARKDOWN_CSS_FILE_CLASS, {
+        FILE_NAME_ATTR: fileName,
+        SEQ_NUMBER_ATTR: seq.toString()
+    })
+    /*
     const elem = document.createElement('style')
 
     elem.classList.add(MARKDOWN_CSS_FILE_CLASS)
@@ -17,6 +35,7 @@ export function addMarkdownCssElement(fileName:string, css:string, seq:number): 
 
     document.head.appendChild(elem)
     return elem
+    */
 }
 
 function findCssFiles(folder:FolderType):string[] {

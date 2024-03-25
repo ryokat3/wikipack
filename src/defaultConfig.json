@@ -3,5 +3,6 @@
     "markdownFileRegex": [ ".*\\.(md|markdown)$" ],
     "cssFileRegex": [ ".*\\.css$" ],
     "initialConfig": true,
-    "markdownBodyClass": "markdown-body"
+    "markdownBodyClass": "markdown-body",
+    "useDefaultCss": true
 }
