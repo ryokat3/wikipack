@@ -1,5 +1,7 @@
-import { MarkdownFileType } from "../fileTree/FileTreeType"
+import { MarkdownFileType, CssFileType, DataFileType} from "../fileTree/FileTreeType"
 import { FileStampFolderType } from "../fileTree/FileStampTree"
+
+type PartialDataFileType = Omit<Omit<DataFileType, 'dataRef'>, 'buffer'> & { buffer: ArrayBuffer}
 
 export type WorkerMessageType = {
     openFile : {
@@ -37,24 +39,20 @@ export type WorkerMessageType = {
     },
     updateMarkdownFile: {
         response: {
-            fileName: string,
-            fileStamp: string,
+            fileName: string,            
             markdownFile: MarkdownFileType
         }
     },
     updateCssFile: {
         response: {
             fileName: string,
-            fileStamp: string,
-            data: string
+            cssFile: CssFileType
         }
     },
     updateDataFile: {
         response: {
-            fileName: string,
-            fileStamp: string,
-            mime: string,
-            data: ArrayBuffer
+            fileName: string, 
+            dataFile: PartialDataFileType
         }
     },
     deleteFile: {

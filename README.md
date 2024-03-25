@@ -17,11 +17,10 @@ A portable HTML file to pack markdown, image, css, and any data files into itsel
 
 CSS files in the same directory and 'css' sub-directory of the markdown file will be loaded and applied.
 
-### Recommend CSS
+### Default CSS
 
-- [GitHub Flavoured](https://github.com/sindresorhus/github-markdown-css)
-- [highlight.js](https://github.com/highlightjs/highlight.js/) (including many styles)
-
+- __Markdown CSS__ : [GitHub Flavoured](https://github.com/sindresorhus/github-markdown-css)
+- __Code Highlight CSS__ : [highlight.js](https://github.com/highlightjs/highlight.js/)
 
 ## Extended Markdown Syntax
 

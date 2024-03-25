@@ -6,7 +6,8 @@ export type FileType = {
         markdown: string,
         fileStamp: string,
         imageList: string[],
-        linkList: string[]
+        linkList: string[],
+        markdownList: string[]
     },
     css: {
         type: "css",

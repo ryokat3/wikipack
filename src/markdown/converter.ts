@@ -22,20 +22,26 @@ export function getMarkdownFile(markdown:string, fileName:string, fileStamp:stri
         markdown: markdown,
         fileStamp: fileStamp,
         imageList: [],
-        linkList: []
+        linkList: [],
+        markdownList: []
     }
     const dirPath = splitPath(fileName).slice(0,-1).join('/')
-    
-    //const warlkTokens = (token:marked.Token) => {
-    const warlkTokens = (token:marked.Token) => {
+        
+    const warlkTokens = (token:marked.Token) => {        
         if (token.type === "image") {            
             if (! isURL(token.href)) {                
                 result.imageList.push(splitPath(`${dirPath}/${token.href}`).join('/'))
             }
         }
-        else if (token.type === "link") {                        
-            if ((! isURL(token.href)) && (! isMarkdownFile(token.href))) {                
-                result.linkList.push(splitPath(`${dirPath}/${token.href}`).join('/'))
+        else if (token.type === "link") {   
+            const fileName = splitPath(`${dirPath}/${token.href}`).join('/')                     
+            if (! isURL(token.href)) {
+                if (isMarkdownFile(token.href)) {                
+                    result.markdownList.push(fileName)
+                }
+                else {
+                    result.linkList.push(fileName)
+                }
             }
         }
     }
@@ -44,8 +50,6 @@ export function getMarkdownFile(markdown:string, fileName:string, fileStamp:stri
 
     return result
 }
-
-
 
 function getRendererExtension(    
     rootFolder:FolderType,
@@ -57,12 +61,18 @@ function getRendererExtension(
        
     return {
         link(href: string, title: string|null|undefined, text: string) {            
-            if (isMarkdown(href)) {
-                const fileName = addPath(dirPath, href)
+            const fileName = addPath(dirPath, href)
+            if (isMarkdown(href)) {                                
                 return renderer.link(`javascript:_open_markdown('${fileName}')`, title, text)
             }
-            else {
-                return renderer.link(href, title, text)
+            else {                
+                const dataFile = getFileFromTree(rootFolder, fileName)
+                if ((dataFile !== undefined) && (dataFile.type === 'data')) {
+                    return renderer.link(dataFile.dataRef, title, text)                    
+                }
+                else {
+                    return renderer.link(href, title, text)
+                }
             }
         },
 

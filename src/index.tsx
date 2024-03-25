@@ -38,7 +38,8 @@ window.onload = async function () {
             markdown: defaultMarkdown,
             fileStamp: "",
             imageList: [],
-            linkList: []
+            linkList: [],
+            markdownList: []
         })
     }
 

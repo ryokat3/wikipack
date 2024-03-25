@@ -34,8 +34,7 @@ async function readMarkdownFile(handle: FileSystemFileHandle, isMarkdownFile:(fi
                 const markdownFileName = (fileName !== undefined) ? fileName : blob.name
                 const markdownFile = getMarkdownFile(e.target.result, markdownFileName, getFileStamp(blob), isMarkdownFile)
                 resolve({
-                    fileName: markdownFileName,
-                    fileStamp: getFileStamp(blob),
+                    fileName: markdownFileName,                    
                     markdownFile: markdownFile
                 })                
             }
@@ -54,8 +53,11 @@ async function readCssFile(handle: FileSystemFileHandle, fileName: string|undefi
                 const cssFileName = (fileName !== undefined) ? fileName : blob.name                                
                 resolve({
                     fileName: cssFileName,
-                    fileStamp: getFileStamp(blob),
-                    data: e.target.result
+                    cssFile: {
+                        type: "css",
+                        fileStamp: getFileStamp(blob),
+                        css: e.target.result
+                    }
                 })                
             }
         }
@@ -72,9 +74,12 @@ async function readDataFile(handle: FileSystemFileHandle, fileName: string): Pro
             if ((e.target !== null) && (e.target.result !== null) && (typeof e.target.result == 'object')) {                
                 resolve({
                     fileName: fileName,
-                    fileStamp: getFileStamp(blob),
-                    mime: blob.type,
-                    data: e.target.result
+                    dataFile: {
+                        type: "data",
+                        fileStamp: getFileStamp(blob),
+                        mime: blob.type,
+                        buffer: e.target.result
+                    }
                 })
             }
         }
@@ -90,7 +95,7 @@ async function updateDataFileList(rootHandle:FileSystemDirectoryHandle, fileName
             const current = await handle.getFile()
             if ((prev === undefined) || (prev.type === "folder") || (getFileStamp(current) !== prev.fileStamp)) {              
                 const dataFile = await readDataFile(handle as FileSystemFileHandle, fileName)
-                postEvent.send("updateDataFile", dataFile, [dataFile.data])
+                postEvent.send("updateDataFile", dataFile, [dataFile.dataFile.buffer])
             }
         }
     }

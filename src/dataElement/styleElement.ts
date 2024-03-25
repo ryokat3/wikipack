@@ -1,10 +1,25 @@
-import { MARKDOWN_CSS_FILE_CLASS, FILE_NAME_ATTR, SEQ_NUMBER_ATTR } from "../constant"
+import { MARKDOWN_CSS_FILE_CLASS, FILE_NAME_ATTR, SEQ_NUMBER_ATTR, DEFAULT_CSS_CLASS } from "../constant"
 import { getFileFromTree } from "../fileTree/FileTree"
 import { CssFileType, FolderType } from "../fileTree/FileTreeType"
 import { getDir, addPath } from "../utils/appUtils"
 
+import defaultHighlightCss from "../../node_modules/highlight.js/styles/github.min.css"
+import defaultMarkdownCss from "../../node_modules/github-markdown-css/github-markdown.css"
+
+
 export function getMarkdownCssElement(): Element[] {    
     return Array.from(document.getElementsByClassName(MARKDOWN_CSS_FILE_CLASS))
+}
+
+export function addDefaultCssElement():void {
+    addCssElement(defaultMarkdownCss, DEFAULT_CSS_CLASS, {})
+    addCssElement(defaultHighlightCss, DEFAULT_CSS_CLASS, {})    
+}
+
+export function removeDefaultCssElement():void {
+    Array.from(document.getElementsByClassName(DEFAULT_CSS_CLASS)).forEach((elem:Element)=>{
+        elem.remove()
+    })
 }
 
 export function addCssElement(css:string, className:string, attrs:{ [attr:string]:string }): HTMLStyleElement {
@@ -25,17 +40,6 @@ export function addMarkdownCssElement(fileName:string, css:string, seq:number): 
         FILE_NAME_ATTR: fileName,
         SEQ_NUMBER_ATTR: seq.toString()
     })
-    /*
-    const elem = document.createElement('style')
-
-    elem.classList.add(MARKDOWN_CSS_FILE_CLASS)
-    elem.setAttribute(FILE_NAME_ATTR, fileName)
-    elem.setAttribute(SEQ_NUMBER_ATTR, seq.toString())    
-    elem.innerHTML = css
-
-    document.head.appendChild(elem)
-    return elem
-    */
 }
 
 function findCssFiles(folder:FolderType):string[] {

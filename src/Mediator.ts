@@ -13,15 +13,10 @@ import { getMarkdownMenu, MarkdownMenuFileType } from "./fileTree/MarkdownMenu"
 import { convertToFileStampFolder } from "./fileTree/FileStampTree"
 import { setupDragAndDrop } from "./fileIO/dragAndDrop"
 import { hasMarkdownFileElement } from "./dataElement/dataFromElement"
-import { addCssElement } from "./dataElement/styleElement"
-import { DEFAULT_CSS_CLASS } from "./constant"
+import { addDefaultCssElement } from "./dataElement/styleElement"
 import packageJson from "../package.json"
-import defaultHighlightCss from "../node_modules/highlight.js/styles/github.min.css"
-import defaultMarkdownCss from "../node_modules/github-markdown-css/github-markdown.css"
 
 export const VERSION:string = packageJson.version
-export const DEFAULT_HIGHLIGHTJS_CSS:string = defaultHighlightCss
-export const DEFAULT_MARKDOWN_CSS:string = defaultMarkdownCss
 
 const NO_CURRENT_PAGE = ""
 
@@ -88,8 +83,7 @@ export class Mediator extends MediatorData {
         }
 
         if (this.config.useDefaultCss) {
-            addCssElement(defaultMarkdownCss, DEFAULT_CSS_CLASS, {})
-            addCssElement(defaultHighlightCss, DEFAULT_CSS_CLASS, {})
+            addDefaultCssElement()                        
         }
                 
         if (!hasMarkdownFileElement() && (this.rootUrl.protocol.toLowerCase() === 'http:' || this.rootUrl.protocol.toLowerCase() === 'https:')) {
@@ -194,11 +188,7 @@ export class Mediator extends MediatorData {
 
     updateCssFile(payload:WorkerMessageType['updateCssFile']['response']):void {
         const fileName = normalizePath(payload.fileName)        
-        const isSame = updateFileOfTree(this.rootFolder, fileName, {
-            type: "css",
-            fileStamp: payload.fileStamp,
-            css: payload.data
-        }, isSameFile)
+        const isSame = updateFileOfTree(this.rootFolder, fileName, payload.cssFile, isSameFile)
                 
         if (!isSame) {                    
             this.seq = this.seq + 1
@@ -211,15 +201,9 @@ export class Mediator extends MediatorData {
 
     updateDataFile(payload:WorkerMessageType['updateDataFile']['response']):void {
         const fileName = normalizePath(payload.fileName)
-        const blob = new Blob( [payload.data], { type: payload.mime })
+        const blob = new Blob( [payload.dataFile.buffer], { type: payload.dataFile.mime })
         const dataRef = URL.createObjectURL(blob)        
-        const isSame = updateFileOfTree(this.rootFolder, fileName, {
-            type: "data",
-            dataRef: dataRef,
-            buffer: payload.data,
-            mime: payload.mime,
-            fileStamp: payload.fileStamp
-        }, isSameFile)
+        const isSame = updateFileOfTree(this.rootFolder, fileName, { ...payload.dataFile, dataRef: dataRef }, isSameFile)
         
         if (!isSame) {        
             const markdownFile = getFileFromTree(this.rootFolder, this.currentPage)
