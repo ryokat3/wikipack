@@ -1,5 +1,5 @@
 import { MarkdownFileType, CssFileType, DataFileType} from "../fileTree/FileTreeType"
-import { FileStampFolderType } from "../fileTree/FileStampTree"
+import { ScanTreeFolderType } from "../fileTree/ScanTree"
 
 type PartialDataFileType = Omit<Omit<DataFileType, 'dataRef'>, 'buffer'> & { buffer: ArrayBuffer}
 
@@ -13,7 +13,7 @@ export type WorkerMessageType = {
     scanDirectory: {
         request: {
             handle: FileSystemDirectoryHandle,
-            rootStampTree: FileStampFolderType,
+            rootScanTree: ScanTreeFolderType,
             markdownFileRegex: string[],
             cssFileRegex: string[]
         }
@@ -27,7 +27,7 @@ export type WorkerMessageType = {
         request: {
             url: string,
             topPage: string,
-            rootStampTree: FileStampFolderType,
+            rootScanTree: ScanTreeFolderType,
             markdownFileRegex: string[],
             cssFileRegex: string[]             
         }

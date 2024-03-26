@@ -3,14 +3,14 @@ import { PostEvent } from "../utils/WorkerMessage"
 import { getMarkdownFile} from "../markdown/converter"
 import { collectFiles, getHandle, isFileHandle } from "./fileRW"
 import { makeFileRegexChecker } from "../utils/appUtils"
-import { getFileFromTree } from "../fileTree/FileTree"
-import { FileStampFolderType } from "../fileTree/FileStampTree"
+import { getFileFromTree, updateFileOfTree } from "../fileTree/FileTree"
+import { ScanTreeFolderType } from "../fileTree/ScanTree"
 
 function getFileStamp(fp:File):string {
     return `lastModified=${fp.lastModified}:size=${fp.size}`
 }
 
-async function isFileUpdated(rootStampTree:FileStampFolderType, fileName:string, handle:FileSystemFileHandle):Promise<boolean> {
+async function isFileUpdated(rootStampTree:ScanTreeFolderType, fileName:string, handle:FileSystemFileHandle):Promise<boolean> {
     const prev = getFileFromTree(rootStampTree, fileName)    
     if (prev === undefined) {
         return true
@@ -87,16 +87,22 @@ async function readDataFile(handle: FileSystemFileHandle, fileName: string): Pro
     })
 }
 
-async function updateDataFileList(rootHandle:FileSystemDirectoryHandle, fileNameList:string[], rootStampTree:FileStampFolderType, postEvent:PostEvent<WorkerMessageType>) {
+async function updateDataFileList(rootHandle:FileSystemDirectoryHandle, fileNameList:string[], rootScanTree:ScanTreeFolderType, postEvent:PostEvent<WorkerMessageType>) {
     for (const fileName of fileNameList) {
         const handle = await getHandle(rootHandle, fileName)
         if ((handle !== undefined) && isFileHandle(handle)) {
-            const prev = getFileFromTree(rootStampTree, fileName)
-            const current = await handle.getFile()
-            if ((prev === undefined) || (prev.type === "folder") || (getFileStamp(current) !== prev.fileStamp)) {              
+            const prevData = getFileFromTree(rootScanTree, fileName)
+            const currentFile = await handle.getFile()
+            const currentFileStamp = getFileStamp(currentFile)
+            if ((prevData === undefined) || (prevData.type === "folder") || (currentFileStamp !== prevData.fileStamp)) {              
                 const dataFile = await readDataFile(handle as FileSystemFileHandle, fileName)
                 postEvent.send("updateDataFile", dataFile, [dataFile.dataFile.buffer])
             }
+            updateFileOfTree(rootScanTree, fileName, {
+                type: 'data',
+                fileStamp: currentFileStamp,
+                status: 'found'
+            })
         }
     }
 }
@@ -113,27 +119,38 @@ export async function openFileWorkerCallback(payload:WorkerMessageType['openFile
 
 export async function scanDirectoryWorkerCallback(payload:WorkerMessageType['scanDirectory']['request'], postEvent:PostEvent<WorkerMessageType>){                
     const rootHandle = payload.handle
-    const rootStampTree = payload.rootStampTree    
+    const rootScanTree = payload.rootScanTree    
     const isMarkdownFile = makeFileRegexChecker(payload.markdownFileRegex)
     const isCssFile = makeFileRegexChecker(payload.cssFileRegex)
 
     try {
         const dataFileList:Set<string> = new Set([])
-        for (const [name, handle] of Object.entries(await collectFiles(rootHandle, isMarkdownFile))) {
-            const result = await readMarkdownFile(handle, isMarkdownFile, name)
-            if (await isFileUpdated(rootStampTree, name, handle)) {                
-                postEvent.send("updateMarkdownFile", result)
+        for (const [fileName, handle] of Object.entries(await collectFiles(rootHandle, isMarkdownFile))) {
+            const fileData = await readMarkdownFile(handle, isMarkdownFile, fileName)
+            if (await isFileUpdated(rootScanTree, fileName, handle)) {                
+                postEvent.send("updateMarkdownFile", fileData)
             }
-            result.markdownFile.imageList.forEach(dataFileList.add, dataFileList)
-            result.markdownFile.linkList.forEach(dataFileList.add, dataFileList)
-        }        
-        await updateDataFileList(rootHandle, Array.from(dataFileList.values()), rootStampTree, postEvent)
+            updateFileOfTree(rootScanTree, fileName, {
+                type: 'markdown',
+                fileStamp: fileData.markdownFile.fileStamp,
+                status: 'found'
+            })
 
-        for (const [name, handle] of Object.entries(await collectFiles(rootHandle, isCssFile))) {            
-            if (await isFileUpdated(rootStampTree, name, handle)) {                
-                const result = await readCssFile(handle, name)
-                postEvent.send("updateCssFile", result)
+            fileData.markdownFile.imageList.forEach(dataFileList.add, dataFileList)
+            fileData.markdownFile.linkList.forEach(dataFileList.add, dataFileList)
+        }        
+        await updateDataFileList(rootHandle, Array.from(dataFileList.values()), rootScanTree, postEvent)
+
+        for (const [fileName, handle] of Object.entries(await collectFiles(rootHandle, isCssFile))) {            
+            const fileData = await readCssFile(handle, fileName)
+            if (await isFileUpdated(rootScanTree, fileName, handle)) {                                
+                postEvent.send("updateCssFile", fileData)
             }
+            updateFileOfTree(rootScanTree, fileName, {
+                type: 'css',
+                fileStamp: fileData.cssFile.fileStamp,
+                status: 'found'
+            })
         }
         /*
         for await (const fileName of deletedFileGenerator(rootHandle, rootFolder)) {

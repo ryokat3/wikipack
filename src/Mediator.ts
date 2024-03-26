@@ -10,7 +10,7 @@ import { getRenderer } from "./markdown/converter"
 import { makeFileRegexChecker } from "./utils/appUtils"
 import { getProxyDataClass } from "./utils/proxyData"
 import { getMarkdownMenu, MarkdownMenuFileType } from "./fileTree/MarkdownMenu"
-import { convertToFileStampFolder } from "./fileTree/FileStampTree"
+import { convertToScanTreeFolder } from "./fileTree/ScanTree"
 import { setupDragAndDrop } from "./fileIO/dragAndDrop"
 import { hasMarkdownFileElement } from "./dataElement/dataFromElement"
 import { addDefaultCssElement } from "./dataElement/styleElement"
@@ -125,7 +125,7 @@ export class Mediator extends MediatorData {
         this.directory = handle
         this.worker.request("scanDirectory", { 
             handle: handle,
-            rootStampTree: convertToFileStampFolder(this.rootFolder),
+            rootScanTree: convertToScanTreeFolder(this.rootFolder),
             markdownFileRegex: this.config.markdownFileRegex,
             cssFileRegex: this.config.cssFileRegex               
         })        
@@ -142,7 +142,7 @@ export class Mediator extends MediatorData {
         this.worker.request("scanUrl", { 
             url: url.href, // URL object is not cloned in Post,
             topPage: this.config.topPage,
-            rootStampTree: convertToFileStampFolder(this.rootFolder),
+            rootScanTree: convertToScanTreeFolder(this.rootFolder),
             markdownFileRegex: this.config.markdownFileRegex,
             cssFileRegex: this.config.cssFileRegex
         })        
