@@ -3,7 +3,9 @@ import { PostEvent } from "../utils/WorkerMessage"
 import { getMarkdownFile } from "../markdown/converter"
 import { makeFileRegexChecker } from "../utils/appUtils"
 import { MarkdownFileType } from "../fileTree/FileTreeType"
-import { updateFileOfTree } from "../fileTree/FileTree"
+import { updateFileOfTree, getFileFromTree } from "../fileTree/FileTree"
+import { ScanTreeFolderType } from "../fileTree/ScanTree"
+import { getDir, addPath } from "../utils/appUtils"
 
 function getFileStamp(header:Headers):string {
     const result = {
@@ -30,6 +32,12 @@ function getPageUrl(url:string, page:string):string {
     return url + page
 }
 
+
+function isFileScanned(rootScanTree:ScanTreeFolderType, fileName:string):boolean {
+    const result = getFileFromTree(rootScanTree, fileName)
+    return (result !== undefined) && (result.type !== 'folder') && (result.status !== 'init')
+}
+
 async function fetchMarkdownFile(url:string, page:string, isMarkdownFile:(fileName:string)=>boolean):Promise<MarkdownFileType|undefined> {
     const response = await fetch(getPageUrl(url, page))
     if (response.ok) {
@@ -43,20 +51,38 @@ async function fetchMarkdownFile(url:string, page:string, isMarkdownFile:(fileNa
     }    
 }
 
+function updateMakedownFile(fileName:string, markdownFile:MarkdownFileType, rootScanTree:ScanTreeFolderType, postEvent:PostEvent<WorkerMessageType>) {
+    postEvent.send("updateMarkdownFile", {
+        fileName: fileName,            
+        markdownFile: markdownFile
+    })
+    updateFileOfTree(rootScanTree, fileName, {
+        type: 'markdown',
+        fileStamp: markdownFile.fileStamp,
+        status: 'found'
+    })
+}
+
+async function scanUrlMarkdownHandler(url:string, fileName:string, rootScanTree:ScanTreeFolderType, postEvent:PostEvent<WorkerMessageType>, isMarkdownFile:(fileName:string)=>boolean) {
+
+    if (!isFileScanned(rootScanTree, fileName)) {
+        const markdownFile = await fetchMarkdownFile(url, fileName, isMarkdownFile)
+
+        if (markdownFile !== undefined) {
+            updateMakedownFile(fileName, markdownFile, rootScanTree, postEvent)
+        }
+
+        markdownFile?.markdownList.forEach((link:string)=>{            
+            scanUrlMarkdownHandler(url, addPath(getDir(fileName), link), rootScanTree, postEvent, isMarkdownFile)
+        })
+    }
+}
+
+
 export async function scanUrlWorkerCallback(payload:WorkerMessageType['scanUrl']['request'], postEvent:PostEvent<WorkerMessageType>){                
     const rootScanTree = payload.rootScanTree    
     const isMarkdownFile = makeFileRegexChecker(payload.markdownFileRegex)
-    const markdownFile = await fetchMarkdownFile(payload.url, payload.topPage, isMarkdownFile)
 
-    if (markdownFile !== undefined) {
-        postEvent.send("updateMarkdownFile", {
-            fileName: payload.topPage,            
-            markdownFile: markdownFile
-        })
-        updateFileOfTree(rootScanTree, payload.topPage, {
-            type: 'markdown',
-            fileStamp: markdownFile.fileStamp,
-            status: 'found'
-        })
-    }
+    scanUrlMarkdownHandler(payload.url, payload.topPage, rootScanTree, postEvent, isMarkdownFile)
+
 }
