@@ -71,11 +71,7 @@ function removeParentDir(pathName:string[]):string[] {
 export function splitPath(pathName:string|undefined|null):string[] {
     return pathName ? pipe(
         pathName.split('/'),
-        (pathList:string[]) => pathList.length > 0 ? O.some(pathList) : O.none,
-//        O.map((pathList:string[])=> pathList.at(0) === '' ? pathList.slice(1) :  pathList),
-//        O.chain((pathList:string[]) => pathList.length > 0 ? O.some(pathList) : O.none),
-//        O.map((pathList:string[])=> pathList.at(-1) === '' ? pathList.slice(0,-1) :  pathList),
-//        O.chain((pathList:string[]) => pathList.length > 0 ? O.some(pathList) : O.none),       
+        (pathList:string[]) => pathList.length > 0 ? O.some(pathList) : O.none,     
         O.map((pathList:string[])=> pathList.filter((name:string)=>name !== "." && name !== '')), 
         O.map((pathList:string[])=> removeParentDir(pathList)), 
         O.getOrElse(()=>[] as string[])
@@ -98,6 +94,12 @@ export function getFileName(filePath:string|undefined|null):string {
     return splitPath(filePath).pop() || ""
 }
 
+export function addPathToUrl(urlStr:string, fileName:string, isMarkdownFile:(name:string)=>boolean):string {
+    const url = new URL(urlStr)
+    url.pathname = "/" + (isMarkdownFile(url.pathname) ? getDir(url.pathname) : normalizePath(url.pathname)) + "/" + fileName
+    return url.toString()
+}
+
 /************************************************************************************************ 
 Markdown File
 ************************************************************************************************/
@@ -113,4 +115,17 @@ export function makeFileRegexChecker(regexList:string[]):(name:string)=>boolean 
         }
         return false
     }
+}
+
+/************************************************************************************************ 
+URL
+************************************************************************************************/
+
+export function isURL(url:string):boolean {
+    try {
+        new URL(url);
+        return true;
+    } catch (err) {
+        return false;
+    }   
 }

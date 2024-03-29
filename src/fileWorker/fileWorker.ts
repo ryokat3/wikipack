@@ -120,8 +120,7 @@ export async function openFileWorkerCallback(payload:WorkerMessageType['openFile
 export async function scanDirectoryWorkerCallback(payload:WorkerMessageType['scanDirectory']['request'], postEvent:PostEvent<WorkerMessageType>){                
     const rootHandle = payload.handle
     const rootScanTree = payload.rootScanTree    
-    const isMarkdownFile = makeFileRegexChecker(payload.markdownFileRegex)
-    const isCssFile = makeFileRegexChecker(payload.cssFileRegex)
+    const isMarkdownFile = makeFileRegexChecker(payload.markdownFileRegex)    
 
     try {
         const dataFileList:Set<string> = new Set([])
@@ -141,6 +140,7 @@ export async function scanDirectoryWorkerCallback(payload:WorkerMessageType['sca
         }        
         await updateDataFileList(rootHandle, Array.from(dataFileList.values()), rootScanTree, postEvent)
 
+        /*
         for (const [fileName, handle] of Object.entries(await collectFiles(rootHandle, isCssFile))) {            
             const fileData = await readCssFile(handle, fileName)
             if (await isFileUpdated(rootScanTree, fileName, handle)) {                                
@@ -152,6 +152,7 @@ export async function scanDirectoryWorkerCallback(payload:WorkerMessageType['sca
                 status: 'found'
             })
         }
+        */
         /*
         for await (const fileName of deletedFileGenerator(rootHandle, rootFolder)) {
             deleteFileFromTree(rootFolder, fileName)
@@ -161,5 +162,13 @@ export async function scanDirectoryWorkerCallback(payload:WorkerMessageType['sca
     }
     finally {
         postEvent.send("scanDirectoryDone", { handle: rootHandle })
+    }
+}
+
+export async function readCssFileWorkerCallback(payload:WorkerMessageType['readCssFile']['request'], postEvent:PostEvent<WorkerMessageType>){
+    const handle = await getHandle(payload.handle, payload.fileName)
+    if ((handle !== undefined) && isFileHandle(handle)) {
+        const fileData = await readCssFile(handle, payload.fileName)
+        postEvent.send("updateCssFile", fileData)
     }
 }

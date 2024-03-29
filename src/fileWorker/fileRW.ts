@@ -32,7 +32,6 @@ export async function getHandle(dirHandle:FileSystemDirectoryHandle, pathName:st
         }
         return undefined
     }
-
 }
 
 export async function collectFiles(dirHandle:FileSystemDirectoryHandle, pred:(fileName:string)=>boolean) {

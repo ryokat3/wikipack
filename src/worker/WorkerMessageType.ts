@@ -14,8 +14,7 @@ export type WorkerMessageType = {
         request: {
             handle: FileSystemDirectoryHandle,
             rootScanTree: ScanTreeFolderType,
-            markdownFileRegex: string[],
-            cssFileRegex: string[]
+            markdownFileRegex: string[]            
         }
     },
     scanDirectoryDone: {
@@ -28,8 +27,19 @@ export type WorkerMessageType = {
             url: string,
             topPage: string,
             rootScanTree: ScanTreeFolderType,
-            markdownFileRegex: string[],
-            cssFileRegex: string[]             
+            markdownFileRegex: string[]            
+        }
+    }
+    readCssFile: {
+        request: {
+            handle: FileSystemDirectoryHandle,
+            fileName: string
+        }
+    }
+    downloadCssFile: {
+        request: {
+            url: string,
+            fileName: string
         }
     }
     scanUrlDone: {

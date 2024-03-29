@@ -4,16 +4,9 @@ import { markedHighlight } from "marked-highlight"
 import hljs from 'highlight.js'
 import { getFileFromTree } from "../fileTree/FileTree"
 import { MarkdownFileType, FolderType } from "../fileTree/FileTreeType"
-import { splitPath, getDir, addPath } from "../utils/appUtils"
+import { splitPath, getDir, addPath, isURL } from "../utils/appUtils"
 
-function isURL(url:string):boolean {
-    try {
-        new URL(url);
-        return true;
-    } catch (err) {
-        return false;
-    }   
-}
+
 
 export function getMarkdownFile(markdown:string, fileName:string, fileStamp:string, isMarkdownFile:(fileName:string)=>boolean):MarkdownFileType {
 

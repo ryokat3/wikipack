@@ -1,10 +1,10 @@
 # WikiPack
 
-A portable HTML file to pack markdown, image, css, and any data files into itself.
+A portable HTML file to pack markdown, image, css, and any data files into single HTML file.
 
 ## Usage
 
-1. Open [the HTML file](https://ryokat3.github.io/wikipack/)
+1. Open the [WikiPack HTML file](https://ryokat3.github.io/wikipack/)
 
 2. Drag-and-drop the directory (not a file [^1]) holding your markdown and image files
 

@@ -2,7 +2,7 @@ import { WorkerMessageType } from "../worker/WorkerMessageType"
 import { PostEvent } from "../utils/WorkerMessage"
 import { getMarkdownFile } from "../markdown/converter"
 import { makeFileRegexChecker } from "../utils/appUtils"
-import { MarkdownFileType } from "../fileTree/FileTreeType"
+import { MarkdownFileType, CssFileType } from "../fileTree/FileTreeType"
 import { updateFileOfTree, getFileFromTree } from "../fileTree/FileTree"
 import { ScanTreeFolderType } from "../fileTree/ScanTree"
 import { getDir, addPath } from "../utils/appUtils"
@@ -51,6 +51,23 @@ async function fetchMarkdownFile(url:string, page:string, isMarkdownFile:(fileNa
     }    
 }
 
+async function fetchCssFile(url:string):Promise<CssFileType|undefined> {
+    const response = await fetch(url)
+    if (response.ok) {
+        const fileStamp = getFileStamp(response.headers)
+        const css = await response.text()
+
+        return {
+            type: "css",
+            css: css,
+            fileStamp: fileStamp
+        }
+    }
+    else {
+        return undefined
+    }    
+}
+
 function updateMakedownFile(fileName:string, markdownFile:MarkdownFileType, rootScanTree:ScanTreeFolderType, postEvent:PostEvent<WorkerMessageType>) {
     postEvent.send("updateMarkdownFile", {
         fileName: fileName,            
@@ -84,5 +101,14 @@ export async function scanUrlWorkerCallback(payload:WorkerMessageType['scanUrl']
     const isMarkdownFile = makeFileRegexChecker(payload.markdownFileRegex)
 
     scanUrlMarkdownHandler(payload.url, payload.topPage, rootScanTree, postEvent, isMarkdownFile)
+}
 
+export async function downloadCssFilelWorkerCallback(payload:WorkerMessageType['downloadCssFile']['request'], postEvent:PostEvent<WorkerMessageType>){                
+    const cssFile = await fetchCssFile(payload.url)
+    if (cssFile !== undefined) {
+        postEvent.send('updateCssFile', {
+            fileName: payload.fileName,
+            cssFile: cssFile
+        })
+    }
 }

@@ -6,7 +6,7 @@ import { WorkerMessageType } from "./worker/WorkerMessageType"
 import { mediatorData } from "./Mediator"
 import { readConfig } from "./config"
 import { TopStateType } from "./gui/TopReducer"
-import { updateFileOfTree } from "./fileTree/FileTree"
+import { isEmptyFileTreeFolder, updateFileOfTree } from "./fileTree/FileTree"
 import { injectAllMarkdownFileFromElement, injectAllCssFileFromElement, injectAllDataFileFromElement } from "./dataElement/dataFromElement"
 import { TOP_COMPONENT_ID } from "./constant"
 import { makeFileRegexChecker } from "./utils/appUtils"
@@ -26,13 +26,15 @@ window.onload = async function () {
     const container = document.getElementById(TOP_COMPONENT_ID)
     const isMarkdownFile = makeFileRegexChecker(config.markdownFileRegex)
     
+    // Set File Element
+    //
     await injectAllMarkdownFileFromElement(mediatorData.rootFolder, isMarkdownFile)
     await injectAllCssFileFromElement(mediatorData.rootFolder)
     await injectAllDataFileFromElement(mediatorData.rootFolder)
 
-    const menuRoot = getMarkdownMenu(mediatorData.rootFolder) || createRootFolder<MarkdownMenuFileType>()     
-
-    if (config.initialConfig) {
+    // Set default Markdown page if Markdown File element not found
+    //
+    if (isEmptyFileTreeFolder(mediatorData.rootFolder)) {
         updateFileOfTree(mediatorData.rootFolder, config.topPage, {
             type: "markdown",
             markdown: defaultMarkdown,
@@ -42,13 +44,13 @@ window.onload = async function () {
             markdownList: []
         })
     }
-
+    
     const initialState:TopStateType = {
         title: "",
         html: "",
         packFileName: "wikipack",
         seq: 0,
-        menuRoot: menuRoot
+        menuRoot: getMarkdownMenu(mediatorData.rootFolder) || createRootFolder<MarkdownMenuFileType>()
     }
 
     if (container !== null) {     

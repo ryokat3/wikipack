@@ -4,16 +4,17 @@ import { ConfigType } from "./config"
 import { TopDispatcherType } from "./gui/TopDispatcher"
 import { FolderType, FileType } from "./fileTree/FileTreeType"
 import { createRootFolder, getFileFromTree, updateFileOfTree, deleteFileFromTree } from "./fileTree/FileTree"
-import { collectCssFiles, CssInfo, updateCssInfo, applyCssInfo } from "./dataElement/styleElement"
-import { normalizePath } from "./utils/appUtils"
+import { updateCssElement } from "./dataElement/styleElement"
+import { normalizePath, getDir, addPath } from "./utils/appUtils"
 import { getRenderer } from "./markdown/converter"
-import { makeFileRegexChecker } from "./utils/appUtils"
+import { makeFileRegexChecker, isURL, addPathToUrl } from "./utils/appUtils"
 import { getProxyDataClass } from "./utils/proxyData"
 import { getMarkdownMenu, MarkdownMenuFileType } from "./fileTree/MarkdownMenu"
 import { convertToScanTreeFolder } from "./fileTree/ScanTree"
 import { setupDragAndDrop } from "./fileIO/dragAndDrop"
 import { hasMarkdownFileElement } from "./dataElement/dataFromElement"
-import { addDefaultCssElement } from "./dataElement/styleElement"
+import { getNewCssList } from "./dataElement/styleElement"
+import { CssRules } from "./css/CssRules"
 import packageJson from "../package.json"
 
 export const VERSION:string = packageJson.version
@@ -28,7 +29,7 @@ class MediatorData {
     readonly rootUrl: URL = new URL(window.location.href)
     rootFolder: FolderType = createRootFolder<FileType>()
     currentPage: string = NO_CURRENT_PAGE
-    currentCss: CssInfo = {}
+    // currentCss: CssInfo = {}
     mode: 'directory' | 'url' | undefined = undefined
     directory: FileSystemDirectoryHandle | undefined = undefined    
     seq: number = 0    
@@ -39,6 +40,7 @@ export class Mediator extends MediatorData {
     readonly worker: WorkerInvoke<WorkerMessageType>
     readonly config: ConfigType
     readonly dispatcher: TopDispatcherType
+    readonly cssRules: CssRules
     readonly isMarkdown: (name:string)=>boolean
 
     constructor(worker:WorkerInvoke<WorkerMessageType>, config:ConfigType, dispatcher: TopDispatcherType) {
@@ -46,7 +48,8 @@ export class Mediator extends MediatorData {
 
         this.worker = worker
         this.config = config
-        this.dispatcher = dispatcher        
+        this.dispatcher = dispatcher
+        this.cssRules = new CssRules(config.cssRules)   
 
         this.isMarkdown = makeFileRegexChecker(this.config.markdownFileRegex)
 
@@ -64,8 +67,7 @@ export class Mediator extends MediatorData {
     }
 
     resetRootFolder():void {
-        this.currentPage = NO_CURRENT_PAGE
-        this.currentCss = Object.create(null)
+        this.currentPage = NO_CURRENT_PAGE        
         this.rootFolder = createRootFolder<FileType>()
     }
 
@@ -81,10 +83,6 @@ export class Mediator extends MediatorData {
         _open_markdown = function(name:string) {
             self.updateCurrentPage(name)
         }
-
-        if (this.config.useDefaultCss) {
-            addDefaultCssElement()                        
-        }
                 
         if (!hasMarkdownFileElement() && (this.rootUrl.protocol.toLowerCase() === 'http:' || this.rootUrl.protocol.toLowerCase() === 'https:')) {
             this.scanUrl(this.rootUrl)
@@ -96,15 +94,47 @@ export class Mediator extends MediatorData {
     ////////////////////////////////////////////////////////////////////////
 
     updateCurrentPage(filePath:string):void {
-        this.currentPage = normalizePath(filePath)
-        this.currentCss = updateCssInfo(this.currentCss, collectCssFiles(this.rootFolder, this.currentPage))
+        this.currentPage = normalizePath(filePath)        
 
         // Update HTML
         const html = this.convertToHtml(this.currentPage)
         this.dispatcher.updateHtml({ title: this.currentPage, html: (html !== undefined) ? html : `${this.currentPage} not found` })
         
         // Update CSS
-        applyCssInfo(this.rootFolder, this.currentCss)        
+        const newCssList = getNewCssList(this.cssRules.getCssList(this.currentPage))
+
+        if (this.mode === undefined) {
+            newCssList.forEach((fileName)=>{
+                if (isURL(fileName)) {
+                    this.downloadCssFile(fileName, fileName)
+                }
+            })            
+        }
+        else if (this.mode === 'directory') {
+            newCssList.forEach((fileName)=>{
+                if (isURL(fileName)) {
+                    this.downloadCssFile(fileName, fileName)
+                }
+                else {
+                    if (this.directory !== undefined) {
+                        this.readCssFile(this.directory, addPath(getDir(this.currentPage), normalizePath(fileName)))
+                    }
+                }
+            })             
+        }
+        else if (this.mode === 'url') {
+            newCssList.forEach((fileName)=>{
+                if (isURL(fileName)) {
+                    this.downloadCssFile(fileName, fileName)
+                }
+                else {
+                    this.downloadCssFile(addPathToUrl(this.rootUrl.toString(), fileName, this.isMarkdown), normalizePath(fileName))
+                }
+            })
+        }
+        
+        
+        // applyCssInfo(this.rootFolder, this.currentCss)        
     }
 
     updateSeq():void {
@@ -126,8 +156,7 @@ export class Mediator extends MediatorData {
         this.worker.request("scanDirectory", { 
             handle: handle,
             rootScanTree: convertToScanTreeFolder(this.rootFolder),
-            markdownFileRegex: this.config.markdownFileRegex,
-            cssFileRegex: this.config.cssFileRegex               
+            markdownFileRegex: this.config.markdownFileRegex            
         })        
     }
 
@@ -143,8 +172,7 @@ export class Mediator extends MediatorData {
             url: url.href, // URL object is not cloned in Post,
             topPage: this.config.topPage,
             rootScanTree: convertToScanTreeFolder(this.rootFolder),
-            markdownFileRegex: this.config.markdownFileRegex,
-            cssFileRegex: this.config.cssFileRegex
+            markdownFileRegex: this.config.markdownFileRegex            
         })        
     }
 
@@ -160,6 +188,20 @@ export class Mediator extends MediatorData {
             handle: handle,
             markdownFileRegex: this.config.markdownFileRegex,
         }) 
+    }
+
+    downloadCssFile(url:string, fileName:string):void {
+        this.worker.request("downloadCssFile", {
+            url: url,
+            fileName: fileName
+        })
+    }
+
+    readCssFile(handle:FileSystemDirectoryHandle, fileName:string):void {
+        this.worker.request("readCssFile", {
+            handle: handle,
+            fileName: fileName
+        })
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -186,17 +228,8 @@ export class Mediator extends MediatorData {
         }          
     }
 
-    updateCssFile(payload:WorkerMessageType['updateCssFile']['response']):void {
-        const fileName = normalizePath(payload.fileName)        
-        const isSame = updateFileOfTree(this.rootFolder, fileName, payload.cssFile, isSameFile)
-                
-        if (!isSame) {                    
-            this.seq = this.seq + 1
-            this.currentCss = updateCssInfo({ ...this.currentCss, [fileName]: this.seq }, collectCssFiles(this.rootFolder, this.currentPage))                                    
-            if (Object.keys(this.currentCss).includes(fileName)) {                       
-                applyCssInfo(this.rootFolder, this.currentCss)
-            }
-        }    
+    updateCssFile(payload:WorkerMessageType['updateCssFile']['response']):void {        
+        updateCssElement(payload.cssFile.css, normalizePath(payload.fileName), payload.cssFile.fileStamp)  
     }
 
     updateDataFile(payload:WorkerMessageType['updateDataFile']['response']):void {
