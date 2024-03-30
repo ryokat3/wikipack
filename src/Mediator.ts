@@ -5,7 +5,7 @@ import { TopDispatcherType } from "./gui/TopDispatcher"
 import { FolderType, FileType } from "./fileTree/FileTreeType"
 import { createRootFolder, getFileFromTree, updateFileOfTree, deleteFileFromTree } from "./fileTree/FileTree"
 import { updateCssElement } from "./dataElement/styleElement"
-import { normalizePath, getDir, addPath } from "./utils/appUtils"
+import { canonicalFileName, getDir, addPath } from "./utils/appUtils"
 import { getRenderer } from "./markdown/converter"
 import { makeFileRegexChecker, isURL, addPathToUrl } from "./utils/appUtils"
 import { getProxyDataClass } from "./utils/proxyData"
@@ -76,7 +76,7 @@ export class Mediator extends MediatorData {
     ////////////////////////////////////////////////////////////////////////
 
     onGuiInitialized(): void {        
-        this.updateCurrentPage(this.config.topPage)
+        
         this.updateSeq()        
         setupDragAndDrop(this)
         const self = this
@@ -87,6 +87,7 @@ export class Mediator extends MediatorData {
         if (!hasMarkdownFileElement() && (this.rootUrl.protocol.toLowerCase() === 'http:' || this.rootUrl.protocol.toLowerCase() === 'https:')) {
             this.scanUrl(this.rootUrl)
         }
+        this.updateCurrentPage(this.config.topPage)
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -94,7 +95,7 @@ export class Mediator extends MediatorData {
     ////////////////////////////////////////////////////////////////////////
 
     updateCurrentPage(filePath:string):void {
-        this.currentPage = normalizePath(filePath)        
+        this.currentPage = canonicalFileName(filePath)        
 
         // Update HTML
         const html = this.convertToHtml(this.currentPage)
@@ -102,33 +103,34 @@ export class Mediator extends MediatorData {
         
         // Update CSS
         const newCssList = getNewCssList(this.cssRules.getCssList(this.currentPage))
+        console.log(`newCssList = ${JSON.stringify(newCssList)}`)
 
         if (this.mode === undefined) {
-            newCssList.forEach((fileName)=>{
+            Object.entries(newCssList).forEach(([ fileName, fileStamp ])=>{
                 if (isURL(fileName)) {
-                    this.downloadCssFile(fileName, fileName)
+                    this.downloadCssFile(fileName, fileName, fileStamp)
                 }
             })            
         }
         else if (this.mode === 'directory') {
-            newCssList.forEach((fileName)=>{
+            Object.entries(newCssList).forEach(([fileName, fileStamp])=>{
                 if (isURL(fileName)) {
-                    this.downloadCssFile(fileName, fileName)
+                    this.downloadCssFile(fileName, fileName, fileStamp)
                 }
                 else {
                     if (this.directory !== undefined) {
-                        this.readCssFile(this.directory, addPath(getDir(this.currentPage), normalizePath(fileName)))
+                        this.readCssFile(this.directory, addPath(getDir(this.currentPage), canonicalFileName(fileName)))
                     }
                 }
             })             
         }
         else if (this.mode === 'url') {
-            newCssList.forEach((fileName)=>{
+            Object.entries(newCssList).forEach(([fileName, fileStamp])=>{
                 if (isURL(fileName)) {
-                    this.downloadCssFile(fileName, fileName)
+                    this.downloadCssFile(fileName, fileName, fileStamp)
                 }
                 else {
-                    this.downloadCssFile(addPathToUrl(this.rootUrl.toString(), fileName, this.isMarkdown), normalizePath(fileName))
+                    this.downloadCssFile(addPathToUrl(this.rootUrl.toString(), fileName, this.isMarkdown), canonicalFileName(fileName), fileStamp)
                 }
             })
         }
@@ -190,10 +192,12 @@ export class Mediator extends MediatorData {
         }) 
     }
 
-    downloadCssFile(url:string, fileName:string):void {
+    downloadCssFile(url:string, fileName:string, fileStamp:string|null):void {
+        console.log(`downloadCssFile(fileStamp=${fileStamp})`)
         this.worker.request("downloadCssFile", {
             url: url,
-            fileName: fileName
+            fileName: fileName,
+            fileStamp: fileStamp
         })
     }
 
@@ -209,7 +213,7 @@ export class Mediator extends MediatorData {
     ////////////////////////////////////////////////////////////////////////
 
     updateMarkdownFile(payload:WorkerMessageType['updateMarkdownFile']['response']):void {        
-        const fileName = normalizePath(payload.fileName)
+        const fileName = canonicalFileName(payload.fileName)
         const isNewFile = getFileFromTree(this.rootFolder, fileName) === undefined
         const isSame = updateFileOfTree(this.rootFolder, fileName, payload.markdownFile, isSameFile)
         const isCurrentPageExist = getFileFromTree(this.rootFolder, this.currentPage) !== undefined
@@ -229,11 +233,11 @@ export class Mediator extends MediatorData {
     }
 
     updateCssFile(payload:WorkerMessageType['updateCssFile']['response']):void {        
-        updateCssElement(payload.cssFile.css, normalizePath(payload.fileName), payload.cssFile.fileStamp)  
+        updateCssElement(payload.cssFile.css, canonicalFileName(payload.fileName), payload.cssFile.fileStamp)  
     }
 
     updateDataFile(payload:WorkerMessageType['updateDataFile']['response']):void {
-        const fileName = normalizePath(payload.fileName)
+        const fileName = canonicalFileName(payload.fileName)
         const blob = new Blob( [payload.dataFile.buffer], { type: payload.dataFile.mime })
         const dataRef = URL.createObjectURL(blob)        
         const isSame = updateFileOfTree(this.rootFolder, fileName, { ...payload.dataFile, dataRef: dataRef }, isSameFile)
@@ -250,7 +254,7 @@ export class Mediator extends MediatorData {
     }
 
     deleteFile(payload:WorkerMessageType['deleteFile']['response']):void {
-        const filePath = normalizePath(payload.fileName)        
+        const filePath = canonicalFileName(payload.fileName)        
         deleteFileFromTree(this.rootFolder, filePath)        
     }    
 }

@@ -82,8 +82,8 @@ export function addPath(dirName:string|undefined|null, fileName:string):string {
     return splitPath(`${dirName ? dirName + "/" : ""}${fileName}`).join("/")
 }
 
-export function normalizePath(fileName:string|undefined|null):string {
-    return fileName ? splitPath(fileName).join("/") : ""
+export function canonicalFileName(fileName:string|undefined|null):string {
+    return fileName ? isURL(fileName) ? fileName : splitPath(fileName).join("/") : ""
 }
 
 export function getDir(fileName:string|undefined|null):string {
@@ -96,7 +96,7 @@ export function getFileName(filePath:string|undefined|null):string {
 
 export function addPathToUrl(urlStr:string, fileName:string, isMarkdownFile:(name:string)=>boolean):string {
     const url = new URL(urlStr)
-    url.pathname = "/" + (isMarkdownFile(url.pathname) ? getDir(url.pathname) : normalizePath(url.pathname)) + "/" + fileName
+    url.pathname = "/" + (isMarkdownFile(url.pathname) ? getDir(url.pathname) : canonicalFileName(url.pathname)) + "/" + fileName
     return url.toString()
 }
 

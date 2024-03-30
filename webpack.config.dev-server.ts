@@ -1,32 +1,21 @@
 import { Configuration } from "webpack"
-import { } from "webpack-dev-server"
+import { Configuration as DevServerConfiguration } from "webpack-dev-server"
 
-const devServerConfig:Configuration = {
-    mode: "development",
-    devServer: {
-        host: '0.0.0.0',
-        hot: true,
-        open: true,
-        port: 18080,
-        static: {
-            directory: 'dist',
-            watch: true
+
+const getDevServerConfig:(port: number, dir: string)=>Configuration & { 'devServer': DevServerConfiguration } = (port:number, dir:string) => {
+    return {
+        mode: "development",        
+        devServer: {
+            host: '0.0.0.0',
+            port: port,
+            hot: true,
+            open: true,
+            static: {
+                directory: dir,
+                watch: true
+            }
         }
     }
 }
 
-const testDevServerConfig: Configuration = {
-    mode: "development",
-    devServer: {
-        host: '0.0.0.0',
-        hot: true,
-        open: true,
-        port: 28080,
-        static: {
-            directory: 'tmp',
-            watch: true
-        }
-    }
-}
-
-module.exports = [ devServerConfig, testDevServerConfig ]
+module.exports = [ getDevServerConfig(18080, 'dist'), getDevServerConfig(28080, 'tmp') ]

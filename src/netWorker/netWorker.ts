@@ -7,25 +7,52 @@ import { updateFileOfTree, getFileFromTree } from "../fileTree/FileTree"
 import { ScanTreeFolderType } from "../fileTree/ScanTree"
 import { getDir, addPath } from "../utils/appUtils"
 
-function getFileStamp(header:Headers):string {
-    const result = {
-        etag: "",
-        lastModified:""
-    }
 
-    function createFileStamp(data:typeof result):string {
-        return (data.etag !== "" || data.lastModified !== "") ? `ETag=${data.etag};Last-Modified=${data.lastModified}` : new Date().toString()
-    }
+type FileStampType = {
+    etag: string | null,
+    lastModified: string | null    
+}
 
-    header.forEach((key, value)=> {
-        if (key.toLowerCase() === 'etag') {
-            result.etag = value            
+function isFileStampType(target:any):target is FileStampType {
+    return (typeof target === "object") && ('etag' in target) && ('lastModified' in target)
+}
+
+function convertToFileStamp(data:string|null):FileStampType|undefined {
+    if (data === null) {
+        return undefined
+    }
+    try {
+        const fileStamp = JSON.parse(data)        
+        if (isFileStampType(fileStamp)) {
+            return fileStamp
         }
-        else if (key.toLowerCase() === 'last-modified') {
-            result.lastModified = value            
+        return undefined
+    }
+    catch {
+        return undefined
+    }
+}
+
+function getFileStamp(header:Headers):string {
+
+    const fileStampData:FileStampType = {        
+        etag: null,
+        lastModified: null
+    }
+
+    function createFileStamp(data:FileStampType):string {        
+        return (data.etag !== null || data.lastModified !== null ) ? JSON.stringify(data) : new Date().toString()
+    }
+
+    header.forEach((value, key)=> {        
+        if (key.toLowerCase() === 'etag') {            
+            fileStampData.etag = value            
+        }
+        else if (key.toLowerCase() === 'last-modified') {            
+            fileStampData.lastModified = value            
         }
     })
-    return createFileStamp(result)
+    return createFileStamp(fileStampData)
 }
 
 function getPageUrl(url:string, page:string):string {
@@ -39,7 +66,12 @@ function isFileScanned(rootScanTree:ScanTreeFolderType, fileName:string):boolean
 }
 
 async function fetchMarkdownFile(url:string, page:string, isMarkdownFile:(fileName:string)=>boolean):Promise<MarkdownFileType|undefined> {
-    const response = await fetch(getPageUrl(url, page))
+    const response = await fetch(getPageUrl(url, page), {
+        mode: 'cors',
+        headers: {
+            'Access-Control-Request-Headers': 'Cache-Control'            
+        }
+    })
     if (response.ok) {
         const fileStamp = getFileStamp(response.headers)
         const markdown = await response.text()
@@ -51,21 +83,56 @@ async function fetchMarkdownFile(url:string, page:string, isMarkdownFile:(fileNa
     }    
 }
 
-async function fetchCssFile(url:string):Promise<CssFileType|undefined> {
-    const response = await fetch(url)
-    if (response.ok) {
-        const fileStamp = getFileStamp(response.headers)
-        const css = await response.text()
+async function convertResponseToCssFile(response:Response):Promise<CssFileType|undefined> {
 
-        return {
-            type: "css",
-            css: css,
-            fileStamp: fileStamp
+    // TODO: delete
+    response.headers.forEach((value, key) => {
+        console.log(`${key}: ${value}`)
+    })
+
+
+    const fileStamp = getFileStamp(response.headers)
+    const css = await response.text()
+
+    return {
+        type: "css",
+        css: css,
+        fileStamp: fileStamp
+    }
+}
+
+function etagToHeader(etag:string|null): { 'If-None-Match'?: string } {
+    return (etag !== null) ? { 'If-None-Match': etag } : {}
+}
+
+function lastModifiedToHeader(lastModified:string|null): { 'If-Modified-Since'?: string } {
+    return (lastModified !== null) ? { 'If-Modified-Since': lastModified } : {}
+}
+
+function fileStampToHeader(fileStamp:FileStampType|undefined) {
+    return (fileStamp !== undefined) ? { ...etagToHeader(fileStamp.etag), ...lastModifiedToHeader(fileStamp.lastModified) } : {}
+}
+
+async function fetchFile(url: string, fileStamp: FileStampType | undefined): Promise<Response | undefined> {
+    try {
+        const response = await fetch(url, (fileStamp !== undefined) ? {
+            // mode: 'cors',        
+            // headers: { ...fileStampToHeader(fileStamp), 'Cache-Control': 'no-cache' }            
+            headers: fileStampToHeader(fileStamp)
+        } : {})
+        if (response.ok) {
+            console.log(`fetch OK`)
+            return response
+        }
+        else {
+            console.log(`fetch Fail`)
+            return undefined
         }
     }
-    else {
-        return undefined
-    }    
+    catch (error) {
+        // Try simple request
+        return (fileStamp !== undefined) ? fetchFile(url, undefined) : undefined        
+    }
 }
 
 function updateMakedownFile(fileName:string, markdownFile:MarkdownFileType, rootScanTree:ScanTreeFolderType, postEvent:PostEvent<WorkerMessageType>) {
@@ -95,7 +162,6 @@ async function scanUrlMarkdownHandler(url:string, fileName:string, rootScanTree:
     }
 }
 
-
 export async function scanUrlWorkerCallback(payload:WorkerMessageType['scanUrl']['request'], postEvent:PostEvent<WorkerMessageType>){                
     const rootScanTree = payload.rootScanTree    
     const isMarkdownFile = makeFileRegexChecker(payload.markdownFileRegex)
@@ -103,12 +169,18 @@ export async function scanUrlWorkerCallback(payload:WorkerMessageType['scanUrl']
     scanUrlMarkdownHandler(payload.url, payload.topPage, rootScanTree, postEvent, isMarkdownFile)
 }
 
-export async function downloadCssFilelWorkerCallback(payload:WorkerMessageType['downloadCssFile']['request'], postEvent:PostEvent<WorkerMessageType>){                
-    const cssFile = await fetchCssFile(payload.url)
-    if (cssFile !== undefined) {
-        postEvent.send('updateCssFile', {
-            fileName: payload.fileName,
-            cssFile: cssFile
-        })
+export async function downloadCssFilelWorkerCallback(payload: WorkerMessageType['downloadCssFile']['request'], postEvent: PostEvent<WorkerMessageType>) {    
+    const response = await fetchFile(payload.url, convertToFileStamp(payload.fileStamp))
+    if (response !== undefined) {
+        const cssFile = await convertResponseToCssFile(response)                
+        if ((cssFile !== undefined) && (payload.fileStamp !== cssFile.fileStamp)) {            
+            postEvent.send('updateCssFile', {
+                fileName: payload.fileName,
+                cssFile: cssFile
+            })
+        }
+        else if ((cssFile !== undefined) && (payload.fileStamp === cssFile.fileStamp)) {
+            console.log(`${payload.url} not changed`)
+        }
     }
 }

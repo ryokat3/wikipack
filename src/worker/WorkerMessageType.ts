@@ -39,7 +39,8 @@ export type WorkerMessageType = {
     downloadCssFile: {
         request: {
             url: string,
-            fileName: string
+            fileName: string,
+            fileStamp: string | null
         }
     }
     scanUrlDone: {

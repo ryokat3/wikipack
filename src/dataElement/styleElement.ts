@@ -15,14 +15,8 @@ export function findCssElement(fileName:string): Element|undefined {
     return undefined
 }
 
-function removeCssElement(entry:[string, Element], cssList:string[]):string {
-    if (!cssList.includes(entry[0])) {
-        entry[1].remove()
-    }
-    return entry[0]
-}
 
-export function updateCssElement(css:string, fileName:string, fileStamp:string): HTMLStyleElement {
+export function updateCssElement(css:string, fileName:string, fileStamp:string): HTMLStyleElement {    
     const element = findCssElement(fileName)
     if (element !== undefined) {        
         if (element.getAttribute(FILE_STAMP_ATTR) === fileStamp) {
@@ -40,8 +34,8 @@ export function addCssElement(css:string, className:string, attrs:{ [attr:string
     const elem = document.createElement('style')
 
     elem.classList.add(className)
-    Object.entries(attrs).forEach(([name, value])=>{
-        elem.setAttribute(name, value)
+    Object.entries(attrs).forEach(([name, value])=>{        
+        elem.setAttribute(name, value)        
     })
     elem.innerHTML = css
 
@@ -49,10 +43,23 @@ export function addCssElement(css:string, className:string, attrs:{ [attr:string
     return elem
 }
 
-export function getNewCssList(cssList:string[]):string[] {
-    const currentCssList = collectCssElement()
-            .map((element)=>tuple(element.getAttribute(FILE_NAME_ATTR), element))
-            .filter((x):x is [string, Element]=>x[0] !== null)
+
+function removeCssElement(entry:[string, string|null, Element], cssList:string[]) {
+    if (!cssList.includes(entry[0])) {
+        entry[2].remove()
+    }
+    return entry
+}
+
+export function getNewCssList(cssList:string[]):{ [fileName:string]:string|null } {
+    const currentCssList = Object.fromEntries(collectCssElement()
+            .map((element)=>tuple(element.getAttribute(FILE_NAME_ATTR), element.getAttribute(FILE_STAMP_ATTR), element))
+            .filter((x):x is [string, string|null, Element]=>x[0] !== null)
             .map((x)=>removeCssElement(x, cssList))
-    return cssList.filter((name)=>!currentCssList.includes(name))
+            .filter((x)=>cssList.includes(x[0]))
+            .map((x)=>[x[0], x[1]]))
+
+    return { ...cssList.reduce<{[key:string]:string|null}>((acc, x)=>{ 
+        return { ...acc, [x]:null }
+    }, Object.create(null)), ...currentCssList }
 }
