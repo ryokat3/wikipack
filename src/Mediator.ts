@@ -191,8 +191,7 @@ export class Mediator extends MediatorData {
         }) 
     }
 
-    downloadCssFile(url:string, fileName:string, fileStamp:string|undefined, skipHead:boolean=false):void {
-        console.log(`downloadCssFile(fileStamp=${fileStamp})`)
+    downloadCssFile(url:string, fileName:string, fileStamp:string|undefined, skipHead:boolean=false):void {        
         this.worker.request("downloadCssFile", {
             url: url,
             fileName: fileName,

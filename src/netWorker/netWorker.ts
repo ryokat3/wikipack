@@ -6,7 +6,6 @@ import { MarkdownFileType, CssFileType } from "../fileTree/FileTreeType"
 import { updateFileOfTree, getFileFromTree } from "../fileTree/FileTree"
 import { ScanTreeFolderType } from "../fileTree/ScanTree"
 import { getDir, addPath } from "../utils/appUtils"
-import assert from 'assert'
 
 function getFileStamp(headers:Headers):string {
     const fileStamp =  {
@@ -79,9 +78,7 @@ function updateDataFile(fileName:string, dataFile:PartialDataFileType, rootScanT
 }
 
 // 
-async function convertResponseToDataFile(response:Response):Promise<PartialDataFileType> {
-    assert(response.ok)
-
+async function convertResponseToDataFile(response:Response):Promise<PartialDataFileType> {    
     const buffer = await response.arrayBuffer()
     const fileStamp = getFileStamp(response.headers)
     const mime = response.headers.get('Content-Type') || 'application/octet-stream'
@@ -95,8 +92,6 @@ async function convertResponseToDataFile(response:Response):Promise<PartialDataF
 }
 
 async function convertResponseToCssFile(response: Response): Promise<CssFileType> {
-    assert(response.ok)
-
     const css = await response.text()
     const fileStamp = getFileStamp(response.headers)
 
@@ -108,9 +103,7 @@ async function convertResponseToCssFile(response: Response): Promise<CssFileType
 }
 
 async function convertResponseToMarkdownFile(response:Response, page:string, isMarkdownFile:(fileName:string)=>boolean):Promise<MarkdownFileType> {
-    assert(response.ok)
-
-    const markdownText = await response.text()
+        const markdownText = await response.text()
     const fileStamp = getFileStamp(response.headers)
     return getMarkdownFile(markdownText, page, fileStamp, isMarkdownFile)
 }
@@ -131,10 +124,14 @@ async function scanUrlMarkdownHandler(url:string, fileName:string, rootScanTree:
             });
         
             [...markdownFile.imageList, ...markdownFile.linkList].forEach(async (link: string) => {
-                const dataFileName = addPath(getDir(fileName), link)
-                const dataFile = await fetchFile(getPageUrl(url, dataFileName), dataFileName, convertResponseToDataFile, false)
-                if ((dataFile !== undefined) && (dataFile.fileStamp !== result?.fileStamp)) {
-                    updateDataFile(dataFileName, dataFile, rootScanTree, postEvent)
+                const dataFileName = addPath(getDir(fileName), link)                                
+                const dataResult = getFileFromTree(rootScanTree, dataFileName)
+                if ((dataResult === undefined) || ((dataResult.type !== 'folder') && (dataResult.status === 'init'))) {
+                    const dataFile = await fetchFile(getPageUrl(url, dataFileName), dataFileName, convertResponseToDataFile, false)
+                
+                    if ((dataFile !== undefined) && (dataFile.fileStamp !== dataResult?.fileStamp)) {
+                        updateDataFile(dataFileName, dataFile, rootScanTree, postEvent)
+                    }
                 }
             })
         }
