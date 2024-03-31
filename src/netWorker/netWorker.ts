@@ -2,10 +2,11 @@ import { WorkerMessageType, PartialDataFileType } from "../worker/WorkerMessageT
 import { PostEvent } from "../utils/WorkerMessage"
 import { getMarkdownFile } from "../markdown/converter"
 import { makeFileRegexChecker } from "../utils/appUtils"
-import { MarkdownFileType } from "../fileTree/FileTreeType"
+import { MarkdownFileType, CssFileType } from "../fileTree/FileTreeType"
 import { updateFileOfTree, getFileFromTree } from "../fileTree/FileTree"
 import { ScanTreeFolderType } from "../fileTree/ScanTree"
 import { getDir, addPath } from "../utils/appUtils"
+import assert from 'assert'
 
 function getFileStamp(headers:Headers):string {
     const fileStamp =  {
@@ -30,9 +31,9 @@ async function doFetch(url: string, method:'GET'|'HEAD', headers:HeadersInit|und
     }
 }
 
-async function fetchFile(url: string, fileStamp: string|undefined, skipHead:boolean, headers:HeadersInit|undefined=undefined): Promise<Response | undefined> {
+async function doHeadAndGet(url: string, fileStamp: string|undefined, skipHead:boolean, headers:HeadersInit|undefined=undefined): Promise<Response | undefined> {
     if (skipHead || fileStamp === null) {
-        return await doFetch(url, 'GET', headers)
+        return await doFetch(url, 'GET', headers)        
     }
     else {
         const headResponse = await doFetch(url, 'HEAD', headers)
@@ -48,6 +49,11 @@ async function fetchFile(url: string, fileStamp: string|undefined, skipHead:bool
     }
 }
 
+async function fetchFile<T>(url: string, fileStamp: string|undefined, converter:(response:Response)=>T, skipHead:boolean, headers:HeadersInit|undefined=undefined): Promise<T | undefined> {
+    const response = await doHeadAndGet(url, fileStamp, skipHead, headers)
+    return ((response !== undefined) && response.ok) ? converter(response) : undefined
+}
+
 function updateMakedownFile(fileName:string, markdownFile:MarkdownFileType, rootScanTree:ScanTreeFolderType, postEvent:PostEvent<WorkerMessageType>) {
     postEvent.send("updateMarkdownFile", {
         fileName: fileName,            
@@ -60,47 +66,64 @@ function updateMakedownFile(fileName:string, markdownFile:MarkdownFileType, root
     })
 }
 
-async function fetchMarkdownFile(url:string, page:string, fileStamp:string|undefined, skipHead:boolean, isMarkdownFile:(fileName:string)=>boolean):Promise<MarkdownFileType|undefined> {
-    const response = await fetchFile(getPageUrl(url, page), fileStamp, skipHead)
-    if (response !== undefined) {
-        const markdownText = await response.text()
-        const fileStamp = getFileStamp(response.headers)
-
-        if (response.ok) {
-            return getMarkdownFile(markdownText, page, fileStamp, isMarkdownFile)
-        }
-        else {
-            return undefined
-        }
-    }
-    return undefined
+function updateDataFile(fileName:string, dataFile:PartialDataFileType, rootScanTree:ScanTreeFolderType, postEvent:PostEvent<WorkerMessageType>) {
+    postEvent.send("updateDataFile", {
+        fileName: fileName,            
+        dataFile: dataFile
+    })                
+    updateFileOfTree(rootScanTree, fileName, {
+        type: "data",
+        fileStamp: dataFile.fileStamp,
+        status: 'found'
+    })
 }
 
-async function fetchDataFile(url:string, page:string, fileStamp:string|undefined, skipHead:boolean):Promise<PartialDataFileType|undefined> {
-    const response = await fetchFile(getPageUrl(url, page), fileStamp, skipHead)
-    if ((response !== undefined) && (response.ok)) {
-        const buffer = await response.arrayBuffer()
-        const fileStamp = getFileStamp(response.headers)
-        const mime = response.headers.get('Content-Type') || 'application/octet-stream'
+// 
+async function convertResponseToDataFile(response:Response):Promise<PartialDataFileType> {
+    assert(response.ok)
 
-        return {
-            type: "data",
-            fileStamp: fileStamp,
-            mime: mime,
-            buffer: buffer            
-        }
+    const buffer = await response.arrayBuffer()
+    const fileStamp = getFileStamp(response.headers)
+    const mime = response.headers.get('Content-Type') || 'application/octet-stream'
+
+    return {
+        type: "data",
+        fileStamp: fileStamp,
+        mime: mime,
+        buffer: buffer            
     }
-    return undefined
+}
+
+async function convertResponseToCssFile(response: Response): Promise<CssFileType> {
+    assert(response.ok)
+
+    const css = await response.text()
+    const fileStamp = getFileStamp(response.headers)
+
+    return {
+        type: "css",
+        css: css,
+        fileStamp: fileStamp
+    }
+}
+
+async function convertResponseToMarkdownFile(response:Response, page:string, isMarkdownFile:(fileName:string)=>boolean):Promise<MarkdownFileType> {
+    assert(response.ok)
+
+    const markdownText = await response.text()
+    const fileStamp = getFileStamp(response.headers)
+    return getMarkdownFile(markdownText, page, fileStamp, isMarkdownFile)
 }
 
 async function scanUrlMarkdownHandler(url:string, fileName:string, rootScanTree:ScanTreeFolderType, postEvent:PostEvent<WorkerMessageType>, isMarkdownFile:(fileName:string)=>boolean) {
 
     const result = getFileFromTree(rootScanTree, fileName)
 
-    if ((result === undefined) || ((result.type !== 'folder') && (result.status === 'init'))) {                
-        const markdownFile = await fetchMarkdownFile(url, fileName, result?.fileStamp, false, isMarkdownFile)
+    if ((result === undefined) || ((result.type !== 'folder') && (result.status === 'init'))) {
+        const converter = (response:Response)=>convertResponseToMarkdownFile(response, fileName, isMarkdownFile)              
+        const markdownFile = await fetchFile(url, fileName, converter, false)
 
-        if (markdownFile !== undefined) {
+        if ((markdownFile !== undefined) && (markdownFile.fileStamp !== result?.fileStamp)) {
             updateMakedownFile(fileName, markdownFile, rootScanTree, postEvent);
             
             markdownFile.markdownList.forEach((link: string) => {
@@ -109,17 +132,9 @@ async function scanUrlMarkdownHandler(url:string, fileName:string, rootScanTree:
         
             [...markdownFile.imageList, ...markdownFile.linkList].forEach(async (link: string) => {
                 const dataFileName = addPath(getDir(fileName), link)
-                const dataFile = await fetchDataFile(url, dataFileName, result?.fileStamp, false)
-                if (dataFile !== undefined) {
-                    postEvent.send("updateDataFile", {
-                        fileName: dataFileName,            
-                        dataFile: dataFile
-                    })                
-                    updateFileOfTree(rootScanTree, fileName, {
-                        type: "data",
-                        fileStamp: dataFile.fileStamp,
-                        status: 'found'
-                    })
+                const dataFile = await fetchFile(url, dataFileName, convertResponseToDataFile, false)
+                if ((dataFile !== undefined) && (dataFile.fileStamp !== result?.fileStamp)) {
+                    updateDataFile(dataFileName, dataFile, rootScanTree, postEvent)
                 }
             })
         }
@@ -133,23 +148,15 @@ export async function scanUrlWorkerCallback(payload:WorkerMessageType['scanUrl']
     scanUrlMarkdownHandler(payload.url, payload.topPage, rootScanTree, postEvent, isMarkdownFile)
 }
 
-export async function downloadCssFilelWorkerCallback(payload: WorkerMessageType['downloadCssFile']['request'], postEvent: PostEvent<WorkerMessageType>) {    
-    const response = await fetchFile(payload.url, payload.fileStamp, payload.skipHead)
-    if (response !== undefined) {
-        const css = await response.text()
-        const fileStamp = getFileStamp(response.headers)
-        if (payload.fileStamp !== fileStamp) {            
-            postEvent.send('updateCssFile', {
-                fileName: payload.fileName,
-                cssFile: {
-                    type: "css",
-                    css: css,
-                    fileStamp: fileStamp
-                }
-            })
-        }
-        else {
-            console.log(`${payload.url} not changed`)
-        }
+export async function downloadCssFilelWorkerCallback(payload: WorkerMessageType['downloadCssFile']['request'], postEvent: PostEvent<WorkerMessageType>) {
+    const cssFile = await fetchFile(payload.url, payload.fileStamp, convertResponseToCssFile, payload.skipHead)
+    if ((cssFile !== undefined) && (cssFile?.fileStamp !== payload.fileStamp)) {
+        postEvent.send('updateCssFile', {
+            fileName: payload.fileName,
+            cssFile: cssFile
+        })
+    }
+    else {
+        console.log(`${payload.url} not changed`)
     }
 }
