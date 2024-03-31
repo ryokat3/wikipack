@@ -102,8 +102,7 @@ export class Mediator extends MediatorData {
         this.dispatcher.updateHtml({ title: this.currentPage, html: (html !== undefined) ? html : `${this.currentPage} not found` })
         
         // Update CSS
-        const newCssList = getNewCssList(this.cssRules.getCssList(this.currentPage))
-        console.log(`newCssList = ${JSON.stringify(newCssList)}`)
+        const newCssList = getNewCssList(this.cssRules.getCssList(this.currentPage))        
 
         if (this.mode === undefined) {
             Object.entries(newCssList).forEach(([ fileName, fileStamp ])=>{
@@ -192,12 +191,13 @@ export class Mediator extends MediatorData {
         }) 
     }
 
-    downloadCssFile(url:string, fileName:string, fileStamp:string|null):void {
+    downloadCssFile(url:string, fileName:string, fileStamp:string|undefined, skipHead:boolean=false):void {
         console.log(`downloadCssFile(fileStamp=${fileStamp})`)
         this.worker.request("downloadCssFile", {
             url: url,
             fileName: fileName,
-            fileStamp: fileStamp
+            fileStamp: fileStamp,
+            skipHead: skipHead
         })
     }
 
@@ -212,7 +212,9 @@ export class Mediator extends MediatorData {
     // Handler for Worker Message Responses
     ////////////////////////////////////////////////////////////////////////
 
-    updateMarkdownFile(payload:WorkerMessageType['updateMarkdownFile']['response']):void {        
+    updateMarkdownFile(payload:WorkerMessageType['updateMarkdownFile']['response']):void {     
+        console.log(`updateMarkdownFile(${payload.fileName})`)
+
         const fileName = canonicalFileName(payload.fileName)
         const isNewFile = getFileFromTree(this.rootFolder, fileName) === undefined
         const isSame = updateFileOfTree(this.rootFolder, fileName, payload.markdownFile, isSameFile)
@@ -237,6 +239,8 @@ export class Mediator extends MediatorData {
     }
 
     updateDataFile(payload:WorkerMessageType['updateDataFile']['response']):void {
+        console.log(`updateDataFile(${payload.fileName})`)
+
         const fileName = canonicalFileName(payload.fileName)
         const blob = new Blob( [payload.dataFile.buffer], { type: payload.dataFile.mime })
         const dataRef = URL.createObjectURL(blob)        

@@ -15,7 +15,6 @@ export function findCssElement(fileName:string): Element|undefined {
     return undefined
 }
 
-
 export function updateCssElement(css:string, fileName:string, fileStamp:string): HTMLStyleElement {    
     const element = findCssElement(fileName)
     if (element !== undefined) {        
@@ -51,15 +50,15 @@ function removeCssElement(entry:[string, string|null, Element], cssList:string[]
     return entry
 }
 
-export function getNewCssList(cssList:string[]):{ [fileName:string]:string|null } {
+export function getNewCssList(cssList:string[]):{ [fileName:string]:string|undefined } {
     const currentCssList = Object.fromEntries(collectCssElement()
             .map((element)=>tuple(element.getAttribute(FILE_NAME_ATTR), element.getAttribute(FILE_STAMP_ATTR), element))
             .filter((x):x is [string, string|null, Element]=>x[0] !== null)
             .map((x)=>removeCssElement(x, cssList))
             .filter((x)=>cssList.includes(x[0]))
-            .map((x)=>[x[0], x[1]]))
+            .map((x)=>[x[0], (x[1] !== null) ? x[1] : undefined]))
 
-    return { ...cssList.reduce<{[key:string]:string|null}>((acc, x)=>{ 
-        return { ...acc, [x]:null }
+    return { ...cssList.reduce<{[key:string]:string|undefined}>((acc, x)=>{ 
+        return { ...acc, [x]:undefined }
     }, Object.create(null)), ...currentCssList }
 }

@@ -1,137 +1,50 @@
-import { WorkerMessageType } from "../worker/WorkerMessageType"
+import { WorkerMessageType, PartialDataFileType } from "../worker/WorkerMessageType"
 import { PostEvent } from "../utils/WorkerMessage"
 import { getMarkdownFile } from "../markdown/converter"
 import { makeFileRegexChecker } from "../utils/appUtils"
-import { MarkdownFileType, CssFileType } from "../fileTree/FileTreeType"
+import { MarkdownFileType } from "../fileTree/FileTreeType"
 import { updateFileOfTree, getFileFromTree } from "../fileTree/FileTree"
 import { ScanTreeFolderType } from "../fileTree/ScanTree"
 import { getDir, addPath } from "../utils/appUtils"
 
-
-type FileStampType = {
-    etag: string | null,
-    lastModified: string | null    
-}
-
-function isFileStampType(target:any):target is FileStampType {
-    return (typeof target === "object") && ('etag' in target) && ('lastModified' in target)
-}
-
-function convertToFileStamp(data:string|null):FileStampType|undefined {
-    if (data === null) {
-        return undefined
-    }
-    try {
-        const fileStamp = JSON.parse(data)        
-        if (isFileStampType(fileStamp)) {
-            return fileStamp
-        }
-        return undefined
-    }
-    catch {
-        return undefined
-    }
-}
-
-function getFileStamp(header:Headers):string {
-
-    const fileStampData:FileStampType = {        
-        etag: null,
-        lastModified: null
+function getFileStamp(headers:Headers):string {
+    const fileStamp =  {
+        etag: headers.get('ETag'),
+        lastModified: headers.get('last-modified')
     }
 
-    function createFileStamp(data:FileStampType):string {        
-        return (data.etag !== null || data.lastModified !== null ) ? JSON.stringify(data) : new Date().toString()
-    }
-
-    header.forEach((value, key)=> {        
-        if (key.toLowerCase() === 'etag') {            
-            fileStampData.etag = value            
-        }
-        else if (key.toLowerCase() === 'last-modified') {            
-            fileStampData.lastModified = value            
-        }
-    })
-    return createFileStamp(fileStampData)
+    return Object.values(fileStamp).every((val)=>val === null) ? new Date().toString() : JSON.stringify(fileStamp)
 }
 
 function getPageUrl(url:string, page:string):string {
     return url + page
 }
 
-
-function isFileScanned(rootScanTree:ScanTreeFolderType, fileName:string):boolean {
-    const result = getFileFromTree(rootScanTree, fileName)
-    return (result !== undefined) && (result.type !== 'folder') && (result.status !== 'init')
-}
-
-async function fetchMarkdownFile(url:string, page:string, isMarkdownFile:(fileName:string)=>boolean):Promise<MarkdownFileType|undefined> {
-    const response = await fetch(getPageUrl(url, page), {
-        mode: 'cors',
-        headers: {
-            'Access-Control-Request-Headers': 'Cache-Control'            
-        }
-    })
-    if (response.ok) {
-        const fileStamp = getFileStamp(response.headers)
-        const markdown = await response.text()
-
-        return getMarkdownFile(markdown, page, fileStamp, isMarkdownFile)
-    }
-    else {
-        return undefined
-    }    
-}
-
-async function convertResponseToCssFile(response:Response):Promise<CssFileType|undefined> {
-
-    // TODO: delete
-    response.headers.forEach((value, key) => {
-        console.log(`${key}: ${value}`)
-    })
-
-
-    const fileStamp = getFileStamp(response.headers)
-    const css = await response.text()
-
-    return {
-        type: "css",
-        css: css,
-        fileStamp: fileStamp
-    }
-}
-
-function etagToHeader(etag:string|null): { 'If-None-Match'?: string } {
-    return (etag !== null) ? { 'If-None-Match': etag } : {}
-}
-
-function lastModifiedToHeader(lastModified:string|null): { 'If-Modified-Since'?: string } {
-    return (lastModified !== null) ? { 'If-Modified-Since': lastModified } : {}
-}
-
-function fileStampToHeader(fileStamp:FileStampType|undefined) {
-    return (fileStamp !== undefined) ? { ...etagToHeader(fileStamp.etag), ...lastModifiedToHeader(fileStamp.lastModified) } : {}
-}
-
-async function fetchFile(url: string, fileStamp: FileStampType | undefined): Promise<Response | undefined> {
+async function doFetch(url: string, method:'GET'|'HEAD', headers:HeadersInit|undefined=undefined): Promise<Response | undefined> {    
     try {
-        const response = await fetch(url, (fileStamp !== undefined) ? {
-            // mode: 'cors',        
-            // headers: { ...fileStampToHeader(fileStamp), 'Cache-Control': 'no-cache' }            
-            headers: fileStampToHeader(fileStamp)
-        } : {})
-        if (response.ok) {
-            console.log(`fetch OK`)
-            return response
-        }
-        else {
-            console.log(`fetch Fail`)
-            return undefined
-        }
+        return await fetch(url, { method:method, headers:(headers!==undefined) ? headers : {} })
     }
     catch (error) {
-        // Try simple request
-        return (fileStamp !== undefined) ? fetchFile(url, undefined) : undefined        
+        console.log(`Failed to fetch ${url}: ${error}`)
+        return undefined
+    }
+}
+
+async function fetchFile(url: string, fileStamp: string|undefined, skipHead:boolean, headers:HeadersInit|undefined=undefined): Promise<Response | undefined> {
+    if (skipHead || fileStamp === null) {
+        return await doFetch(url, 'GET', headers)
+    }
+    else {
+        const headResponse = await doFetch(url, 'HEAD', headers)
+        if (headResponse === undefined) {
+            return undefined
+        }
+        else if (getFileStamp(headResponse.headers) === fileStamp) {
+            return undefined
+        }
+        else {
+            return await doFetch(url, 'GET', headers)
+        }        
     }
 }
 
@@ -147,19 +60,70 @@ function updateMakedownFile(fileName:string, markdownFile:MarkdownFileType, root
     })
 }
 
+async function fetchMarkdownFile(url:string, page:string, fileStamp:string|undefined, skipHead:boolean, isMarkdownFile:(fileName:string)=>boolean):Promise<MarkdownFileType|undefined> {
+    const response = await fetchFile(getPageUrl(url, page), fileStamp, skipHead)
+    if (response !== undefined) {
+        const markdownText = await response.text()
+        const fileStamp = getFileStamp(response.headers)
+
+        if (response.ok) {
+            return getMarkdownFile(markdownText, page, fileStamp, isMarkdownFile)
+        }
+        else {
+            return undefined
+        }
+    }
+    return undefined
+}
+
+async function fetchDataFile(url:string, page:string, fileStamp:string|undefined, skipHead:boolean):Promise<PartialDataFileType|undefined> {
+    const response = await fetchFile(getPageUrl(url, page), fileStamp, skipHead)
+    if ((response !== undefined) && (response.ok)) {
+        const buffer = await response.arrayBuffer()
+        const fileStamp = getFileStamp(response.headers)
+        const mime = response.headers.get('Content-Type') || 'application/octet-stream'
+
+        return {
+            type: "data",
+            fileStamp: fileStamp,
+            mime: mime,
+            buffer: buffer            
+        }
+    }
+    return undefined
+}
+
 async function scanUrlMarkdownHandler(url:string, fileName:string, rootScanTree:ScanTreeFolderType, postEvent:PostEvent<WorkerMessageType>, isMarkdownFile:(fileName:string)=>boolean) {
 
-    if (!isFileScanned(rootScanTree, fileName)) {
-        const markdownFile = await fetchMarkdownFile(url, fileName, isMarkdownFile)
+    const result = getFileFromTree(rootScanTree, fileName)
+
+    if ((result === undefined) || ((result.type !== 'folder') && (result.status === 'init'))) {                
+        const markdownFile = await fetchMarkdownFile(url, fileName, result?.fileStamp, false, isMarkdownFile)
 
         if (markdownFile !== undefined) {
-            updateMakedownFile(fileName, markdownFile, rootScanTree, postEvent)
+            updateMakedownFile(fileName, markdownFile, rootScanTree, postEvent);
+            
+            markdownFile.markdownList.forEach((link: string) => {
+                scanUrlMarkdownHandler(url, addPath(getDir(fileName), link), rootScanTree, postEvent, isMarkdownFile)
+            });
+        
+            [...markdownFile.imageList, ...markdownFile.linkList].forEach(async (link: string) => {
+                const dataFileName = addPath(getDir(fileName), link)
+                const dataFile = await fetchDataFile(url, dataFileName, result?.fileStamp, false)
+                if (dataFile !== undefined) {
+                    postEvent.send("updateDataFile", {
+                        fileName: dataFileName,            
+                        dataFile: dataFile
+                    })                
+                    updateFileOfTree(rootScanTree, fileName, {
+                        type: "data",
+                        fileStamp: dataFile.fileStamp,
+                        status: 'found'
+                    })
+                }
+            })
         }
-
-        markdownFile?.markdownList.forEach((link:string)=>{            
-            scanUrlMarkdownHandler(url, addPath(getDir(fileName), link), rootScanTree, postEvent, isMarkdownFile)
-        })
-    }
+    }    
 }
 
 export async function scanUrlWorkerCallback(payload:WorkerMessageType['scanUrl']['request'], postEvent:PostEvent<WorkerMessageType>){                
@@ -170,16 +134,21 @@ export async function scanUrlWorkerCallback(payload:WorkerMessageType['scanUrl']
 }
 
 export async function downloadCssFilelWorkerCallback(payload: WorkerMessageType['downloadCssFile']['request'], postEvent: PostEvent<WorkerMessageType>) {    
-    const response = await fetchFile(payload.url, convertToFileStamp(payload.fileStamp))
+    const response = await fetchFile(payload.url, payload.fileStamp, payload.skipHead)
     if (response !== undefined) {
-        const cssFile = await convertResponseToCssFile(response)                
-        if ((cssFile !== undefined) && (payload.fileStamp !== cssFile.fileStamp)) {            
+        const css = await response.text()
+        const fileStamp = getFileStamp(response.headers)
+        if (payload.fileStamp !== fileStamp) {            
             postEvent.send('updateCssFile', {
                 fileName: payload.fileName,
-                cssFile: cssFile
+                cssFile: {
+                    type: "css",
+                    css: css,
+                    fileStamp: fileStamp
+                }
             })
         }
-        else if ((cssFile !== undefined) && (payload.fileStamp === cssFile.fileStamp)) {
+        else {
             console.log(`${payload.url} not changed`)
         }
     }

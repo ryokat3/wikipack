@@ -139,26 +139,6 @@ export async function scanDirectoryWorkerCallback(payload:WorkerMessageType['sca
             fileData.markdownFile.linkList.forEach(dataFileList.add, dataFileList)
         }        
         await updateDataFileList(rootHandle, Array.from(dataFileList.values()), rootScanTree, postEvent)
-
-        /*
-        for (const [fileName, handle] of Object.entries(await collectFiles(rootHandle, isCssFile))) {            
-            const fileData = await readCssFile(handle, fileName)
-            if (await isFileUpdated(rootScanTree, fileName, handle)) {                                
-                postEvent.send("updateCssFile", fileData)
-            }
-            updateFileOfTree(rootScanTree, fileName, {
-                type: 'css',
-                fileStamp: fileData.cssFile.fileStamp,
-                status: 'found'
-            })
-        }
-        */
-        /*
-        for await (const fileName of deletedFileGenerator(rootHandle, rootFolder)) {
-            deleteFileFromTree(rootFolder, fileName)
-            postEvent.send("deleteFile", { fileName: fileName })
-        }
-        */
     }
     finally {
         postEvent.send("scanDirectoryDone", { handle: rootHandle })

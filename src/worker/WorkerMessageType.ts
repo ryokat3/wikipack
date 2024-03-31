@@ -1,7 +1,7 @@
 import { MarkdownFileType, CssFileType, DataFileType} from "../fileTree/FileTreeType"
 import { ScanTreeFolderType } from "../fileTree/ScanTree"
 
-type PartialDataFileType = Omit<Omit<DataFileType, 'dataRef'>, 'buffer'> & { buffer: ArrayBuffer}
+export type PartialDataFileType = Omit<Omit<DataFileType, 'dataRef'>, 'buffer'> & { buffer: ArrayBuffer}
 
 export type WorkerMessageType = {
     openFile : {
@@ -40,12 +40,13 @@ export type WorkerMessageType = {
         request: {
             url: string,
             fileName: string,
-            fileStamp: string | null
+            fileStamp: string | undefined,
+            skipHead: boolean
         }
     }
     scanUrlDone: {
         response: {
-            url: URL        
+            url: string     
         }
     },
     updateMarkdownFile: {
