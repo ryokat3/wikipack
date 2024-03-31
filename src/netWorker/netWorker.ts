@@ -121,7 +121,7 @@ async function scanUrlMarkdownHandler(url:string, fileName:string, rootScanTree:
 
     if ((result === undefined) || ((result.type !== 'folder') && (result.status === 'init'))) {
         const converter = (response:Response)=>convertResponseToMarkdownFile(response, fileName, isMarkdownFile)              
-        const markdownFile = await fetchFile(url, fileName, converter, false)
+        const markdownFile = await fetchFile(getPageUrl(url, fileName), fileName, converter, false)
 
         if ((markdownFile !== undefined) && (markdownFile.fileStamp !== result?.fileStamp)) {
             updateMakedownFile(fileName, markdownFile, rootScanTree, postEvent);
@@ -132,7 +132,7 @@ async function scanUrlMarkdownHandler(url:string, fileName:string, rootScanTree:
         
             [...markdownFile.imageList, ...markdownFile.linkList].forEach(async (link: string) => {
                 const dataFileName = addPath(getDir(fileName), link)
-                const dataFile = await fetchFile(url, dataFileName, convertResponseToDataFile, false)
+                const dataFile = await fetchFile(getPageUrl(url, dataFileName), dataFileName, convertResponseToDataFile, false)
                 if ((dataFile !== undefined) && (dataFile.fileStamp !== result?.fileStamp)) {
                     updateDataFile(dataFileName, dataFile, rootScanTree, postEvent)
                 }
@@ -155,8 +155,5 @@ export async function downloadCssFilelWorkerCallback(payload: WorkerMessageType[
             fileName: payload.fileName,
             cssFile: cssFile
         })
-    }
-    else {
-        console.log(`${payload.url} not changed`)
     }
 }
