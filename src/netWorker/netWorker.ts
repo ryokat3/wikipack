@@ -36,13 +36,14 @@ async function doHeadAndGet(url: string, fileStamp: string|undefined, skipHead:b
     }
     else {
         const headResponse = await doFetch(url, 'HEAD', headers)
+        
         if (headResponse === undefined) {
             return undefined
         }
         else if (getFileStamp(headResponse.headers) === fileStamp) {
             return undefined
         }
-        else {
+        else {            
             return await doFetch(url, 'GET', headers)
         }        
     }
@@ -53,32 +54,6 @@ async function fetchFile<T>(url: string, fileStamp: string|undefined, converter:
     return ((response !== undefined) && response.ok) ? await converter(response) : undefined
 }
 
-/*
-function updateMakedownFile(fileName:string, markdownFile:MarkdownFileType, rootScanTree:ScanTreeFolderType, postEvent:PostEvent<WorkerMessageType>) {
-    postEvent.send("updateMarkdownFile", {
-        fileName: fileName,            
-        markdownFile: markdownFile
-    })
-    updateFileOfTree(rootScanTree, fileName, {
-        type: 'markdown',
-        fileStamp: markdownFile.fileStamp,
-        status: true
-    })
-}
-
-function updateDataFile(fileName:string, dataFile:PartialDataFileType, rootScanTree:ScanTreeFolderType, postEvent:PostEvent<WorkerMessageType>) {
-    postEvent.send("updateDataFile", {
-        fileName: fileName,            
-        dataFile: dataFile
-    })                
-    updateFileOfTree(rootScanTree, fileName, {
-        type: "data",
-        fileStamp: dataFile.fileStamp,
-        status: true
-    })
-}
-*/
-// 
 async function convertResponseToDataFile(response:Response):Promise<PartialDataFileType> {    
     const buffer = await response.arrayBuffer()
     const fileStamp = getFileStamp(response.headers)
@@ -115,7 +90,7 @@ async function scanUrlMarkdownHandler(url: string, fileName: string, fileData:Sc
         fileData.status = true    
         if (fileData.type === "markdown") {
             const converter = (response: Response) => convertResponseToMarkdownFile(response, fileName, isMarkdownFile)
-            const markdownFile = await fetchFile(getPageUrl(url, fileName), fileName, converter, false)
+            const markdownFile = await fetchFile(getPageUrl(url, fileName), fileData.fileStamp, converter, false)
             
             if ((markdownFile !== undefined) && (markdownFile.fileStamp !== fileData.fileStamp)) {
                 postEvent.send("updateMarkdownFile", {
@@ -130,7 +105,7 @@ async function scanUrlMarkdownHandler(url: string, fileName: string, fileData:Sc
             }                                        
         }
         else {                        
-            const dataFile = await fetchFile(getPageUrl(url, fileName), fileName, convertResponseToDataFile, false)
+            const dataFile = await fetchFile(getPageUrl(url, fileName), fileData.fileStamp, convertResponseToDataFile, false)
             if ((dataFile !== undefined) && (dataFile.fileStamp !== fileData.fileStamp)) {
                 postEvent.send("updateDataFile", {
                     fileName: fileName,            
