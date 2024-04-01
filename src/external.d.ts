@@ -1,4 +1,4 @@
-declare var _open_markdown: Function
+// declare var _open_markdown: Function
 
 declare module '*.asdata' {
     const src: string;

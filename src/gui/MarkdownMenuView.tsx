@@ -16,7 +16,7 @@ const MarkdownMenuFile: React.FunctionComponent<MarkdownMenuFileProps> = (props:
 }
 
 interface MarkdownMenuViewProps {
-    root: MarkdownMenuFolderType
+    root: MarkdownMenuFolderType    
     pathName?: string  
 }
 
@@ -32,7 +32,7 @@ export const MarkdownMenuView: React.FunctionComponent<MarkdownMenuViewProps> = 
         if (isSelected) {
             const node = getFileFromTree(props.root, itemId)
             if ((node !== undefined) && (node.type === "markdown")) {
-                _open_markdown(itemId)
+                window.location.hash = `#${itemId}`                
             }
         }
     }
@@ -45,5 +45,5 @@ export const MarkdownMenuView: React.FunctionComponent<MarkdownMenuViewProps> = 
             {childrenView}
         </SimpleTreeView> : <TreeItem itemId={props.pathName} label={getFileName(props.pathName) }>
             {childrenView}
-        </TreeItem> 
+        </TreeItem>         
 }

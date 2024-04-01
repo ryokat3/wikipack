@@ -25,8 +25,15 @@ function isSameFile(oldF:FolderType|FileType[keyof FileType], newF:FileType[keyo
     return (oldF.type == newF.type) && (oldF.fileStamp == newF.fileStamp)
 }
 
+function getRootUrl():URL {
+    const url: URL = new URL(window.location.href)
+    url.hash = ""
+    return url
+}
+
 class MediatorData {
-    readonly rootUrl: URL = new URL(window.location.href)
+    // readonly rootUrl: URL = new URL(window.location.href)
+    readonly rootUrl: URL = getRootUrl()
     rootFolder: FolderType = createRootFolder<FileType>()
     currentPage: string = NO_CURRENT_PAGE
     // currentCss: CssInfo = {}
@@ -76,18 +83,25 @@ export class Mediator extends MediatorData {
     ////////////////////////////////////////////////////////////////////////
 
     onGuiInitialized(): void {        
+        const self = this        
         
+        function gotoHashPage() {
+            const url = new URL(window.location.href)    
+            const hash = url.hash.startsWith('#') ? url.hash.slice(1) : url.hash
+                        
+            self.updateCurrentPage((hash !== "") ? hash : self.config.topPage)
+        }
+        window.addEventListener("hashchange", ()=>{            
+            gotoHashPage()
+        })
+
         this.updateSeq()        
         setupDragAndDrop(this)
-        const self = this
-        _open_markdown = function(name:string) {
-            self.updateCurrentPage(name)
-        }
-                
-        if (!hasMarkdownFileElement() && (this.rootUrl.protocol.toLowerCase() === 'http:' || this.rootUrl.protocol.toLowerCase() === 'https:')) {
-            this.scanUrl(this.rootUrl)
-        }
-        this.updateCurrentPage(this.config.topPage)
+    
+        if (!hasMarkdownFileElement() && (this.rootUrl.protocol.toLowerCase() === 'http:' || this.rootUrl.protocol.toLowerCase() === 'https:')) {            
+            this.scanUrl(this.rootUrl)            
+        }        
+        gotoHashPage()
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -168,6 +182,8 @@ export class Mediator extends MediatorData {
     }
 
     scanUrl(url:URL):void {
+        console.log(`scauUrl(${url})`)
+
         this.mode = "url"        
         this.worker.request("scanUrl", { 
             url: url.href, // URL object is not cloned in Post,

@@ -48,9 +48,9 @@ async function doHeadAndGet(url: string, fileStamp: string|undefined, skipHead:b
     }
 }
 
-async function fetchFile<T>(url: string, fileStamp: string|undefined, converter:(response:Response)=>T, skipHead:boolean, headers:HeadersInit|undefined=undefined): Promise<T | undefined> {
+async function fetchFile<T>(url: string, fileStamp: string|undefined, converter:(response:Response)=>Promise<T>, skipHead:boolean, headers:HeadersInit|undefined=undefined): Promise<T | undefined> {
     const response = await doHeadAndGet(url, fileStamp, skipHead, headers)
-    return ((response !== undefined) && response.ok) ? converter(response) : undefined
+    return ((response !== undefined) && response.ok) ? await converter(response) : undefined
 }
 
 function updateMakedownFile(fileName:string, markdownFile:MarkdownFileType, rootScanTree:ScanTreeFolderType, postEvent:PostEvent<WorkerMessageType>) {
@@ -109,12 +109,13 @@ async function convertResponseToMarkdownFile(response:Response, page:string, isM
 }
 
 async function scanUrlMarkdownHandler(url:string, fileName:string, rootScanTree:ScanTreeFolderType, postEvent:PostEvent<WorkerMessageType>, isMarkdownFile:(fileName:string)=>boolean) {
+    
 
     const result = getFileFromTree(rootScanTree, fileName)
-
+    
     if ((result === undefined) || ((result.type !== 'folder') && (result.status === 'init'))) {
         const converter = (response:Response)=>convertResponseToMarkdownFile(response, fileName, isMarkdownFile)              
-        const markdownFile = await fetchFile(getPageUrl(url, fileName), fileName, converter, false)
+        const markdownFile = await fetchFile(getPageUrl(url, fileName), fileName, converter, false)        
 
         if ((markdownFile !== undefined) && (markdownFile.fileStamp !== result?.fileStamp)) {
             updateMakedownFile(fileName, markdownFile, rootScanTree, postEvent);
@@ -135,7 +136,7 @@ async function scanUrlMarkdownHandler(url:string, fileName:string, rootScanTree:
                 }
             })
         }
-    }    
+    }
 }
 
 export async function scanUrlWorkerCallback(payload:WorkerMessageType['scanUrl']['request'], postEvent:PostEvent<WorkerMessageType>){                

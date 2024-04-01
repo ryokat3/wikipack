@@ -56,7 +56,8 @@ function getRendererExtension(
         link(href: string, title: string|null|undefined, text: string) {            
             const fileName = addPath(dirPath, href)
             if (isMarkdown(href)) {                                
-                return renderer.link(`javascript:_open_markdown('${fileName}')`, title, text)
+                // return renderer.link(`javascript:_open_markdown('${fileName}')`, title, text)
+                return renderer.link(`#${fileName}`, title, text)
             }
             else {                
                 const dataFile = getFileFromTree(rootFolder, fileName)
