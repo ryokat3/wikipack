@@ -101,7 +101,7 @@ async function updateDataFileList(rootHandle:FileSystemDirectoryHandle, fileName
             updateFileOfTree(rootScanTree, fileName, {
                 type: 'data',
                 fileStamp: currentFileStamp,
-                status: 'found'
+                status: true
             })
         }
     }
@@ -132,7 +132,7 @@ export async function scanDirectoryWorkerCallback(payload:WorkerMessageType['sca
             updateFileOfTree(rootScanTree, fileName, {
                 type: 'markdown',
                 fileStamp: fileData.markdownFile.fileStamp,
-                status: 'found'
+                status: true
             })
 
             fileData.markdownFile.imageList.forEach(dataFileList.add, dataFileList)

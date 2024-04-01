@@ -1,13 +1,11 @@
 import { FileTreeFolderType, convertFileTree } from "./FileTree"
 import { FolderType, FileType } from "./FileTreeType"
 
-export type ScanTreeStatus = 'init' | 'found' | 'error'
-
 export type ScanTreeFileType = {
     file: {
         type: keyof FileType,
         fileStamp: string,
-        status: ScanTreeStatus
+        status: boolean
     }
 }
 
@@ -17,7 +15,7 @@ function convertToScanTreeFile(fileData:FileType[keyof FileType]):ScanTreeFileTy
     return {
         type: fileData.type,
         fileStamp: fileData.fileStamp,
-        status: 'init'
+        status: false
     }
 }
 

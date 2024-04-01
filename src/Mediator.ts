@@ -182,8 +182,6 @@ export class Mediator extends MediatorData {
     }
 
     scanUrl(url:URL):void {
-        console.log(`scauUrl(${url})`)
-
         this.mode = "url"        
         this.worker.request("scanUrl", { 
             url: url.href, // URL object is not cloned in Post,
@@ -193,7 +191,7 @@ export class Mediator extends MediatorData {
         })        
     }
 
-    scanUrlDone(_payload:WorkerMessageType['scanUrlDone']['response']):void {
+    scanUrlDone(_payload:WorkerMessageType['scanUrlDone']['response']):void {        
         if (this.mode === "url") {
             this.scanUrl(this.rootUrl)
         }        
