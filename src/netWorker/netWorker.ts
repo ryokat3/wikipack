@@ -108,33 +108,28 @@ async function convertResponseToMarkdownFile(response:Response, page:string, isM
     return getMarkdownFile(markdownText, page, fileStamp, isMarkdownFile)
 }
 
-async function scanUrlMarkdownHandler(url:string, fileName:string, rootScanTree:ScanTreeFolderType, postEvent:PostEvent<WorkerMessageType>, isMarkdownFile:(fileName:string)=>boolean) {
-    
+async function scanUrlMarkdownHandler(url: string, fileName: string, rootScanTree: ScanTreeFolderType, postEvent: PostEvent<WorkerMessageType>, isMarkdownFile: (fileName: string) => boolean) {
 
     const result = getFileFromTree(rootScanTree, fileName)
-    
-    if ((result === undefined) || ((result.type !== 'folder') && (result.status === 'init'))) {
-        const converter = (response:Response)=>convertResponseToMarkdownFile(response, fileName, isMarkdownFile)              
-        const markdownFile = await fetchFile(getPageUrl(url, fileName), fileName, converter, false)        
 
-        if ((markdownFile !== undefined) && (markdownFile.fileStamp !== result?.fileStamp)) {
-            updateMakedownFile(fileName, markdownFile, rootScanTree, postEvent);
-            
-            markdownFile.markdownList.forEach((link: string) => {
-                scanUrlMarkdownHandler(url, addPath(getDir(fileName), link), rootScanTree, postEvent, isMarkdownFile)
-            });
-        
-            [...markdownFile.imageList, ...markdownFile.linkList].forEach(async (link: string) => {
-                const dataFileName = addPath(getDir(fileName), link)                                
-                const dataResult = getFileFromTree(rootScanTree, dataFileName)
-                if ((dataResult === undefined) || ((dataResult.type !== 'folder') && (dataResult.status === 'init'))) {
-                    const dataFile = await fetchFile(getPageUrl(url, dataFileName), dataFileName, convertResponseToDataFile, false)
-                
-                    if ((dataFile !== undefined) && (dataFile.fileStamp !== dataResult?.fileStamp)) {
-                        updateDataFile(dataFileName, dataFile, rootScanTree, postEvent)
-                    }
+    if ((result === undefined) || ((result.type !== 'folder') && (result.status === 'init'))) {
+        if (isMarkdownFile(fileName)) {
+            const converter = (response: Response) => convertResponseToMarkdownFile(response, fileName, isMarkdownFile)
+            const markdownFile = await fetchFile(getPageUrl(url, fileName), fileName, converter, false)
+
+            if ((markdownFile !== undefined) && (markdownFile.fileStamp !== result?.fileStamp)) {
+                updateMakedownFile(fileName, markdownFile, rootScanTree, postEvent)
+
+                for (const link of [...markdownFile.markdownList, ...markdownFile.imageList, ...markdownFile.linkList]) {                    
+                    await scanUrlMarkdownHandler(url, addPath(getDir(fileName), link), rootScanTree, postEvent, isMarkdownFile)
                 }
-            })
+            }
+        }
+        else {                        
+            const dataFile = await fetchFile(getPageUrl(url, fileName), fileName, convertResponseToDataFile, false)
+            if ((dataFile !== undefined) && (dataFile.fileStamp !== result?.fileStamp)) {
+                updateDataFile(fileName, dataFile, rootScanTree, postEvent)
+            }            
         }
     }
 }
@@ -143,7 +138,9 @@ export async function scanUrlWorkerCallback(payload:WorkerMessageType['scanUrl']
     const rootScanTree = payload.rootScanTree    
     const isMarkdownFile = makeFileRegexChecker(payload.markdownFileRegex)
 
-    scanUrlMarkdownHandler(payload.url, payload.topPage, rootScanTree, postEvent, isMarkdownFile)
+    await scanUrlMarkdownHandler(payload.url, payload.topPage, rootScanTree, postEvent, isMarkdownFile)
+
+    postEvent.send("scanUrlDone", { url:payload.url })
 }
 
 export async function downloadCssFilelWorkerCallback(payload: WorkerMessageType['downloadCssFile']['request'], postEvent: PostEvent<WorkerMessageType>) {

@@ -1,4 +1,4 @@
-import { splitPath } from "../utils/appUtils"
+import { splitPath, addPath } from "../utils/appUtils"
 
 type FileTreeFileType = {
     [key:string]: {        
@@ -43,7 +43,7 @@ function getOrCreateFolder<FT extends FileTreeFileType>(folder:FileTreeFolderTyp
 }
 
 export function updateFileOfTree<FT extends FileTreeFileType>(
-        folder:FileTreeFolderType<FT>,
+    folder:FileTreeFolderType<FT>,
         pathName:string|string[],
         file:FT[keyof FT],
         isSameFunction:(oldF:FileTreeFolderType<FT>|FT[keyof FT], newF:FT[keyof FT])=>boolean = (_o, _f)=>false
@@ -59,6 +59,23 @@ export function updateFileOfTree<FT extends FileTreeFileType>(
     else {
         return updateFileOfTree(getOrCreateFolder(folder, pathName[0]), pathName.slice(1), file, isSameFunction)
     }
+}
+
+export async function reduceFileOfTree<FT extends FileTreeFileType, VALUE>(
+    folder:FileTreeFolderType<FT>,
+    folderName:string,
+    func: (fileName:string, file:FT[keyof FT], value:Promise<VALUE>)=>Promise<VALUE>,
+    value: Promise<VALUE>
+):Promise<VALUE> {
+    return await Object.entries(folder.children).reduce<Promise<VALUE>>(async (v, [name, child]) => {
+        const childName = addPath(folderName, name)
+        if (child.type === "folder" ) {            
+            return await reduceFileOfTree(child as FileTreeFolderType<FT>, childName, func, v)
+        }
+        else {
+            return await func(childName, child as FT[keyof FT], v)
+        }
+    }, value)
 }
 
 export function getFileFromTree<FT extends FileTreeFileType>(folder:FileTreeFolderType<FT>, pathName:string|string[]):FT[keyof FT] | FileTreeFolderType<FT> |undefined {
