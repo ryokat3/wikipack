@@ -2,7 +2,7 @@ import { WorkerInvoke } from "./utils/WorkerMessage"
 import { WorkerMessageType } from "./worker/WorkerMessageType"
 import { ConfigType } from "./config"
 import { TopDispatcherType } from "./gui/TopDispatcher"
-import { FolderType, FileType } from "./fileTree/FileTreeType"
+import { FolderType, WikiFileType } from "./fileTree/FileTreeType"
 import { createRootFolder, getFileFromTree, updateFileOfTree, deleteFileFromTree } from "./fileTree/FileTree"
 import { updateCssElement } from "./dataElement/styleElement"
 import { canonicalFileName, getDir, addPath } from "./utils/appUtils"
@@ -21,7 +21,7 @@ export const VERSION:string = packageJson.version
 
 const NO_CURRENT_PAGE = ""
 
-function isSameFile(oldF:FolderType|FileType[keyof FileType], newF:FileType[keyof FileType]):boolean {         
+function isSameFile(oldF:FolderType|WikiFileType[keyof WikiFileType], newF:WikiFileType[keyof WikiFileType]):boolean {         
     return (oldF.type == newF.type) && (oldF.fileStamp == newF.fileStamp)
 }
 
@@ -34,7 +34,7 @@ function getRootUrl():URL {
 class MediatorData {
     // readonly rootUrl: URL = new URL(window.location.href)
     readonly rootUrl: URL = getRootUrl()
-    rootFolder: FolderType = createRootFolder<FileType>()
+    rootFolder: FolderType = createRootFolder<WikiFileType>()
     currentPage: string = NO_CURRENT_PAGE
     // currentCss: CssInfo = {}
     mode: 'directory' | 'url' | undefined = undefined
@@ -75,7 +75,7 @@ export class Mediator extends MediatorData {
 
     resetRootFolder():void {
         this.currentPage = NO_CURRENT_PAGE        
-        this.rootFolder = createRootFolder<FileType>()
+        this.rootFolder = createRootFolder<WikiFileType>()
     }
 
     ////////////////////////////////////////////////////////////////////////

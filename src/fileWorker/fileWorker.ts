@@ -1,10 +1,10 @@
 import { WorkerMessageType } from "../worker/WorkerMessageType"
 import { PostEvent } from "../utils/WorkerMessage"
 // import { getMarkdownFile} from "../markdown/converter"
-import { collectFiles, getHandle, isFileHandle, ExtFileHandlerForFileHandle } from "./fileRW"
+import { collectFiles, getHandle, isFileHandle, WikiFileHandlerForFileHandle } from "./fileRW"
 import { makeFileRegexChecker } from "../utils/appUtils"
 import { getFileFromTree, updateFileOfTree } from "../fileTree/FileTree"
-import { readMarkdownFile, isExtFile, getExtBlobHandler } from "../fileTree/FileTreeType"
+import { readMarkdownFile, readDataFile, isWikiFile, getWikiBlobHandler } from "../fileTree/FileTreeType"
 import { ScanTreeFolderType } from "../fileTree/ScanTree"
 
 function getFileStamp(fp:File):string {
@@ -69,6 +69,7 @@ async function readCssFile(handle: FileSystemFileHandle, fileName: string|undefi
     })    
 }
 
+/*
 async function readDataFile(handle: FileSystemFileHandle, fileName: string): Promise<WorkerMessageType["updateDataFile"]["response"]> {
     return await new Promise<WorkerMessageType["updateDataFile"]["response"]>(async (resolve) => {
         const blob = await handle.getFile()         
@@ -90,21 +91,21 @@ async function readDataFile(handle: FileSystemFileHandle, fileName: string): Pro
         reader.readAsArrayBuffer(blob)
     })
 }
+*/
 
 async function updateDataFileList(rootHandle:FileSystemDirectoryHandle, fileNameList:string[], rootScanTree:ScanTreeFolderType, postEvent:PostEvent<WorkerMessageType>) {
     for (const fileName of fileNameList) {
         const handle = await getHandle(rootHandle, fileName)
         if ((handle !== undefined) && isFileHandle(handle)) {
             const prevData = getFileFromTree(rootScanTree, fileName)
-            const currentFile = await handle.getFile()
-            const currentFileStamp = getFileStamp(currentFile)
-            if ((prevData === undefined) || (prevData.type === "folder") || (currentFileStamp !== prevData.fileStamp)) {              
-                const dataFile = await readDataFile(handle as FileSystemFileHandle, fileName)
-                postEvent.send("updateDataFile", dataFile, [dataFile.dataFile.buffer])
+            const handler = getWikiBlobHandler( { type: "fileHandle", fileHandle: handle})
+            const dataFile = await readDataFile(handler, ((prevData !== undefined) && (prevData.type !== "folder")) ? prevData.fileStamp : undefined )
+            if (isWikiFile(dataFile))  {
+                postEvent.send("updateDataFile", { fileName: fileName, dataFile: dataFile }, [dataFile.buffer])
             }
             updateFileOfTree(rootScanTree, fileName, {
                 type: 'data',
-                fileStamp: currentFileStamp,
+                fileStamp: (isWikiFile(dataFile)) ? dataFile.fileStamp : "",
                 status: true
             })
         }
@@ -117,7 +118,7 @@ async function updateDataFileList(rootHandle:FileSystemDirectoryHandle, fileName
 
 export async function openFileWorkerCallback(payload:WorkerMessageType['openFile']['request'], postEvent:PostEvent<WorkerMessageType>) {
     const isMarkdownFile = makeFileRegexChecker(payload.markdownFileRegex)
-    const handler = new ExtFileHandlerForFileHandle( { type: "fileHandle", fileHandle: payload.handle})
+    const handler = new WikiFileHandlerForFileHandle( { type: "fileHandle", fileHandle: payload.handle})
     const blob = await handler.getBlob()
     const result = await readMarkdownFile(handler, blob.name, undefined, isMarkdownFile)
 
@@ -137,18 +138,18 @@ export async function scanDirectoryWorkerCallback(payload:WorkerMessageType['sca
     try {
         const dataFileList:Set<string> = new Set([])
         for (const [fileName, handle] of Object.entries(await collectFiles(rootHandle, isMarkdownFile))) {
-            const handler = getExtBlobHandler({ type: "fileHandle", fileHandle: handle})
+            const handler = getWikiBlobHandler({ type: "fileHandle", fileHandle: handle})
             const prev = getFileFromTree(rootScanTree, fileName)
             const fileData = await readMarkdownFile(handler, fileName, (prev?.type === "markdown") ? prev.fileStamp : undefined, isMarkdownFile)            
-            if (isExtFile(fileData)) {
+            if (isWikiFile(fileData)) {
                 postEvent.send("updateMarkdownFile", { fileName:fileName, markdownFile:fileData})
             }
             updateFileOfTree(rootScanTree, fileName, {
                 type: 'markdown',
-                fileStamp: (isExtFile(fileData)) ? fileData.fileStamp : "",
+                fileStamp: (isWikiFile(fileData)) ? fileData.fileStamp : "",
                 status: true
             })
-            if (isExtFile(fileData)) {
+            if (isWikiFile(fileData)) {
                 fileData.imageList.forEach(dataFileList.add, dataFileList)
                 fileData.linkList.forEach(dataFileList.add, dataFileList)
             }

@@ -1,6 +1,6 @@
 import { FileTreeFolderType } from "./FileTree"
-import { ExtFileHandlerForUrl } from "../netWorker/netWorker"
-import { ExtFileHandlerForFileHandle, ExtFileHandlerForDirHandle }  from "../fileWorker/fileRW"
+import { WikiFileHandlerForUrl } from "../netWorker/netWorker"
+import { WikiFileHandlerForFileHandle, WikiFileHandlerForDirHandle }  from "../fileWorker/fileRW"
 import { getMarkdownLink }  from "../markdown/converter"
 import { getDir } from "../utils/appUtils"
 
@@ -11,7 +11,7 @@ export type MarkdownLinkType = {
 
 }
 
-export type FileType = {
+export type WikiFileType = {
     markdown: {
         type: "markdown",
         markdown: string,
@@ -31,18 +31,18 @@ export type FileType = {
     }
 }
 
-export type DataFileType = FileType['data']
-export type MarkdownFileType = FileType['markdown']
-export type CssFileType = FileType['css']
+export type DataFileType = WikiFileType['data']
+export type MarkdownFileType = WikiFileType['markdown']
+export type CssFileType = WikiFileType['css']
 export type WorkerDataFileType = Omit<Omit<DataFileType, 'dataRef'>, 'buffer'> & { buffer: ArrayBuffer}
 
-export type FolderType = FileTreeFolderType<FileType>
+export type FolderType = FileTreeFolderType<WikiFileType>
 
 /////////////////////////////////////////////////////////////////////////////////
 // ExtBlob
 /////////////////////////////////////////////////////////////////////////////////
 
-export type ExtBlobType = {
+export type WikiBlobType = {
     dirHandle: {
         type: "dirHandle"
         dirHandle: FileSystemDirectoryHandle
@@ -66,9 +66,9 @@ export type ExtBlobType = {
 // success    =>  success      error
 //
 ////////////////////////////////////////////////////////////////////////////////
-export type ExtBlobStatus = 'init' | 'success' | 'error'
+export type WikiBlobStatus = 'init' | 'success' | 'error'
 
-export function updateExtBlobStatus(status:ExtBlobStatus, success:boolean):ExtBlobStatus {
+export function updateWikiBlobStatus(status:WikiBlobStatus, success:boolean):WikiBlobStatus {
     switch (status) {
         case 'init':
             return (success) ? 'success' : 'init'
@@ -78,48 +78,48 @@ export function updateExtBlobStatus(status:ExtBlobStatus, success:boolean):ExtBl
     }
 }
 
-export type ExtBlobData = {
-    src: ExtBlobType[keyof ExtBlobType]
+export type WikiBlobData = {
+    src: WikiBlobType[keyof WikiBlobType]
     fileStamp: string
     mime: string
 }
 
-export type ExtTextFileType = ExtBlobData & {
+export type WikiTextFileType = WikiBlobData & {
     data: string
 }
 
-export type ExtBinaryFileType = ExtBlobData & {
+export type WikiBinaryFileType = WikiBlobData & {
     data: ArrayBuffer
 }
 
 export type NO_UPDATE = 'NO_UPDATE'
 
-export interface ExtBlobHandler {
-    getFileData(): Promise<ExtBlobData | undefined>
-    getTextFile(): Promise<ExtTextFileType | undefined>
-    getBinaryFile(): Promise<ExtBinaryFileType | undefined>
+export interface WikiBlobHandler {
+    getFileData(): Promise<WikiBlobData | undefined>
+    getTextFile(): Promise<WikiTextFileType | undefined>
+    getBinaryFile(): Promise<WikiBinaryFileType | undefined>
 }
 
-export function getExtBlobHandler(extFile: ExtBlobType[keyof ExtBlobType]) {
-    switch (extFile.type) {
+export function getWikiBlobHandler(wikiBlob: WikiBlobType[keyof WikiBlobType]) {
+    switch (wikiBlob.type) {
         case 'url':
-            return new ExtFileHandlerForUrl(extFile)            
+            return new WikiFileHandlerForUrl(wikiBlob)            
         case 'fileHandle':
-            return new ExtFileHandlerForFileHandle(extFile)
+            return new WikiFileHandlerForFileHandle(wikiBlob)
         case 'dirHandle':
-            return new ExtFileHandlerForDirHandle(extFile)
+            return new WikiFileHandlerForDirHandle(wikiBlob)
     }
 }
 
-export class ExtBlobReader {
+export class WikiBlobReader {
 
-    readonly handler:ExtBlobHandler
+    readonly handler:WikiBlobHandler
 
-    constructor(handler:ExtBlobHandler) {
+    constructor(handler:WikiBlobHandler) {
         this.handler = handler
     }
 
-    async readTextFile(fileStamp:string|undefined = undefined):Promise<ExtTextFileType|NO_UPDATE|undefined> {
+    async readTextFile(fileStamp:string|undefined = undefined):Promise<WikiTextFileType|NO_UPDATE|undefined> {
         if (fileStamp !== undefined) {
             const fileData = await this.handler.getFileData()
             if (fileData === undefined) {
@@ -132,7 +132,7 @@ export class ExtBlobReader {
         return await this.handler.getTextFile()
     }
 
-    async readBinaryFile(fileStamp:string|undefined = undefined):Promise<ExtBinaryFileType|NO_UPDATE|undefined> {
+    async readBinaryFile(fileStamp:string|undefined = undefined):Promise<WikiBinaryFileType|NO_UPDATE|undefined> {
         if (fileStamp !== undefined) {
             const fileData = await this.handler.getFileData()
             if (fileData === undefined) {
@@ -146,29 +146,58 @@ export class ExtBlobReader {
     }
 }
 
-export function isExtFile<FT extends FileType[keyof FileType]>(target:FT|NO_UPDATE|undefined):target is FT {
+export function isWikiFile<T>(target:T):target is Exclude<Exclude<T, "NO_UPDATE">, undefined> {
     return (target !== undefined) && (target !== "NO_UPDATE")
 }
 
-export async function readMarkdownFile(handler:ExtBlobHandler, fileName:string, fileStamp:string|undefined, isMarkdownFile:(fileName:string)=>boolean):Promise<MarkdownFileType|NO_UPDATE|undefined> {
-    const reader = new ExtBlobReader(handler)
-    const markdown = await reader.readTextFile(fileStamp)
+function convertToMarkdownFile(textFile:WikiTextFileType, dirPath:string, isMarkdownFile:(fileName:string)=>boolean):MarkdownFileType {
+    return {
+        ...getMarkdownLink(textFile.data, dirPath, isMarkdownFile),
+        type: "markdown",
+        markdown: textFile.data,
+        fileStamp: textFile.fileStamp   
+    }
+}
 
-    if (markdown === undefined) {
-        return undefined
+function convertToDataFile(binaryFile:WikiBinaryFileType):WorkerDataFileType {
+    return {
+        type: "data",
+        fileStamp: binaryFile.fileStamp,
+        mime: binaryFile.mime,
+        buffer: binaryFile.data
     }
-    else if (markdown == 'NO_UPDATE') {
-        return 'NO_UPDATE'
+}
+
+function convertToCssFile(textFile:WikiTextFileType):CssFileType {
+    return {        
+        type: "css",
+        css: textFile.data,
+        fileStamp: textFile.fileStamp   
     }
-    else {
-        const link = getMarkdownLink(markdown.data, getDir(fileName), isMarkdownFile)
-        return {
-            ...link,
-            type: "markdown",
-            markdown: markdown.data,
-            fileStamp: markdown.fileStamp            
-        }
-    }
+}
+
+async function convertFromWikiText<T>(handler:WikiBlobHandler, fileStamp:string|undefined, converter:(textFile:WikiTextFileType)=>T|NO_UPDATE|undefined) {
+    const reader = new WikiBlobReader(handler)
+    const wikiText = await reader.readTextFile(fileStamp)
+    return (isWikiFile(wikiText)) ? converter(wikiText) : wikiText
+}
+
+async function convertFromWikiBinary<T>(handler:WikiBlobHandler, fileStamp:string|undefined, converter:(textFile:WikiBinaryFileType)=>T|NO_UPDATE|undefined) {
+    const reader = new WikiBlobReader(handler)
+    const wikiBinary = await reader.readBinaryFile(fileStamp)
+    return (isWikiFile(wikiBinary)) ? converter(wikiBinary) : wikiBinary
+}
+
+export async function readMarkdownFile(handler:WikiBlobHandler, fileName:string, fileStamp:string|undefined, isMarkdownFile:(fileName:string)=>boolean):Promise<MarkdownFileType|NO_UPDATE|undefined> {
+    return convertFromWikiText(handler, fileStamp, (textFile:WikiTextFileType)=>convertToMarkdownFile(textFile, getDir(fileName), isMarkdownFile))
+}
+
+export async function readDataFile(handler:WikiBlobHandler, fileStamp:string|undefined):Promise<WorkerDataFileType|NO_UPDATE|undefined> {
+    return convertFromWikiBinary(handler, fileStamp, convertToDataFile)
+}
+
+export async function readCssFile(handler:WikiBlobHandler, fileStamp:string|undefined):Promise<CssFileType|NO_UPDATE|undefined> {
+    return convertFromWikiText(handler, fileStamp, convertToCssFile)
 }
 
 

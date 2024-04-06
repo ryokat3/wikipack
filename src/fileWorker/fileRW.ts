@@ -1,4 +1,4 @@
-import { ExtBlobType, ExtBlobHandler, ExtBinaryFileType, ExtBlobData, ExtTextFileType } from "../fileTree/FileTreeType"
+import { WikiBlobType, WikiBlobHandler, WikiBinaryFileType, WikiBlobData, WikiTextFileType } from "../fileTree/FileTreeType"
 import { splitPath } from "../utils/appUtils"
 
 export async function getHandleMap(dirHandle:FileSystemDirectoryHandle):Promise<{ [name:string]:FileSystemHandle }> {
@@ -63,11 +63,11 @@ export function getFileStamp(blob:File):string {
     return `lastModified=${blob.lastModified}:size=${blob.size}`
 }
 
-export class ExtFileHandlerForFileHandle implements ExtBlobHandler {
-    readonly extFile:ExtBlobType['fileHandle']
+export class WikiFileHandlerForFileHandle implements WikiBlobHandler {
+    readonly extFile:WikiBlobType['fileHandle']
     private blob:File|undefined
 
-    constructor(extFile:ExtBlobType['fileHandle']) {        
+    constructor(extFile:WikiBlobType['fileHandle']) {        
         this.extFile = extFile
         this.blob = undefined
     }
@@ -79,7 +79,7 @@ export class ExtFileHandlerForFileHandle implements ExtBlobHandler {
         return this.blob
     }
 
-    async getFileData():Promise<ExtBlobData> {
+    async getFileData():Promise<WikiBlobData> {
         const blob = await this.getBlob()
         return {
             src: this.extFile,            
@@ -88,9 +88,9 @@ export class ExtFileHandlerForFileHandle implements ExtBlobHandler {
         }
     }
 
-    async getTextFile():Promise<ExtTextFileType|undefined> {
+    async getTextFile():Promise<WikiTextFileType|undefined> {
         
-        return await new Promise<ExtTextFileType|undefined>(async (resolve) => {
+        return await new Promise<WikiTextFileType|undefined>(async (resolve) => {
             const blob = await this.getBlob()
             const reader = new FileReader()
         
@@ -114,8 +114,8 @@ export class ExtFileHandlerForFileHandle implements ExtBlobHandler {
         })        
     }
 
-    async getBinaryFile():Promise<ExtBinaryFileType|undefined> {
-        return await new Promise<ExtBinaryFileType|undefined>(async (resolve) => {
+    async getBinaryFile():Promise<WikiBinaryFileType|undefined> {
+        return await new Promise<WikiBinaryFileType|undefined>(async (resolve) => {
             const blob = await this.getBlob()
             
             const reader = new FileReader()
@@ -140,33 +140,33 @@ export class ExtFileHandlerForFileHandle implements ExtBlobHandler {
     }
 }
 
-export class ExtFileHandlerForDirHandle implements ExtBlobHandler  {
-    readonly extFile:ExtBlobType['dirHandle']
-    private fileHandleReader: ExtFileHandlerForFileHandle | undefined
+export class WikiFileHandlerForDirHandle implements WikiBlobHandler  {
+    readonly extFile:WikiBlobType['dirHandle']
+    private fileHandleReader: WikiFileHandlerForFileHandle | undefined
 
-    constructor(extFile:ExtBlobType['dirHandle']) {        
+    constructor(extFile:WikiBlobType['dirHandle']) {        
         this.extFile = extFile
         this.fileHandleReader = undefined
     }
 
-    private async getFileHandleReader():Promise<ExtFileHandlerForFileHandle|undefined> {        
+    private async getFileHandleReader():Promise<WikiFileHandlerForFileHandle|undefined> {        
         const handle = await getHandle(this.extFile.dirHandle, this.extFile.fileName)
-        this.fileHandleReader = (handle !== undefined && isFileHandle(handle)) ? new ExtFileHandlerForFileHandle( {            
+        this.fileHandleReader = (handle !== undefined && isFileHandle(handle)) ? new WikiFileHandlerForFileHandle( {            
             type: "fileHandle",
             fileHandle: handle
          }) : undefined
         return this.fileHandleReader
     }
 
-    async getFileData():Promise<ExtBlobData|undefined> {
+    async getFileData():Promise<WikiBlobData|undefined> {
         return await (await this.getFileHandleReader())?.getFileData()
     }
 
-    async getTextFile():Promise<ExtTextFileType|undefined> {
+    async getTextFile():Promise<WikiTextFileType|undefined> {
         return await (await this.getFileHandleReader())?.getTextFile()
     }
 
-    async getBinaryFile():Promise<ExtBinaryFileType|undefined> {
+    async getBinaryFile():Promise<WikiBinaryFileType|undefined> {
         return await (await this.getFileHandleReader())?.getBinaryFile()
     }
 }

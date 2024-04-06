@@ -1,7 +1,7 @@
-import { MarkdownFileType, CssFileType, DataFileType} from "../fileTree/FileTreeType"
+import { MarkdownFileType, CssFileType, WorkerDataFileType} from "../fileTree/FileTreeType"
 import { ScanTreeFolderType } from "../fileTree/ScanTree"
 
-export type PartialDataFileType = Omit<Omit<DataFileType, 'dataRef'>, 'buffer'> & { buffer: ArrayBuffer}
+// export type PartialDataFileType = Omit<Omit<DataFileType, 'dataRef'>, 'buffer'> & { buffer: ArrayBuffer}
 
 export type WorkerMessageType = {
     openFile : {
@@ -64,7 +64,7 @@ export type WorkerMessageType = {
     updateDataFile: {
         response: {
             fileName: string, 
-            dataFile: PartialDataFileType
+            dataFile: WorkerDataFileType
         }
     },
     deleteFile: {
