@@ -42,7 +42,7 @@ export type FolderType = FileTreeFolderType<WikiFileType>
 // FileSrc
 /////////////////////////////////////////////////////////////////////////////////
 
-export type AllFileSrcType = {
+type FileSrcDefinition = {
     dirHandle: {
         type: "dirHandle"
         dirHandle: FileSystemDirectoryHandle
@@ -57,7 +57,11 @@ export type AllFileSrcType = {
         url: string
     }
 }
-export type FileSrcType = AllFileSrcType[keyof AllFileSrcType]
+
+export type FileSrcType = FileSrcDefinition[keyof FileSrcDefinition]
+export type UrlSrcType = FileSrcDefinition['url']
+export type DirHandleSrcType = FileSrcDefinition['dirHandle']
+export type FileHandleSrcType = FileSrcDefinition['fileHandle']
 
 ////////////////////////////////////////////////////////////////////////////////
 //                Success      Error
@@ -80,7 +84,7 @@ export function updateWikiBlobStatus(status:FileSrcStatus, success:boolean):File
 }
 
 export type FileSrcData = {
-    src: AllFileSrcType[keyof AllFileSrcType]
+    src: FileSrcDefinition[keyof FileSrcDefinition]
     fileStamp: string
     mime: string
 }
@@ -101,7 +105,7 @@ export interface FileSrcHandler {
     getBinaryFile(): Promise<BinaryFileSrcType | undefined>
 }
 
-export function getFileSrcHandler(wikiBlob: AllFileSrcType[keyof AllFileSrcType]) {
+export function getFileSrcHandler(wikiBlob: FileSrcDefinition[keyof FileSrcDefinition]) {
     switch (wikiBlob.type) {
         case 'url':
             return new WikiFileHandlerForUrl(wikiBlob)            

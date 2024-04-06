@@ -1,4 +1,4 @@
-import { AllFileSrcType, FileSrcHandler, BinaryFileSrcType, FileSrcData, TextFileSrcType } from "../fileTree/WikiFile"
+import { DirHandleSrcType, FileHandleSrcType, FileSrcHandler, BinaryFileSrcType, FileSrcData, TextFileSrcType } from "../fileTree/WikiFile"
 import { splitPath } from "../utils/appUtils"
 
 export async function getHandleMap(dirHandle:FileSystemDirectoryHandle):Promise<{ [name:string]:FileSystemHandle }> {
@@ -64,17 +64,17 @@ export function getFileStamp(blob:File):string {
 }
 
 export class WikiFileHandlerForFileHandle implements FileSrcHandler {
-    readonly extFile:AllFileSrcType['fileHandle']
+    readonly fileSrc:FileHandleSrcType
     private blob:File|undefined
 
-    constructor(extFile:AllFileSrcType['fileHandle']) {        
-        this.extFile = extFile
+    constructor(extFile:FileHandleSrcType) {        
+        this.fileSrc = extFile
         this.blob = undefined
     }
 
     async getBlob():Promise<File> {        
         if (this.blob === undefined) {
-            this.blob = await this.extFile.fileHandle.getFile()
+            this.blob = await this.fileSrc.fileHandle.getFile()
         }
         return this.blob
     }
@@ -82,7 +82,7 @@ export class WikiFileHandlerForFileHandle implements FileSrcHandler {
     async getFileData():Promise<FileSrcData> {
         const blob = await this.getBlob()
         return {
-            src: this.extFile,            
+            src: this.fileSrc,            
             fileStamp: getFileStamp(blob),
             mime: blob.type            
         }
@@ -97,7 +97,7 @@ export class WikiFileHandlerForFileHandle implements FileSrcHandler {
             reader.onload = (e: ProgressEvent<FileReader>) => {
                 if ((e.target !== null) && (e.target.result !== null) && (typeof e.target.result == 'string')) {                    
                     resolve({
-                        src: this.extFile,
+                        src: this.fileSrc,
                         fileStamp: getFileStamp(blob),
                         mime: blob.type,
                         data: e.target.result
@@ -122,7 +122,7 @@ export class WikiFileHandlerForFileHandle implements FileSrcHandler {
             reader.onload = (e: ProgressEvent<FileReader>) => {
                 if ((e.target !== null) && (e.target.result !== null) && (typeof e.target.result == 'object')) {                
                     resolve({
-                        src: this.extFile,
+                        src: this.fileSrc,
                         fileStamp: getFileStamp(blob),
                         mime: blob.type,
                         data: e.target.result
@@ -141,16 +141,16 @@ export class WikiFileHandlerForFileHandle implements FileSrcHandler {
 }
 
 export class WikiFileHandlerForDirHandle implements FileSrcHandler  {
-    readonly extFile:AllFileSrcType['dirHandle']
+    readonly fileSrc:DirHandleSrcType
     private fileHandleReader: WikiFileHandlerForFileHandle | undefined
 
-    constructor(extFile:AllFileSrcType['dirHandle']) {        
-        this.extFile = extFile
+    constructor(extFile:DirHandleSrcType) {        
+        this.fileSrc = extFile
         this.fileHandleReader = undefined
     }
 
     private async getFileHandleReader():Promise<WikiFileHandlerForFileHandle|undefined> {        
-        const handle = await getHandle(this.extFile.dirHandle, this.extFile.fileName)
+        const handle = await getHandle(this.fileSrc.dirHandle, this.fileSrc.fileName)
         this.fileHandleReader = (handle !== undefined && isFileHandle(handle)) ? new WikiFileHandlerForFileHandle( {            
             type: "fileHandle",
             fileHandle: handle

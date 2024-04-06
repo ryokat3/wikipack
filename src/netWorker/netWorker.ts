@@ -2,7 +2,7 @@ import { WorkerMessageType } from "../worker/WorkerMessageType"
 import { PostEvent } from "../utils/WorkerMessage"
 // import { getMarkdownFile } from "../markdown/converter"
 import { makeFileRegexChecker } from "../utils/appUtils"
-import { /* MarkdownFileType, WorkerDataFileType, CssFileType , */ AllFileSrcType, FileSrcType, FileSrcHandler, BinaryFileSrcType, FileSrcData, TextFileSrcType, readMarkdownFile, isWikiFile, getFileSrcHandler, readDataFile, readCssFile } from "../fileTree/WikiFile"
+import { /* MarkdownFileType, WorkerDataFileType, CssFileType , */ UrlSrcType, FileSrcType, FileSrcHandler, BinaryFileSrcType, FileSrcData, TextFileSrcType, readMarkdownFile, isWikiFile, getFileSrcHandler, readDataFile, readCssFile } from "../fileTree/WikiFile"
 import { updateFileOfTree, /* getFileFromTree,*/ reduceFileOfTree, getFileFromTree } from "../fileTree/FileTree"
 import { ScanTreeFileType, ScanTreeFolderType } from "../fileTree/ScanTree"
 import { getDir, addPath } from "../utils/appUtils"
@@ -34,25 +34,25 @@ export class WikiFileHandlerForUrl implements FileSrcHandler {
     static readonly DEFAULT_TEXT_FILE_MIME = 'text/plain'
     static readonly DEFAULT_BINARY_FILE_MIME = 'application/octet-stream'
 
-    readonly extFile:AllFileSrcType['url']
+    readonly fileSrc:UrlSrcType
 
-    constructor(src:AllFileSrcType['url']) {        
-        this.extFile = src
+    constructor(fileSrc:UrlSrcType) {        
+        this.fileSrc = fileSrc
     }
 
     async getFileData():Promise<FileSrcData|undefined> {
-        const response = await doFetch(this.extFile.url, 'HEAD', undefined)
+        const response = await doFetch(this.fileSrc.url, 'HEAD', undefined)
         return (response !== undefined) ? {
-                src: this.extFile,
+                src: this.fileSrc,
                 fileStamp: getFileStamp(response.headers),
                 mime: response.headers.get('Content-Type') || ''
             } : undefined        
     }
 
     async getTextFile():Promise<TextFileSrcType|undefined> {
-        const response = await doFetch(this.extFile.url, 'GET', undefined)
+        const response = await doFetch(this.fileSrc.url, 'GET', undefined)
         return (response !== undefined) ? {
-                src: this.extFile,
+                src: this.fileSrc,
                 fileStamp: getFileStamp(response.headers),
                 mime: response.headers.get('Content-Type') || WikiFileHandlerForUrl.DEFAULT_TEXT_FILE_MIME,
                 data: await response.text()
@@ -60,9 +60,9 @@ export class WikiFileHandlerForUrl implements FileSrcHandler {
     }
 
     async getBinaryFile():Promise<BinaryFileSrcType|undefined> {
-        const response = await doFetch(this.extFile.url, 'GET', undefined)
+        const response = await doFetch(this.fileSrc.url, 'GET', undefined)
         return (response !== undefined) ? {
-                src: this.extFile,
+                src: this.fileSrc,
                 fileStamp: getFileStamp(response.headers),
                 mime: response.headers.get('Content-Type') || WikiFileHandlerForUrl.DEFAULT_BINARY_FILE_MIME,
                 data: await response.arrayBuffer()
