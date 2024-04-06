@@ -2,7 +2,7 @@ import { WorkerMessageType } from "../worker/WorkerMessageType"
 import { PostEvent } from "../utils/WorkerMessage"
 // import { getMarkdownFile } from "../markdown/converter"
 import { makeFileRegexChecker } from "../utils/appUtils"
-import { /* MarkdownFileType, WorkerDataFileType, CssFileType , */ WikiBlobType, WikiBlobHandler, WikiBinaryFileType, WikiBlobData, WikiTextFileType, readMarkdownFile, isWikiFile, getWikiBlobHandler, readDataFile, readCssFile } from "../fileTree/WikiFile"
+import { /* MarkdownFileType, WorkerDataFileType, CssFileType , */ AllFileSrcType, FileSrcType, FileSrcHandler, BinaryFileSrcType, FileSrcData, TextFileSrcType, readMarkdownFile, isWikiFile, getFileSrcHandler, readDataFile, readCssFile } from "../fileTree/WikiFile"
 import { updateFileOfTree, /* getFileFromTree,*/ reduceFileOfTree, getFileFromTree } from "../fileTree/FileTree"
 import { ScanTreeFileType, ScanTreeFolderType } from "../fileTree/ScanTree"
 import { getDir, addPath } from "../utils/appUtils"
@@ -30,76 +30,17 @@ async function doFetch(url: string, method:'GET'|'HEAD', headers:HeadersInit|und
     }
 }
 
-/*
-async function doHeadAndGet(url: string, fileStamp: string|undefined, skipHead:boolean, headers:HeadersInit|undefined=undefined): Promise<Response | undefined> {
-    if (skipHead || fileStamp === null) {
-        return await doFetch(url, 'GET', headers)        
-    }
-    else {
-        const headResponse = await doFetch(url, 'HEAD', headers)
-        
-        if (headResponse === undefined) {
-            return undefined
-        }
-        else if (getFileStamp(headResponse.headers) === fileStamp) {
-            return undefined
-        }
-        else {            
-            return await doFetch(url, 'GET', headers)
-        }        
-    }
-}
-
-
-async function fetchFile<T>(url: string, fileStamp: string|undefined, converter:(response:Response)=>Promise<T>, skipHead:boolean, headers:HeadersInit|undefined=undefined): Promise<T | undefined> {
-    const response = await doHeadAndGet(url, fileStamp, skipHead, headers)
-    return ((response !== undefined) && response.ok) ? await converter(response) : undefined
-}
-
-
-async function convertResponseToDataFile(response:Response):Promise<PartialDataFileType> {    
-    const buffer = await response.arrayBuffer()
-    const fileStamp = getFileStamp(response.headers)
-    const mime = response.headers.get('Content-Type') || 'application/octet-stream'
-
-    return {
-        type: "data",
-        fileStamp: fileStamp,
-        mime: mime,
-        buffer: buffer            
-    }
-}
-
-async function convertResponseToCssFile(response: Response): Promise<CssFileType> {
-    const css = await response.text()
-    const fileStamp = getFileStamp(response.headers)
-
-    return {
-        type: "css",
-        css: css,
-        fileStamp: fileStamp
-    }
-}
-
-async function convertResponseToMarkdownFile(response:Response, page:string, isMarkdownFile:(fileName:string)=>boolean):Promise<MarkdownFileType> {
-    const markdownText = await response.text()
-    const fileStamp = getFileStamp(response.headers)
-    return getMarkdownFile(markdownText, page, fileStamp, isMarkdownFile)
-}
-*/
-
-
-export class WikiFileHandlerForUrl implements WikiBlobHandler {
+export class WikiFileHandlerForUrl implements FileSrcHandler {
     static readonly DEFAULT_TEXT_FILE_MIME = 'text/plain'
     static readonly DEFAULT_BINARY_FILE_MIME = 'application/octet-stream'
 
-    readonly extFile:WikiBlobType['url']
+    readonly extFile:AllFileSrcType['url']
 
-    constructor(src:WikiBlobType['url']) {        
+    constructor(src:AllFileSrcType['url']) {        
         this.extFile = src
     }
 
-    async getFileData():Promise<WikiBlobData|undefined> {
+    async getFileData():Promise<FileSrcData|undefined> {
         const response = await doFetch(this.extFile.url, 'HEAD', undefined)
         return (response !== undefined) ? {
                 src: this.extFile,
@@ -108,7 +49,7 @@ export class WikiFileHandlerForUrl implements WikiBlobHandler {
             } : undefined        
     }
 
-    async getTextFile():Promise<WikiTextFileType|undefined> {
+    async getTextFile():Promise<TextFileSrcType|undefined> {
         const response = await doFetch(this.extFile.url, 'GET', undefined)
         return (response !== undefined) ? {
                 src: this.extFile,
@@ -118,7 +59,7 @@ export class WikiFileHandlerForUrl implements WikiBlobHandler {
             } : undefined        
     }
 
-    async getBinaryFile():Promise<WikiBinaryFileType|undefined> {
+    async getBinaryFile():Promise<BinaryFileSrcType|undefined> {
         const response = await doFetch(this.extFile.url, 'GET', undefined)
         return (response !== undefined) ? {
                 src: this.extFile,
@@ -132,8 +73,9 @@ export class WikiFileHandlerForUrl implements WikiBlobHandler {
 async function scanUrlMarkdownHandler(url: string, fileName: string, fileData:ScanTreeFileType['file'], rootScanTree:ScanTreeFolderType, postEvent: PostEvent<WorkerMessageType>, isMarkdownFile: (fileName: string) => boolean):Promise<Set<string>> {
     
     if (fileData.status === false) {
-        fileData.status = true    
-        const handler = getWikiBlobHandler({ type: "url", url: getPageUrl(url, fileName) })
+        fileData.status = true
+        const fileSrc:FileSrcType = { type: "url", url: getPageUrl(url, fileName) }    
+        const handler = getFileSrcHandler(fileSrc)
 
         if (fileData.type === "markdown") {
            const markdownFile = await readMarkdownFile(handler, fileName, fileData.fileStamp, isMarkdownFile)
@@ -141,7 +83,8 @@ async function scanUrlMarkdownHandler(url: string, fileName: string, fileData:Sc
            
            if (isWikiFile(markdownFile)) {
                 postEvent.send("updateMarkdownFile", {
-                    fileName: fileName,            
+                    fileName: fileName,
+                    fileSrc: fileSrc,          
                     markdownFile: markdownFile
                 })                
 
@@ -155,7 +98,8 @@ async function scanUrlMarkdownHandler(url: string, fileName: string, fileData:Sc
             const dataFile = await readDataFile(handler, fileData.fileStamp)
             if (isWikiFile(dataFile)) {            
                 postEvent.send("updateDataFile", {
-                    fileName: fileName,            
+                    fileName: fileName,
+                    fileSrc: fileSrc,            
                     dataFile: dataFile
                 })                
             }
@@ -197,10 +141,12 @@ export async function scanUrlWorkerCallback(payload: WorkerMessageType['scanUrl'
 }
 
 export async function downloadCssFilelWorkerCallback(payload: WorkerMessageType['downloadCssFile']['request'], postEvent: PostEvent<WorkerMessageType>) {
-    const cssFile = await readCssFile(getWikiBlobHandler({ type:'url', url:payload.url}), payload.fileStamp)
+    const fileSrc:FileSrcType = { type:'url', url:payload.url}
+    const cssFile = await readCssFile(getFileSrcHandler(fileSrc), payload.fileStamp)
     if (isWikiFile(cssFile)) {
         postEvent.send('updateCssFile', {
             fileName: payload.fileName,
+            fileSrc: fileSrc,
             cssFile: cssFile
         })        
     }

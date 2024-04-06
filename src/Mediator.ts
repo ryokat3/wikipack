@@ -65,7 +65,7 @@ export class Mediator extends MediatorData {
         this.worker.addEventHandler("updateMarkdownFile", (payload)=>this.updateMarkdownFile(payload))
         this.worker.addEventHandler("updateCssFile", (payload)=>this.updateCssFile(payload))
         this.worker.addEventHandler("updateDataFile", (payload)=>this.updateDataFile(payload))
-        this.worker.addEventHandler("deleteFile", (payload)=>this.deleteFile(payload))        
+        this.worker.addEventHandler("deleteFile", (payload)=>this.deleteFile(payload))     
     }
 
     convertToHtml(fileName:string):string|undefined {
@@ -109,6 +109,7 @@ export class Mediator extends MediatorData {
     ////////////////////////////////////////////////////////////////////////
 
     updateCurrentPage(filePath:string):void {
+        console.log(`updateCurrentPage(${filePath})`)
         this.currentPage = canonicalFileName(filePath)        
 
         // Update HTML
@@ -132,7 +133,7 @@ export class Mediator extends MediatorData {
                 }
                 else {
                     if (this.directory !== undefined) {
-                        this.readCssFile(this.directory, addPath(getDir(this.currentPage), canonicalFileName(fileName)))
+                        this.readCssFile(this.directory, addPath(getDir(this.currentPage), canonicalFileName(fileName)), undefined)
                     }
                 }
             })             
@@ -177,7 +178,7 @@ export class Mediator extends MediatorData {
 
     scanDirectoryDone(_payload:WorkerMessageType['scanDirectoryDone']['response']):void {
         if (this.mode === "directory" && this.directory !== undefined) {
-            this.scanDirectory(this.directory)
+            // this.scanDirectory(this.directory)
         }        
     }
 
@@ -214,10 +215,11 @@ export class Mediator extends MediatorData {
         })
     }
 
-    readCssFile(handle:FileSystemDirectoryHandle, fileName:string):void {
+    readCssFile(handle:FileSystemDirectoryHandle, fileName:string, fileStamp:string|undefined):void {
         this.worker.request("readCssFile", {
             handle: handle,
-            fileName: fileName
+            fileName: fileName,
+            fileStamp: fileStamp
         })
     }
 
@@ -251,8 +253,7 @@ export class Mediator extends MediatorData {
         updateCssElement(payload.cssFile.css, canonicalFileName(payload.fileName), payload.cssFile.fileStamp)  
     }
 
-    updateDataFile(payload:WorkerMessageType['updateDataFile']['response']):void {
-        console.log(`updateDataFile(${payload.fileName})`)
+    updateDataFile(payload:WorkerMessageType['updateDataFile']['response']):void {        
 
         const fileName = canonicalFileName(payload.fileName)
         const blob = new Blob( [payload.dataFile.buffer], { type: payload.dataFile.mime })

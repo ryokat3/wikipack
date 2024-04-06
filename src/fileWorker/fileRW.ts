@@ -1,4 +1,4 @@
-import { WikiBlobType, WikiBlobHandler, WikiBinaryFileType, WikiBlobData, WikiTextFileType } from "../fileTree/WikiFile"
+import { AllFileSrcType, FileSrcHandler, BinaryFileSrcType, FileSrcData, TextFileSrcType } from "../fileTree/WikiFile"
 import { splitPath } from "../utils/appUtils"
 
 export async function getHandleMap(dirHandle:FileSystemDirectoryHandle):Promise<{ [name:string]:FileSystemHandle }> {
@@ -63,11 +63,11 @@ export function getFileStamp(blob:File):string {
     return `lastModified=${blob.lastModified}:size=${blob.size}`
 }
 
-export class WikiFileHandlerForFileHandle implements WikiBlobHandler {
-    readonly extFile:WikiBlobType['fileHandle']
+export class WikiFileHandlerForFileHandle implements FileSrcHandler {
+    readonly extFile:AllFileSrcType['fileHandle']
     private blob:File|undefined
 
-    constructor(extFile:WikiBlobType['fileHandle']) {        
+    constructor(extFile:AllFileSrcType['fileHandle']) {        
         this.extFile = extFile
         this.blob = undefined
     }
@@ -79,7 +79,7 @@ export class WikiFileHandlerForFileHandle implements WikiBlobHandler {
         return this.blob
     }
 
-    async getFileData():Promise<WikiBlobData> {
+    async getFileData():Promise<FileSrcData> {
         const blob = await this.getBlob()
         return {
             src: this.extFile,            
@@ -88,9 +88,9 @@ export class WikiFileHandlerForFileHandle implements WikiBlobHandler {
         }
     }
 
-    async getTextFile():Promise<WikiTextFileType|undefined> {
+    async getTextFile():Promise<TextFileSrcType|undefined> {
         
-        return await new Promise<WikiTextFileType|undefined>(async (resolve) => {
+        return await new Promise<TextFileSrcType|undefined>(async (resolve) => {
             const blob = await this.getBlob()
             const reader = new FileReader()
         
@@ -114,8 +114,8 @@ export class WikiFileHandlerForFileHandle implements WikiBlobHandler {
         })        
     }
 
-    async getBinaryFile():Promise<WikiBinaryFileType|undefined> {
-        return await new Promise<WikiBinaryFileType|undefined>(async (resolve) => {
+    async getBinaryFile():Promise<BinaryFileSrcType|undefined> {
+        return await new Promise<BinaryFileSrcType|undefined>(async (resolve) => {
             const blob = await this.getBlob()
             
             const reader = new FileReader()
@@ -140,11 +140,11 @@ export class WikiFileHandlerForFileHandle implements WikiBlobHandler {
     }
 }
 
-export class WikiFileHandlerForDirHandle implements WikiBlobHandler  {
-    readonly extFile:WikiBlobType['dirHandle']
+export class WikiFileHandlerForDirHandle implements FileSrcHandler  {
+    readonly extFile:AllFileSrcType['dirHandle']
     private fileHandleReader: WikiFileHandlerForFileHandle | undefined
 
-    constructor(extFile:WikiBlobType['dirHandle']) {        
+    constructor(extFile:AllFileSrcType['dirHandle']) {        
         this.extFile = extFile
         this.fileHandleReader = undefined
     }
@@ -158,15 +158,15 @@ export class WikiFileHandlerForDirHandle implements WikiBlobHandler  {
         return this.fileHandleReader
     }
 
-    async getFileData():Promise<WikiBlobData|undefined> {
+    async getFileData():Promise<FileSrcData|undefined> {
         return await (await this.getFileHandleReader())?.getFileData()
     }
 
-    async getTextFile():Promise<WikiTextFileType|undefined> {
+    async getTextFile():Promise<TextFileSrcType|undefined> {
         return await (await this.getFileHandleReader())?.getTextFile()
     }
 
-    async getBinaryFile():Promise<WikiBinaryFileType|undefined> {
+    async getBinaryFile():Promise<BinaryFileSrcType|undefined> {
         return await (await this.getFileHandleReader())?.getBinaryFile()
     }
 }

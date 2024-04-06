@@ -1,4 +1,4 @@
-import { MarkdownFileType, CssFileType, WorkerDataFileType} from "../fileTree/WikiFile"
+import { MarkdownFileType, CssFileType, WorkerDataFileType, FileSrcType, TextFileSrcType, BinaryFileSrcType } from "../fileTree/WikiFile"
 import { ScanTreeFolderType } from "../fileTree/ScanTree"
 
 // export type PartialDataFileType = Omit<Omit<DataFileType, 'dataRef'>, 'buffer'> & { buffer: ArrayBuffer}
@@ -33,7 +33,8 @@ export type WorkerMessageType = {
     readCssFile: {
         request: {
             handle: FileSystemDirectoryHandle,
-            fileName: string
+            fileName: string,
+            fileStamp: string | undefined,
         }
     }
     downloadCssFile: {
@@ -49,21 +50,41 @@ export type WorkerMessageType = {
             url: string     
         }
     },
+    updateTextFile: {
+        response: {
+            type: 'css',
+            fileName: string,
+            file: TextFileSrcType,
+            fileSrc: FileSrcType,
+        }
+    },
+    updateBinaryFile: {
+        response: {
+            type: 'data',
+            fileName: string,
+            fileSrc: FileSrcType,
+            mime: string,
+            file: BinaryFileSrcType            
+        }
+    },
     updateMarkdownFile: {
         response: {
-            fileName: string,            
+            fileName: string,
+            fileSrc: FileSrcType,
             markdownFile: MarkdownFileType
         }
     },
     updateCssFile: {
         response: {
             fileName: string,
+            fileSrc: FileSrcType,
             cssFile: CssFileType
         }
     },
     updateDataFile: {
         response: {
             fileName: string, 
+            fileSrc: FileSrcType,
             dataFile: WorkerDataFileType
         }
     },

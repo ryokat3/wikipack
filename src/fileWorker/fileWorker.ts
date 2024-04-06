@@ -4,14 +4,14 @@ import { PostEvent } from "../utils/WorkerMessage"
 import { collectFiles, getHandle, isFileHandle, WikiFileHandlerForFileHandle } from "./fileRW"
 import { makeFileRegexChecker } from "../utils/appUtils"
 import { getFileFromTree, updateFileOfTree } from "../fileTree/FileTree"
-import { readMarkdownFile, readDataFile, isWikiFile, getWikiBlobHandler } from "../fileTree/WikiFile"
+import { readMarkdownFile, readDataFile, readCssFile, isWikiFile, getFileSrcHandler, FileSrcType } from "../fileTree/WikiFile"
 import { ScanTreeFolderType } from "../fileTree/ScanTree"
 
+/*
 function getFileStamp(fp:File):string {
     return `lastModified=${fp.lastModified}:size=${fp.size}`
 }
 
- /*
 async function isFileUpdated(rootStampTree:ScanTreeFolderType, fileName:string, handle:FileSystemFileHandle):Promise<boolean> {
     const prev = getFileFromTree(rootStampTree, fileName)    
     if (prev === undefined) {
@@ -45,7 +45,7 @@ async function readMarkdownFile(handle: FileSystemFileHandle, isMarkdownFile:(fi
         reader.readAsText(blob, "utf-8")
     })    
 }
-*/
+
 
 async function readCssFile(handle: FileSystemFileHandle, fileName: string|undefined = undefined ): Promise<WorkerMessageType["updateCssFile"]["response"]> {
     return await new Promise<WorkerMessageType["updateCssFile"]["response"]>(async (resolve) => {
@@ -69,7 +69,7 @@ async function readCssFile(handle: FileSystemFileHandle, fileName: string|undefi
     })    
 }
 
-/*
+
 async function readDataFile(handle: FileSystemFileHandle, fileName: string): Promise<WorkerMessageType["updateDataFile"]["response"]> {
     return await new Promise<WorkerMessageType["updateDataFile"]["response"]>(async (resolve) => {
         const blob = await handle.getFile()         
@@ -98,10 +98,11 @@ async function updateDataFileList(rootHandle:FileSystemDirectoryHandle, fileName
         const handle = await getHandle(rootHandle, fileName)
         if ((handle !== undefined) && isFileHandle(handle)) {
             const prevData = getFileFromTree(rootScanTree, fileName)
-            const handler = getWikiBlobHandler( { type: "fileHandle", fileHandle: handle})
+            const fileSrc:FileSrcType = { type: "fileHandle", fileHandle: handle}
+            const handler = getFileSrcHandler(fileSrc)
             const dataFile = await readDataFile(handler, ((prevData !== undefined) && (prevData.type !== "folder")) ? prevData.fileStamp : undefined )
             if (isWikiFile(dataFile))  {
-                postEvent.send("updateDataFile", { fileName: fileName, dataFile: dataFile }, [dataFile.buffer])
+                postEvent.send("updateDataFile", { fileName: fileName, fileSrc: fileSrc, dataFile: dataFile }, [dataFile.buffer])
             }
             updateFileOfTree(rootScanTree, fileName, {
                 type: 'data',
@@ -118,13 +119,15 @@ async function updateDataFileList(rootHandle:FileSystemDirectoryHandle, fileName
 
 export async function openFileWorkerCallback(payload:WorkerMessageType['openFile']['request'], postEvent:PostEvent<WorkerMessageType>) {
     const isMarkdownFile = makeFileRegexChecker(payload.markdownFileRegex)
-    const handler = new WikiFileHandlerForFileHandle( { type: "fileHandle", fileHandle: payload.handle})
+    const fileSrc:FileSrcType = { type: "fileHandle", fileHandle: payload.handle}    
+    const handler = new WikiFileHandlerForFileHandle(fileSrc)
     const blob = await handler.getBlob()
     const result = await readMarkdownFile(handler, blob.name, undefined, isMarkdownFile)
 
     if ((result !== undefined) && (result !== "NO_UPDATE")) {
-        postEvent.send("updateMarkdownFile", {
+        postEvent.send("updateMarkdownFile", {            
             fileName: blob.name,
+            fileSrc: fileSrc,
             markdownFile: result
         })
     }
@@ -138,11 +141,12 @@ export async function scanDirectoryWorkerCallback(payload:WorkerMessageType['sca
     try {
         const dataFileList:Set<string> = new Set([])
         for (const [fileName, handle] of Object.entries(await collectFiles(rootHandle, isMarkdownFile))) {
-            const handler = getWikiBlobHandler({ type: "fileHandle", fileHandle: handle})
+            const fileSrc:FileSrcType = { type: "fileHandle", fileHandle: handle }
+            const handler = getFileSrcHandler(fileSrc)
             const prev = getFileFromTree(rootScanTree, fileName)
             const fileData = await readMarkdownFile(handler, fileName, (prev?.type === "markdown") ? prev.fileStamp : undefined, isMarkdownFile)            
             if (isWikiFile(fileData)) {
-                postEvent.send("updateMarkdownFile", { fileName:fileName, markdownFile:fileData})
+                postEvent.send("updateMarkdownFile", { fileName:fileName, fileSrc:fileSrc, markdownFile:fileData})
             }
             updateFileOfTree(rootScanTree, fileName, {
                 type: 'markdown',
@@ -164,7 +168,14 @@ export async function scanDirectoryWorkerCallback(payload:WorkerMessageType['sca
 export async function readCssFileWorkerCallback(payload:WorkerMessageType['readCssFile']['request'], postEvent:PostEvent<WorkerMessageType>){
     const handle = await getHandle(payload.handle, payload.fileName)
     if ((handle !== undefined) && isFileHandle(handle)) {
-        const fileData = await readCssFile(handle, payload.fileName)
-        postEvent.send("updateCssFile", fileData)
+        const fileSrc:FileSrcType = { type:"fileHandle", fileHandle: handle}
+        const cssFile = await readCssFile(getFileSrcHandler(fileSrc), payload.fileStamp)
+        if (isWikiFile(cssFile)) {
+            postEvent.send("updateCssFile", {
+                fileName: payload.fileName,
+                fileSrc: fileSrc,
+                cssFile: cssFile
+            })
+        }
     }
 }
