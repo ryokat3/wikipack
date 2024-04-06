@@ -44,6 +44,9 @@ export function getMarkdownFile(markdown:string, fileName:string, fileStamp:stri
         type: "markdown",
         markdown: markdown,
         fileStamp: fileStamp,
+        fileSrc: {
+            type: 'never'
+        },
         imageList: [],
         linkList: [],
         markdownList: []

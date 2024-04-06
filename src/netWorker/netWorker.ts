@@ -43,7 +43,7 @@ export class WikiFileHandlerForUrl implements FileSrcHandler {
     async getFileData():Promise<FileSrcData|undefined> {
         const response = await doFetch(this.fileSrc.url, 'HEAD', undefined)
         return (response !== undefined) ? {
-                src: this.fileSrc,
+                fileSrc: this.fileSrc,
                 fileStamp: getFileStamp(response.headers),
                 mime: response.headers.get('Content-Type') || ''
             } : undefined        
@@ -52,7 +52,7 @@ export class WikiFileHandlerForUrl implements FileSrcHandler {
     async getTextFile():Promise<TextFileSrcType|undefined> {
         const response = await doFetch(this.fileSrc.url, 'GET', undefined)
         return (response !== undefined) ? {
-                src: this.fileSrc,
+                fileSrc: this.fileSrc,
                 fileStamp: getFileStamp(response.headers),
                 mime: response.headers.get('Content-Type') || WikiFileHandlerForUrl.DEFAULT_TEXT_FILE_MIME,
                 data: await response.text()
@@ -62,7 +62,7 @@ export class WikiFileHandlerForUrl implements FileSrcHandler {
     async getBinaryFile():Promise<BinaryFileSrcType|undefined> {
         const response = await doFetch(this.fileSrc.url, 'GET', undefined)
         return (response !== undefined) ? {
-                src: this.fileSrc,
+                fileSrc: this.fileSrc,
                 fileStamp: getFileStamp(response.headers),
                 mime: response.headers.get('Content-Type') || WikiFileHandlerForUrl.DEFAULT_BINARY_FILE_MIME,
                 data: await response.arrayBuffer()

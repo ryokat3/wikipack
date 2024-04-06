@@ -43,6 +43,9 @@ async function getCssFileFromElement(elem:Element):Promise<[string, CssFileType]
         return [fileName, {
             type: "css",
             fileStamp: fileStamp,
+            fileSrc: {
+                type: 'never'                                
+            },
             css: css
         }]
     }
@@ -57,14 +60,19 @@ async function getDataFileFromElement(elem:Element):Promise<[string, DataFileTyp
     if (fileName !== undefined) {    
         const blob = await dataUrlDecodeAsBlob(elem.innerHTML)
         const dataRef = URL.createObjectURL(blob)
+        // const dataRef = elem.innerHTML
         const fileStamp = elem.getAttribute(FILE_STAMP_ATTR) || ""        
-        const mime = elem.getAttribute("mime") || blob.type
+        const mime = elem.getAttribute("mime") || dataRef.substring(dataRef.indexOf(":")+1, dataRef.indexOf(";"))
 
         return [fileName, {
             type: "data",
             dataRef: dataRef,
-            buffer: elem.innerHTML,
+            // buffer: elem.innerHTML,
+            buffer: new ArrayBuffer(0), // TODO: Will not be used
             fileStamp: fileStamp,
+            fileSrc: {
+                type: 'never'
+            },
             mime: mime
         }]
     }
@@ -101,13 +109,13 @@ export async function injectAllCssFileFromElement(root:FolderType) {
     }    
 }
 
-export async function injectAllDataFileFromElement(root:FolderType) {
+export async function injectAllDataFileFromElement(rootFolder:FolderType) {
     const dataElemList = document.getElementsByClassName(EMBEDDED_DATA_FILE_CLASS)        
     for (const elem of Array.from(dataElemList)) {        
         if (elem !== null) {
             const fileData = await getDataFileFromElement(elem)
             if (fileData !== undefined) {
-                updateFileOfTree(root, fileData[0], fileData[1])
+                updateFileOfTree(rootFolder, fileData[0], fileData[1])
             }
         }
     }  

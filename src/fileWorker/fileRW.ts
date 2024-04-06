@@ -82,7 +82,7 @@ export class WikiFileHandlerForFileHandle implements FileSrcHandler {
     async getFileData():Promise<FileSrcData> {
         const blob = await this.getBlob()
         return {
-            src: this.fileSrc,            
+            fileSrc: this.fileSrc,            
             fileStamp: getFileStamp(blob),
             mime: blob.type            
         }
@@ -97,7 +97,7 @@ export class WikiFileHandlerForFileHandle implements FileSrcHandler {
             reader.onload = (e: ProgressEvent<FileReader>) => {
                 if ((e.target !== null) && (e.target.result !== null) && (typeof e.target.result == 'string')) {                    
                     resolve({
-                        src: this.fileSrc,
+                        fileSrc: this.fileSrc,
                         fileStamp: getFileStamp(blob),
                         mime: blob.type,
                         data: e.target.result
@@ -122,7 +122,7 @@ export class WikiFileHandlerForFileHandle implements FileSrcHandler {
             reader.onload = (e: ProgressEvent<FileReader>) => {
                 if ((e.target !== null) && (e.target.result !== null) && (typeof e.target.result == 'object')) {                
                     resolve({
-                        src: this.fileSrc,
+                        fileSrc: this.fileSrc,
                         fileStamp: getFileStamp(blob),
                         mime: blob.type,
                         data: e.target.result

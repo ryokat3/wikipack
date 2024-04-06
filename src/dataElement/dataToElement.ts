@@ -40,6 +40,7 @@ async function saveCssFileToElement(fileName:string, cssFile:CssFileType):Promis
     }
 }
 
+/*
 async function saveDataFileToElement(fileName:string, dataFile:DataFileType):Promise<HTMLScriptElement|undefined> {
     if (typeof dataFile.buffer !== 'string') {
         const dataUrl = await dataUrlEncode(dataFile.buffer, dataFile.mime)        
@@ -62,6 +63,21 @@ async function saveDataFileToElement(fileName:string, dataFile:DataFileType):Pro
         return elem
     }
 }
+*/
+
+async function saveDataFileToElement(fileName:string, dataFile:DataFileType):Promise<HTMLScriptElement|undefined> {
+    const dataUrl = await dataUrlEncode(dataFile.buffer, dataFile.mime)        
+    if (dataUrl !== null) {            
+        const elem = createFileElement(fileName, dataFile.fileStamp)
+        elem.setAttribute('class', EMBEDDED_DATA_FILE_CLASS)
+        elem.setAttribute('mime', dataFile.mime)
+        elem.innerHTML = dataUrl                        
+        return elem
+    }
+    else {
+        return undefined
+    }
+}
 
 export function saveJsonToElement(fileName:string, data:Object, fileStamp:string) {
     const elem = createFileElement(fileName, fileStamp)
@@ -80,9 +96,9 @@ export async function saveFolderToElement(doc:Document, folder:FolderType, pathN
             }
         }
         else if (info.type === "data") {
-            const elem = await saveDataFileToElement(filePath, info)            
-            if (elem !== undefined) {          
-                doc.head.appendChild(elem)                      
+            const elem = await saveDataFileToElement(filePath, info)     
+            if (elem !== undefined) {
+                doc.head.appendChild(elem)
             }
         }
         else if (info.type === "css") {

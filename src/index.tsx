@@ -39,6 +39,7 @@ window.onload = async function () {
             type: "markdown",
             markdown: defaultMarkdown,
             fileStamp: "",
+            fileSrc: { type: "never" },
             imageList: [],
             linkList: [],
             markdownList: []

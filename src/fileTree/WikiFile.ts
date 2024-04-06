@@ -16,17 +16,21 @@ export type WikiFileType = {
         type: "markdown",
         markdown: string,
         fileStamp: string,
+        fileSrc: FileSrcType,
     } & MarkdownLinkType,
     css: {
         type: "css",
         css: string,
-        fileStamp: string  
+        fileStamp: string,
+        fileSrc: FileSrcType, 
     },
     data: {
         type: "data",
         dataRef: string,
-        buffer: ArrayBuffer | string,
+        // TODO: buffer: ArrayBuffer | string,
+        buffer: ArrayBuffer,
         fileStamp: string,
+        fileSrc: FileSrcType,
         mime: string        
     }
 }
@@ -56,12 +60,16 @@ type FileSrcDefinition = {
         type: "url"
         url: string
     }
+    never: {
+        type: "never",
+    }
 }
 
 export type FileSrcType = FileSrcDefinition[keyof FileSrcDefinition]
 export type UrlSrcType = FileSrcDefinition['url']
 export type DirHandleSrcType = FileSrcDefinition['dirHandle']
 export type FileHandleSrcType = FileSrcDefinition['fileHandle']
+export type NeverSrcType = FileSrcDefinition['never']
 
 ////////////////////////////////////////////////////////////////////////////////
 //                Success      Error
@@ -84,7 +92,7 @@ export function updateWikiBlobStatus(status:FileSrcStatus, success:boolean):File
 }
 
 export type FileSrcData = {
-    src: FileSrcDefinition[keyof FileSrcDefinition]
+    fileSrc: FileSrcType
     fileStamp: string
     mime: string
 }
@@ -94,6 +102,7 @@ export type TextFileSrcType = FileSrcData & {
 }
 
 export type BinaryFileSrcType = FileSrcData & {
+    // TODO: data: ArrayBuffer | string
     data: ArrayBuffer
 }
 
@@ -105,15 +114,32 @@ export interface FileSrcHandler {
     getBinaryFile(): Promise<BinaryFileSrcType | undefined>
 }
 
-export function getFileSrcHandler(wikiBlob: FileSrcDefinition[keyof FileSrcDefinition]) {
-    switch (wikiBlob.type) {
+export function getFileSrcHandler(fileSrc:FileSrcType) {
+    switch (fileSrc.type) {
         case 'url':
-            return new WikiFileHandlerForUrl(wikiBlob)            
+            return new WikiFileHandlerForUrl(fileSrc)            
         case 'fileHandle':
-            return new WikiFileHandlerForFileHandle(wikiBlob)
+            return new WikiFileHandlerForFileHandle(fileSrc)
         case 'dirHandle':
-            return new WikiFileHandlerForDirHandle(wikiBlob)
+            return new WikiFileHandlerForDirHandle(fileSrc)
+        case 'never':
+            return new FileTreeSrcHandler(fileSrc)
     }
+}
+
+class FileTreeSrcHandler implements FileSrcHandler {
+    constructor(_fileSrc:NeverSrcType) {        
+    }
+    getFileData():Promise<FileSrcData | undefined> {
+        throw new Error()
+    }
+    getTextFile(): Promise<TextFileSrcType | undefined> {
+        throw new Error()
+    }
+    getBinaryFile(): Promise<BinaryFileSrcType | undefined> {
+        throw new Error()
+    }
+
 }
 
 export class FileSrcReader {
@@ -160,7 +186,8 @@ function convertToMarkdownFile(textFile:TextFileSrcType, dirPath:string, isMarkd
         ...getMarkdownLink(textFile.data, dirPath, isMarkdownFile),
         type: "markdown",
         markdown: textFile.data,
-        fileStamp: textFile.fileStamp   
+        fileStamp: textFile.fileStamp,
+        fileSrc: textFile.fileSrc   
     }
 }
 
@@ -168,6 +195,7 @@ function convertToDataFile(binaryFile:BinaryFileSrcType):WorkerDataFileType {
     return {
         type: "data",
         fileStamp: binaryFile.fileStamp,
+        fileSrc: binaryFile.fileSrc,
         mime: binaryFile.mime,
         buffer: binaryFile.data
     }
@@ -177,7 +205,8 @@ function convertToCssFile(textFile:TextFileSrcType):CssFileType {
     return {        
         type: "css",
         css: textFile.data,
-        fileStamp: textFile.fileStamp   
+        fileStamp: textFile.fileStamp,
+        fileSrc: textFile.fileSrc   
     }
 }
 

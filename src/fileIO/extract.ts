@@ -1,5 +1,5 @@
 import { FolderType, MarkdownFileType, CssFileType, DataFileType } from "../fileTree/WikiFile"
-import { dataUrlDecodeAsArrayBuffer } from "../utils/appUtils"
+// import { dataUrlDecodeAsArrayBuffer } from "../utils/appUtils"
 
 export async function getDirectoryHandle() {
     return await window.showDirectoryPicker({
@@ -25,12 +25,7 @@ async function saveCssFileToLocalFile(handle:FileSystemDirectoryHandle, cssFile:
 async function saveDataFileToLocalFile(handle:FileSystemDirectoryHandle, dataFile:DataFileType, name:string) {
     const fileHandle = await handle.getFileHandle(name, { create: true })
     const writable = await fileHandle.createWritable()
-    if (typeof dataFile.buffer === "string") {
-        await writable.write(await dataUrlDecodeAsArrayBuffer(dataFile.buffer))        
-    }
-    else {
-        await writable.write(dataFile.buffer)
-    }
+    await writable.write(dataFile.dataRef)
     await writable.close()
 }
 
