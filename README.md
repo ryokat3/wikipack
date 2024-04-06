@@ -4,6 +4,14 @@ A portable HTML file to pack markdown, image, css, and any data files into singl
 
 ## Usage
 
+WikiPack has 2 main functions:
+
+1. A single HTML file containing both wiki/blog viewer and wiki/blog contents
+
+2. A single HTML file providing wiki/blog pages without wiki/blog server
+
+### Local File System
+
 1. Open the [WikiPack HTML file](https://ryokat3.github.io/wikipack/)
 
 2. Drag-and-drop the directory (not a file [^1]) holding your markdown and image files
