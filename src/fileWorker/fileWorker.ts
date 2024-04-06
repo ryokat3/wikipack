@@ -4,7 +4,7 @@ import { PostEvent } from "../utils/WorkerMessage"
 import { collectFiles, getHandle, isFileHandle, WikiFileHandlerForFileHandle } from "./fileRW"
 import { makeFileRegexChecker } from "../utils/appUtils"
 import { getFileFromTree, updateFileOfTree } from "../fileTree/FileTree"
-import { readMarkdownFile, readDataFile, isWikiFile, getWikiBlobHandler } from "../fileTree/FileTreeType"
+import { readMarkdownFile, readDataFile, isWikiFile, getWikiBlobHandler } from "../fileTree/WikiFile"
 import { ScanTreeFolderType } from "../fileTree/ScanTree"
 
 function getFileStamp(fp:File):string {

@@ -1,5 +1,5 @@
 import { FileTreeFolderType, convertFileTree } from "./FileTree"
-import { FolderType, WikiFileType } from "./FileTreeType"
+import { FolderType, WikiFileType } from "./WikiFile"
 
 export type ScanTreeFileType = {
     file: {

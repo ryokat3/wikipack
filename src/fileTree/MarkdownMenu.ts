@@ -1,4 +1,4 @@
-import { FolderType, MarkdownFileType } from "./FileTreeType"
+import { FolderType, MarkdownFileType } from "./WikiFile"
 import { createRootFolder, FileTreeFolderType } from "./FileTree"
 
 export type MarkdownMenuFileType =  {

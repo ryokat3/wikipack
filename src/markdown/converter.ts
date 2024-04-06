@@ -3,7 +3,7 @@ import marked, { Marked } from 'marked'
 import { markedHighlight } from "marked-highlight"
 import hljs from 'highlight.js'
 import { getFileFromTree } from "../fileTree/FileTree"
-import { MarkdownFileType, MarkdownLinkType, FolderType } from "../fileTree/FileTreeType"
+import { MarkdownFileType, MarkdownLinkType, FolderType } from "../fileTree/WikiFile"
 import { splitPath, getDir, addPath, isURL } from "../utils/appUtils"
 
 

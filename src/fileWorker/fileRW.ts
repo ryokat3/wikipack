@@ -1,4 +1,4 @@
-import { WikiBlobType, WikiBlobHandler, WikiBinaryFileType, WikiBlobData, WikiTextFileType } from "../fileTree/FileTreeType"
+import { WikiBlobType, WikiBlobHandler, WikiBinaryFileType, WikiBlobData, WikiTextFileType } from "../fileTree/WikiFile"
 import { splitPath } from "../utils/appUtils"
 
 export async function getHandleMap(dirHandle:FileSystemDirectoryHandle):Promise<{ [name:string]:FileSystemHandle }> {
