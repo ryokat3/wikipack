@@ -240,8 +240,10 @@ export class Mediator extends MediatorData {
             this.dispatcher.updateMenuRoot({ menuRoot:menuRoot })
         }
 
-        if ((this.currentPage === NO_CURRENT_PAGE) || (isCurrentPageExist && this.currentPage === fileName && !isSame)) {                        
-            this.currentPage = fileName            
+        if (this.currentPage === NO_CURRENT_PAGE) {
+            window.location.hash = `#${fileName}`            
+        }
+        else if (isCurrentPageExist && this.currentPage === fileName && !isSame) {            
             const html = this.convertToHtml(this.currentPage)
             if (html !== undefined) {                
                 this.dispatcher.updateHtml({ title: this.currentPage, html: html})
