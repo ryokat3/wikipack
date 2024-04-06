@@ -8,7 +8,7 @@ import { addPath, getFileName } from "../utils/appUtils"
 
 
 interface MarkdownMenuFileProps {
-    pathName: string,    
+    pathName: string
 }
 
 const MarkdownMenuFile: React.FunctionComponent<MarkdownMenuFileProps> = (props: MarkdownMenuFileProps) => {

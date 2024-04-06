@@ -30,6 +30,19 @@ export type WorkerMessageType = {
             markdownFileRegex: string[]            
         }
     }
+    checkCurrentPage: {
+        request: {
+            fileSrc:FileSrcType,
+            fileName: string,
+            fileStamp: string | undefined
+            markdownFileRegex: string[] 
+        }
+    }
+    checkCurrentPageDone: {
+        response: {
+            updated: boolean
+        }
+    }
     readCssFile: {
         request: {
             handle: FileSystemDirectoryHandle,

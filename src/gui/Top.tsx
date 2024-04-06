@@ -28,8 +28,6 @@ export interface TopProps {
 
 export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
 
-    console.log(`Top`)
-
     const [state, dispatch] = React.useReducer(topReducer, props.initialState)
     const dispatcher = topDispatcher.build(dispatch)
     const mediator = new MediatorProxy(props.worker, props.config, dispatcher)   
@@ -42,8 +40,6 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
     useEffect(() => {
         mediator.onGuiInitialized()       
     }, [])
-    
-    console.log(`Top: Return`)
 
     return <TopContext.Provider value={context}>
         <SearchAppBar

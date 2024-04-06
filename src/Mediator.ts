@@ -31,15 +31,14 @@ function getRootUrl():URL {
     return url
 }
 
-class MediatorData {
-    // readonly rootUrl: URL = new URL(window.location.href)
+class MediatorData {    
     readonly rootUrl: URL = getRootUrl()
     rootFolder: FolderType = createRootFolder<WikiFileType>()
-    currentPage: string = NO_CURRENT_PAGE
-    // currentCss: CssInfo = {}
+    currentPage: string = NO_CURRENT_PAGE    
     mode: 'directory' | 'url' | undefined = undefined
     directory: FileSystemDirectoryHandle | undefined = undefined    
-    seq: number = 0    
+    seq: number = 0
+    checkInterval: number = 1000
 }
 
 export class Mediator extends MediatorData {
@@ -66,6 +65,7 @@ export class Mediator extends MediatorData {
         this.worker.addEventHandler("updateCssFile", (payload)=>this.updateCssFile(payload))
         this.worker.addEventHandler("updateDataFile", (payload)=>this.updateDataFile(payload))
         this.worker.addEventHandler("deleteFile", (payload)=>this.deleteFile(payload))     
+        this.worker.addEventHandler("checkCurrentPageDone", (payload)=>this.checkCurrentPageDone(payload))
     }
 
     convertToHtml(fileName:string):string|undefined {
@@ -179,7 +179,8 @@ export class Mediator extends MediatorData {
     scanDirectoryDone(_payload:WorkerMessageType['scanDirectoryDone']['response']):void {
         if (this.mode === "directory" && this.directory !== undefined) {
             // this.scanDirectory(this.directory)
-        }        
+        }
+        this.checkCurrentPage()             
     }
 
     scanUrl(url:URL):void {
@@ -194,8 +195,9 @@ export class Mediator extends MediatorData {
 
     scanUrlDone(_payload:WorkerMessageType['scanUrlDone']['response']):void {        
         if (this.mode === "url") {
-            this.scanUrl(this.rootUrl)
-        }        
+            // this.scanUrl(this.rootUrl)
+        }
+        this.checkCurrentPage()      
     }
 
     openFile(handle:FileSystemFileHandle,):void {
@@ -222,6 +224,29 @@ export class Mediator extends MediatorData {
             fileStamp: fileStamp
         })
     }
+
+    checkCurrentPage(): void {
+        if (this.currentPage !== undefined) {
+            const currentFile = getFileFromTree(this.rootFolder, this.currentPage)
+            if ((currentFile !== undefined) && (currentFile.type === 'markdown') && (currentFile.fileSrc.type !== 'never')) {
+                this.worker.request("checkCurrentPage", {
+                    fileSrc: currentFile.fileSrc,
+                    fileName: this.currentPage,
+                    fileStamp: currentFile.fileStamp,
+                    markdownFileRegex: this.config.markdownFileRegex                                
+                })
+                return
+            }
+        }
+        this.checkInterval = Math.min(this.config.maxCheckInterval, this.checkInterval + 10)
+        window.setTimeout(()=>this.checkCurrentPage(), this.checkInterval)
+    }
+
+    checkCurrentPageDone(payload:WorkerMessageType['checkCurrentPageDone']['response']):void {  
+        this.checkInterval = (payload.updated) ? this.config.minCheckInterval : Math.min(this.config.maxCheckInterval, this.checkInterval + 10)
+        window.setTimeout(()=>this.checkCurrentPage(), this.checkInterval)        
+    }
+    
 
     ////////////////////////////////////////////////////////////////////////
     // Handler for Worker Message Responses

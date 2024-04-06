@@ -2,7 +2,9 @@
     "topPage": "index.md",
     "markdownFileRegex": [ ".*\\.(md|markdown)$" ],    
     "markdownBodyClass": "markdown-body",
-    "configFile": "wikipack.config.json",    
+    "configFile": "wikipack.config.json",
+    "minCheckInterval": 10,
+    "maxCheckInterval": 2000,
     "packCss": true,
     "cssRules" : [
         {
