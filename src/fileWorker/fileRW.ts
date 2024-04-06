@@ -1,3 +1,4 @@
+import { ExtFileType, ExtFileHandler, ExtBinaryFileType, ExtFileData, ExtTextFileType } from "../fileTree/FileTreeType"
 import { splitPath } from "../utils/appUtils"
 
 export async function getHandleMap(dirHandle:FileSystemDirectoryHandle):Promise<{ [name:string]:FileSystemHandle }> {
@@ -56,4 +57,116 @@ export function isFileHandle(handle:FileSystemHandle):handle is FileSystemFileHa
 
 export function isDirectoryHandle(handle:FileSystemHandle):handle is FileSystemDirectoryHandle {
     return handle.kind === "directory"
+}
+
+export function getFileStamp(blob:File):string {
+    return `lastModified=${blob.lastModified}:size=${blob.size}`
+}
+
+export class ExtFileHandlerForFileHandle implements ExtFileHandler {
+    readonly extFile:ExtFileType['fileHandle']
+    private blob:File|undefined
+
+    constructor(extFile:ExtFileType['fileHandle']) {        
+        this.extFile = extFile
+        this.blob = undefined
+    }
+
+    async getBlob():Promise<File> {        
+        if (this.blob === undefined) {
+            this.blob = await this.extFile.fileHandle.getFile()
+        }
+        return this.blob
+    }
+
+    async getFileData():Promise<ExtFileData> {
+        const blob = await this.getBlob()
+        return {
+            src: this.extFile,            
+            fileStamp: getFileStamp(blob),
+            mime: blob.type            
+        }
+    }
+
+    async getTextFile():Promise<ExtTextFileType|undefined> {
+        
+        return await new Promise<ExtTextFileType|undefined>(async (resolve) => {
+            const blob = await this.getBlob()
+            const reader = new FileReader()
+        
+            reader.onload = (e: ProgressEvent<FileReader>) => {
+                if ((e.target !== null) && (e.target.result !== null) && (typeof e.target.result == 'string')) {                    
+                    resolve({
+                        src: this.extFile,
+                        fileStamp: getFileStamp(blob),
+                        mime: blob.type,
+                        data: e.target.result
+                    })               
+                }
+                else {                    
+                    resolve(undefined)
+                }
+            }
+            reader.onerror = (_e: ProgressEvent<FileReader>) => {
+                resolve(undefined)
+            }                        
+            reader.readAsText(blob, "utf-8")
+        })        
+    }
+
+    async getBinaryFile():Promise<ExtBinaryFileType|undefined> {
+        return await new Promise<ExtBinaryFileType|undefined>(async (resolve) => {
+            const blob = await this.getBlob()
+            
+            const reader = new FileReader()
+            reader.onload = (e: ProgressEvent<FileReader>) => {
+                if ((e.target !== null) && (e.target.result !== null) && (typeof e.target.result == 'object')) {                
+                    resolve({
+                        src: this.extFile,
+                        fileStamp: getFileStamp(blob),
+                        mime: blob.type,
+                        data: e.target.result
+                    })                    
+                }
+                else {
+                    resolve(undefined)
+                }
+            }
+            reader.onerror = (_e: ProgressEvent<FileReader>) => {
+                resolve(undefined)
+            }  
+            reader.readAsArrayBuffer(blob)        
+        })
+    }
+}
+
+export class ExtFileHandlerForDirHandle implements ExtFileHandler  {
+    readonly extFile:ExtFileType['dirHandle']
+    private fileHandleReader: ExtFileHandlerForFileHandle | undefined
+
+    constructor(extFile:ExtFileType['dirHandle']) {        
+        this.extFile = extFile
+        this.fileHandleReader = undefined
+    }
+
+    private async getFileHandleReader():Promise<ExtFileHandlerForFileHandle|undefined> {        
+        const handle = await getHandle(this.extFile.dirHandle, this.extFile.fileName)
+        this.fileHandleReader = (handle !== undefined && isFileHandle(handle)) ? new ExtFileHandlerForFileHandle( {            
+            type: "fileHandle",
+            fileHandle: handle
+         }) : undefined
+        return this.fileHandleReader
+    }
+
+    async getFileData():Promise<ExtFileData|undefined> {
+        return await (await this.getFileHandleReader())?.getFileData()
+    }
+
+    async getTextFile():Promise<ExtTextFileType|undefined> {
+        return await (await this.getFileHandleReader())?.getTextFile()
+    }
+
+    async getBinaryFile():Promise<ExtBinaryFileType|undefined> {
+        return await (await this.getFileHandleReader())?.getBinaryFile()
+    }
 }

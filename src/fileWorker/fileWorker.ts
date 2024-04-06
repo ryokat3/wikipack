@@ -1,15 +1,17 @@
 import { WorkerMessageType } from "../worker/WorkerMessageType"
 import { PostEvent } from "../utils/WorkerMessage"
-import { getMarkdownFile} from "../markdown/converter"
-import { collectFiles, getHandle, isFileHandle } from "./fileRW"
+// import { getMarkdownFile} from "../markdown/converter"
+import { collectFiles, getHandle, isFileHandle, ExtFileHandlerForFileHandle } from "./fileRW"
 import { makeFileRegexChecker } from "../utils/appUtils"
 import { getFileFromTree, updateFileOfTree } from "../fileTree/FileTree"
+import { readMarkdownFile, isFileType, getExtFileHandler } from "../fileTree/FileTreeType"
 import { ScanTreeFolderType } from "../fileTree/ScanTree"
 
 function getFileStamp(fp:File):string {
     return `lastModified=${fp.lastModified}:size=${fp.size}`
 }
 
+ /*
 async function isFileUpdated(rootStampTree:ScanTreeFolderType, fileName:string, handle:FileSystemFileHandle):Promise<boolean> {
     const prev = getFileFromTree(rootStampTree, fileName)    
     if (prev === undefined) {
@@ -23,6 +25,7 @@ async function isFileUpdated(rootStampTree:ScanTreeFolderType, fileName:string, 
         return  getFileStamp(current) !== prev.fileStamp
     }
 }
+
 
 async function readMarkdownFile(handle: FileSystemFileHandle, isMarkdownFile:(fileName:string)=>boolean, fileName: string|undefined = undefined ): Promise<WorkerMessageType["updateMarkdownFile"]["response"]> {
     return await new Promise<WorkerMessageType["updateMarkdownFile"]["response"]>(async (resolve) => {
@@ -42,6 +45,7 @@ async function readMarkdownFile(handle: FileSystemFileHandle, isMarkdownFile:(fi
         reader.readAsText(blob, "utf-8")
     })    
 }
+*/
 
 async function readCssFile(handle: FileSystemFileHandle, fileName: string|undefined = undefined ): Promise<WorkerMessageType["updateCssFile"]["response"]> {
     return await new Promise<WorkerMessageType["updateCssFile"]["response"]>(async (resolve) => {
@@ -113,8 +117,16 @@ async function updateDataFileList(rootHandle:FileSystemDirectoryHandle, fileName
 
 export async function openFileWorkerCallback(payload:WorkerMessageType['openFile']['request'], postEvent:PostEvent<WorkerMessageType>) {
     const isMarkdownFile = makeFileRegexChecker(payload.markdownFileRegex)
-    const result = await readMarkdownFile(payload.handle, isMarkdownFile)
-    postEvent.send("updateMarkdownFile", result)
+    const handler = new ExtFileHandlerForFileHandle( { type: "fileHandle", fileHandle: payload.handle})
+    const blob = await handler.getBlob()
+    const result = await readMarkdownFile(handler, blob.name, undefined, isMarkdownFile)
+
+    if ((result !== undefined) && (result !== "NO_UPDATE")) {
+        postEvent.send("updateMarkdownFile", {
+            fileName: blob.name,
+            markdownFile: result
+        })
+    }
 }
 
 export async function scanDirectoryWorkerCallback(payload:WorkerMessageType['scanDirectory']['request'], postEvent:PostEvent<WorkerMessageType>){                
@@ -125,18 +137,21 @@ export async function scanDirectoryWorkerCallback(payload:WorkerMessageType['sca
     try {
         const dataFileList:Set<string> = new Set([])
         for (const [fileName, handle] of Object.entries(await collectFiles(rootHandle, isMarkdownFile))) {
-            const fileData = await readMarkdownFile(handle, isMarkdownFile, fileName)
-            if (await isFileUpdated(rootScanTree, fileName, handle)) {                
-                postEvent.send("updateMarkdownFile", fileData)
+            const handler = getExtFileHandler({ type: "fileHandle", fileHandle: handle})
+            const prev = getFileFromTree(rootScanTree, fileName)
+            const fileData = await readMarkdownFile(handler, fileName, (prev?.type === "markdown") ? prev.fileStamp : undefined, isMarkdownFile)            
+            if (isFileType(fileData)) {
+                postEvent.send("updateMarkdownFile", { fileName:fileName, markdownFile:fileData})
             }
             updateFileOfTree(rootScanTree, fileName, {
                 type: 'markdown',
-                fileStamp: fileData.markdownFile.fileStamp,
+                fileStamp: (isFileType(fileData)) ? fileData.fileStamp : "",
                 status: true
             })
-
-            fileData.markdownFile.imageList.forEach(dataFileList.add, dataFileList)
-            fileData.markdownFile.linkList.forEach(dataFileList.add, dataFileList)
+            if (isFileType(fileData)) {
+                fileData.imageList.forEach(dataFileList.add, dataFileList)
+                fileData.linkList.forEach(dataFileList.add, dataFileList)
+            }
         }        
         await updateDataFileList(rootHandle, Array.from(dataFileList.values()), rootScanTree, postEvent)
     }

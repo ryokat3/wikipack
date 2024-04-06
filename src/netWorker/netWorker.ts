@@ -1,8 +1,8 @@
 import { WorkerMessageType, PartialDataFileType } from "../worker/WorkerMessageType"
 import { PostEvent } from "../utils/WorkerMessage"
-import { getMarkdownFile } from "../markdown/converter"
+// import { getMarkdownFile } from "../markdown/converter"
 import { makeFileRegexChecker } from "../utils/appUtils"
-import { MarkdownFileType, CssFileType } from "../fileTree/FileTreeType"
+import { /* MarkdownFileType, */ CssFileType , ExtFileType, ExtFileHandler, ExtBinaryFileType, ExtFileData, ExtTextFileType, readMarkdownFile } from "../fileTree/FileTreeType"
 import { updateFileOfTree, /* getFileFromTree,*/ reduceFileOfTree, getFileFromTree } from "../fileTree/FileTree"
 import { ScanTreeFileType, ScanTreeFolderType } from "../fileTree/ScanTree"
 import { getDir, addPath } from "../utils/appUtils"
@@ -78,21 +78,70 @@ async function convertResponseToCssFile(response: Response): Promise<CssFileType
     }
 }
 
+/*
 async function convertResponseToMarkdownFile(response:Response, page:string, isMarkdownFile:(fileName:string)=>boolean):Promise<MarkdownFileType> {
     const markdownText = await response.text()
     const fileStamp = getFileStamp(response.headers)
     return getMarkdownFile(markdownText, page, fileStamp, isMarkdownFile)
 }
+*/
+
+
+export class ExtFileHandlerForUrl implements ExtFileHandler {
+    static readonly DEFAULT_TEXT_FILE_MIME = 'text/plain'
+    static readonly DEFAULT_BINARY_FILE_MIME = 'application/octet-stream'
+
+    readonly extFile:ExtFileType['url']
+
+    constructor(src:ExtFileType['url']) {        
+        this.extFile = src
+    }
+
+    async getFileData():Promise<ExtFileData|undefined> {
+        const response = await doFetch(this.extFile.url, 'HEAD', undefined)
+        return (response !== undefined) ? {
+                src: this.extFile,
+                fileStamp: getFileStamp(response.headers),
+                mime: response.headers.get('Content-Type') || ''
+            } : undefined        
+    }
+
+    async getTextFile():Promise<ExtTextFileType|undefined> {
+        const response = await doFetch(this.extFile.url, 'GET', undefined)
+        return (response !== undefined) ? {
+                src: this.extFile,
+                fileStamp: getFileStamp(response.headers),
+                mime: response.headers.get('Content-Type') || ExtFileHandlerForUrl.DEFAULT_TEXT_FILE_MIME,
+                data: await response.text()
+            } : undefined        
+    }
+
+    async getBinaryFile():Promise<ExtBinaryFileType|undefined> {
+        const response = await doFetch(this.extFile.url, 'GET', undefined)
+        return (response !== undefined) ? {
+                src: this.extFile,
+                fileStamp: getFileStamp(response.headers),
+                mime: response.headers.get('Content-Type') || ExtFileHandlerForUrl.DEFAULT_BINARY_FILE_MIME,
+                data: await response.arrayBuffer()
+            } : undefined
+    }    
+}
+
 
 async function scanUrlMarkdownHandler(url: string, fileName: string, fileData:ScanTreeFileType['file'], rootScanTree:ScanTreeFolderType, postEvent: PostEvent<WorkerMessageType>, isMarkdownFile: (fileName: string) => boolean):Promise<Set<string>> {
     
     if (fileData.status === false) {
         fileData.status = true    
         if (fileData.type === "markdown") {
+            /*
             const converter = (response: Response) => convertResponseToMarkdownFile(response, fileName, isMarkdownFile)
             const markdownFile = await fetchFile(getPageUrl(url, fileName), fileData.fileStamp, converter, false)
+            */
+           const handler = new ExtFileHandlerForUrl({ type: "url", url: getPageUrl(url, fileName) })
+           const markdownFile = await readMarkdownFile(handler, fileName, fileData.fileStamp, isMarkdownFile)
             
-            if ((markdownFile !== undefined) && (markdownFile.fileStamp !== fileData.fileStamp)) {
+           // if ((markdownFile !== undefined) && (markdownFile.fileStamp !== fileData.fileStamp)) {
+           if ((markdownFile !== undefined) && (markdownFile !== 'NO_UPDATE')) {
                 postEvent.send("updateMarkdownFile", {
                     fileName: fileName,            
                     markdownFile: markdownFile

@@ -3,10 +3,40 @@ import marked, { Marked } from 'marked'
 import { markedHighlight } from "marked-highlight"
 import hljs from 'highlight.js'
 import { getFileFromTree } from "../fileTree/FileTree"
-import { MarkdownFileType, FolderType } from "../fileTree/FileTreeType"
+import { MarkdownFileType, MarkdownLinkType, FolderType } from "../fileTree/FileTreeType"
 import { splitPath, getDir, addPath, isURL } from "../utils/appUtils"
 
 
+function collectMarkdownLink(token:marked.Token, link:MarkdownLinkType, dirPath:string, isMarkdownFile:(fileName:string)=>boolean):void {
+    if (token.type === "image") {            
+        if (! isURL(token.href)) {                
+            link.imageList.push(splitPath(`${dirPath}/${token.href}`).join('/'))
+        }
+    }
+    else if (token.type === "link") {   
+        const fileName = splitPath(`${dirPath}/${token.href}`).join('/')                     
+        if (! isURL(token.href)) {
+            if (isMarkdownFile(token.href)) {                
+                link.markdownList.push(fileName)
+            }
+            else {
+                link.linkList.push(fileName)
+            }
+        }
+    }
+}
+export function getMarkdownLink(markdown:string, dirPath:string, isMarkdownFile:(fileName:string)=>boolean):MarkdownLinkType {
+
+    const link:MarkdownLinkType = {
+        imageList: [],
+        linkList: [],
+        markdownList: []
+    }
+    marked.use({ walkTokens: (token:marked.Token) => collectMarkdownLink(token, link, dirPath, isMarkdownFile) })
+    marked.parse(markdown)
+
+    return link
+}
 
 export function getMarkdownFile(markdown:string, fileName:string, fileStamp:string, isMarkdownFile:(fileName:string)=>boolean):MarkdownFileType {
 
