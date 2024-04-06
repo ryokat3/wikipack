@@ -2,7 +2,7 @@ import { WorkerMessageType, PartialDataFileType } from "../worker/WorkerMessageT
 import { PostEvent } from "../utils/WorkerMessage"
 // import { getMarkdownFile } from "../markdown/converter"
 import { makeFileRegexChecker } from "../utils/appUtils"
-import { /* MarkdownFileType, */ CssFileType , ExtFileType, ExtFileHandler, ExtBinaryFileType, ExtFileData, ExtTextFileType, readMarkdownFile } from "../fileTree/FileTreeType"
+import { /* MarkdownFileType, */ CssFileType , ExtBlobType, ExtBlobHandler, ExtBinaryFileType, ExtBlobData, ExtTextFileType, readMarkdownFile, isExtFile, getExtBlobHandler } from "../fileTree/FileTreeType"
 import { updateFileOfTree, /* getFileFromTree,*/ reduceFileOfTree, getFileFromTree } from "../fileTree/FileTree"
 import { ScanTreeFileType, ScanTreeFolderType } from "../fileTree/ScanTree"
 import { getDir, addPath } from "../utils/appUtils"
@@ -87,17 +87,17 @@ async function convertResponseToMarkdownFile(response:Response, page:string, isM
 */
 
 
-export class ExtFileHandlerForUrl implements ExtFileHandler {
+export class ExtFileHandlerForUrl implements ExtBlobHandler {
     static readonly DEFAULT_TEXT_FILE_MIME = 'text/plain'
     static readonly DEFAULT_BINARY_FILE_MIME = 'application/octet-stream'
 
-    readonly extFile:ExtFileType['url']
+    readonly extFile:ExtBlobType['url']
 
-    constructor(src:ExtFileType['url']) {        
+    constructor(src:ExtBlobType['url']) {        
         this.extFile = src
     }
 
-    async getFileData():Promise<ExtFileData|undefined> {
+    async getFileData():Promise<ExtBlobData|undefined> {
         const response = await doFetch(this.extFile.url, 'HEAD', undefined)
         return (response !== undefined) ? {
                 src: this.extFile,
@@ -132,16 +132,13 @@ async function scanUrlMarkdownHandler(url: string, fileName: string, fileData:Sc
     
     if (fileData.status === false) {
         fileData.status = true    
+        const handler = getExtBlobHandler({ type: "url", url: getPageUrl(url, fileName) })
+
         if (fileData.type === "markdown") {
-            /*
-            const converter = (response: Response) => convertResponseToMarkdownFile(response, fileName, isMarkdownFile)
-            const markdownFile = await fetchFile(getPageUrl(url, fileName), fileData.fileStamp, converter, false)
-            */
-           const handler = new ExtFileHandlerForUrl({ type: "url", url: getPageUrl(url, fileName) })
            const markdownFile = await readMarkdownFile(handler, fileName, fileData.fileStamp, isMarkdownFile)
             
-           // if ((markdownFile !== undefined) && (markdownFile.fileStamp !== fileData.fileStamp)) {
-           if ((markdownFile !== undefined) && (markdownFile !== 'NO_UPDATE')) {
+           
+           if (isExtFile(markdownFile)) {
                 postEvent.send("updateMarkdownFile", {
                     fileName: fileName,            
                     markdownFile: markdownFile

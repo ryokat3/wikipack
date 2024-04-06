@@ -1,4 +1,4 @@
-import { ExtFileType, ExtFileHandler, ExtBinaryFileType, ExtFileData, ExtTextFileType } from "../fileTree/FileTreeType"
+import { ExtBlobType, ExtBlobHandler, ExtBinaryFileType, ExtBlobData, ExtTextFileType } from "../fileTree/FileTreeType"
 import { splitPath } from "../utils/appUtils"
 
 export async function getHandleMap(dirHandle:FileSystemDirectoryHandle):Promise<{ [name:string]:FileSystemHandle }> {
@@ -63,11 +63,11 @@ export function getFileStamp(blob:File):string {
     return `lastModified=${blob.lastModified}:size=${blob.size}`
 }
 
-export class ExtFileHandlerForFileHandle implements ExtFileHandler {
-    readonly extFile:ExtFileType['fileHandle']
+export class ExtFileHandlerForFileHandle implements ExtBlobHandler {
+    readonly extFile:ExtBlobType['fileHandle']
     private blob:File|undefined
 
-    constructor(extFile:ExtFileType['fileHandle']) {        
+    constructor(extFile:ExtBlobType['fileHandle']) {        
         this.extFile = extFile
         this.blob = undefined
     }
@@ -79,7 +79,7 @@ export class ExtFileHandlerForFileHandle implements ExtFileHandler {
         return this.blob
     }
 
-    async getFileData():Promise<ExtFileData> {
+    async getFileData():Promise<ExtBlobData> {
         const blob = await this.getBlob()
         return {
             src: this.extFile,            
@@ -140,11 +140,11 @@ export class ExtFileHandlerForFileHandle implements ExtFileHandler {
     }
 }
 
-export class ExtFileHandlerForDirHandle implements ExtFileHandler  {
-    readonly extFile:ExtFileType['dirHandle']
+export class ExtFileHandlerForDirHandle implements ExtBlobHandler  {
+    readonly extFile:ExtBlobType['dirHandle']
     private fileHandleReader: ExtFileHandlerForFileHandle | undefined
 
-    constructor(extFile:ExtFileType['dirHandle']) {        
+    constructor(extFile:ExtBlobType['dirHandle']) {        
         this.extFile = extFile
         this.fileHandleReader = undefined
     }
@@ -158,7 +158,7 @@ export class ExtFileHandlerForDirHandle implements ExtFileHandler  {
         return this.fileHandleReader
     }
 
-    async getFileData():Promise<ExtFileData|undefined> {
+    async getFileData():Promise<ExtBlobData|undefined> {
         return await (await this.getFileHandleReader())?.getFileData()
     }
 

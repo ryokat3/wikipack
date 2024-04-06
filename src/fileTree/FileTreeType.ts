@@ -39,10 +39,10 @@ export type WorkerDataFileType = Omit<Omit<DataFileType, 'dataRef'>, 'buffer'> &
 export type FolderType = FileTreeFolderType<FileType>
 
 /////////////////////////////////////////////////////////////////////////////////
-// ExtFile
+// ExtBlob
 /////////////////////////////////////////////////////////////////////////////////
 
-export type ExtFileType = {
+export type ExtBlobType = {
     dirHandle: {
         type: "dirHandle"
         dirHandle: FileSystemDirectoryHandle
@@ -66,9 +66,9 @@ export type ExtFileType = {
 // success    =>  success      error
 //
 ////////////////////////////////////////////////////////////////////////////////
-export type ExtFileStatus = 'init' | 'success' | 'error'
+export type ExtBlobStatus = 'init' | 'success' | 'error'
 
-export function updateExtFileStatus(status:ExtFileStatus, success:boolean):ExtFileStatus {
+export function updateExtBlobStatus(status:ExtBlobStatus, success:boolean):ExtBlobStatus {
     switch (status) {
         case 'init':
             return (success) ? 'success' : 'init'
@@ -78,29 +78,29 @@ export function updateExtFileStatus(status:ExtFileStatus, success:boolean):ExtFi
     }
 }
 
-export type ExtFileData = {
-    src: ExtFileType[keyof ExtFileType]
+export type ExtBlobData = {
+    src: ExtBlobType[keyof ExtBlobType]
     fileStamp: string
     mime: string
 }
 
-export type ExtTextFileType = ExtFileData & {
+export type ExtTextFileType = ExtBlobData & {
     data: string
 }
 
-export type ExtBinaryFileType = ExtFileData & {
+export type ExtBinaryFileType = ExtBlobData & {
     data: ArrayBuffer
 }
 
 export type NO_UPDATE = 'NO_UPDATE'
 
-export interface ExtFileHandler {
-    getFileData(): Promise<ExtFileData | undefined>
+export interface ExtBlobHandler {
+    getFileData(): Promise<ExtBlobData | undefined>
     getTextFile(): Promise<ExtTextFileType | undefined>
     getBinaryFile(): Promise<ExtBinaryFileType | undefined>
 }
 
-export function getExtFileHandler(extFile: ExtFileType[keyof ExtFileType]) {
+export function getExtBlobHandler(extFile: ExtBlobType[keyof ExtBlobType]) {
     switch (extFile.type) {
         case 'url':
             return new ExtFileHandlerForUrl(extFile)            
@@ -111,11 +111,11 @@ export function getExtFileHandler(extFile: ExtFileType[keyof ExtFileType]) {
     }
 }
 
-export class ExtFileReader {
+export class ExtBlobReader {
 
-    readonly handler:ExtFileHandler
+    readonly handler:ExtBlobHandler
 
-    constructor(handler:ExtFileHandler) {
+    constructor(handler:ExtBlobHandler) {
         this.handler = handler
     }
 
@@ -145,12 +145,13 @@ export class ExtFileReader {
         return await this.handler.getBinaryFile()
     }
 }
-export function isFileType<FT extends FileType[keyof FileType]>(target:FT|NO_UPDATE|undefined):target is FT {
+
+export function isExtFile<FT extends FileType[keyof FileType]>(target:FT|NO_UPDATE|undefined):target is FT {
     return (target !== undefined) && (target !== "NO_UPDATE")
 }
 
-export async function readMarkdownFile(handler:ExtFileHandler, fileName:string, fileStamp:string|undefined, isMarkdownFile:(fileName:string)=>boolean):Promise<MarkdownFileType|NO_UPDATE|undefined> {
-    const reader = new ExtFileReader(handler)
+export async function readMarkdownFile(handler:ExtBlobHandler, fileName:string, fileStamp:string|undefined, isMarkdownFile:(fileName:string)=>boolean):Promise<MarkdownFileType|NO_UPDATE|undefined> {
+    const reader = new ExtBlobReader(handler)
     const markdown = await reader.readTextFile(fileStamp)
 
     if (markdown === undefined) {

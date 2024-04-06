@@ -4,7 +4,7 @@ import { PostEvent } from "../utils/WorkerMessage"
 import { collectFiles, getHandle, isFileHandle, ExtFileHandlerForFileHandle } from "./fileRW"
 import { makeFileRegexChecker } from "../utils/appUtils"
 import { getFileFromTree, updateFileOfTree } from "../fileTree/FileTree"
-import { readMarkdownFile, isFileType, getExtFileHandler } from "../fileTree/FileTreeType"
+import { readMarkdownFile, isExtFile, getExtBlobHandler } from "../fileTree/FileTreeType"
 import { ScanTreeFolderType } from "../fileTree/ScanTree"
 
 function getFileStamp(fp:File):string {
@@ -137,18 +137,18 @@ export async function scanDirectoryWorkerCallback(payload:WorkerMessageType['sca
     try {
         const dataFileList:Set<string> = new Set([])
         for (const [fileName, handle] of Object.entries(await collectFiles(rootHandle, isMarkdownFile))) {
-            const handler = getExtFileHandler({ type: "fileHandle", fileHandle: handle})
+            const handler = getExtBlobHandler({ type: "fileHandle", fileHandle: handle})
             const prev = getFileFromTree(rootScanTree, fileName)
             const fileData = await readMarkdownFile(handler, fileName, (prev?.type === "markdown") ? prev.fileStamp : undefined, isMarkdownFile)            
-            if (isFileType(fileData)) {
+            if (isExtFile(fileData)) {
                 postEvent.send("updateMarkdownFile", { fileName:fileName, markdownFile:fileData})
             }
             updateFileOfTree(rootScanTree, fileName, {
                 type: 'markdown',
-                fileStamp: (isFileType(fileData)) ? fileData.fileStamp : "",
+                fileStamp: (isExtFile(fileData)) ? fileData.fileStamp : "",
                 status: true
             })
-            if (isFileType(fileData)) {
+            if (isExtFile(fileData)) {
                 fileData.imageList.forEach(dataFileList.add, dataFileList)
                 fileData.linkList.forEach(dataFileList.add, dataFileList)
             }
