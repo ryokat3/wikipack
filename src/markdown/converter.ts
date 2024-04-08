@@ -48,47 +48,6 @@ export function getTokenList(markdown:string, dirPath:string, isMarkdownFile:(fi
     return tokenList
 }
 
-/*
-export function getMarkdownFile(markdown:string, fileName:string, fileStamp:string, isMarkdownFile:(fileName:string)=>boolean):MarkdownFileType {
-
-    const markdownFile:MarkdownFileType = {
-        type: "markdown",
-        markdown: markdown,
-        fileStamp: fileStamp,
-        fileSrc: {
-            type: 'never'
-        },
-        imageList: [],
-        linkList: [],
-        markdownList: []
-    }
-    const dirPath = splitPath(fileName).slice(0,-1).join('/')
-        
-    const warlkTokens = (token:marked.Token) => {        
-        if (token.type === "image") {            
-            if (! isURL(token.href)) {                
-                markdownFile.imageList.push(splitPath(`${dirPath}/${token.href}`).join('/'))
-            }
-        }
-        else if (token.type === "link") {   
-            const fileName = splitPath(`${dirPath}/${token.href}`).join('/')                     
-            if (! isURL(token.href)) {
-                if (isMarkdownFile(token.href)) {                
-                    markdownFile.markdownList.push(fileName)
-                }
-                else {
-                    markdownFile.linkList.push(fileName)
-                }
-            }
-        }
-    }
-    marked.use({ walkTokens: warlkTokens })
-    marked.parse(markdown)
-
-    return markdownFile
-}
-*/
-
 function getRendererExtension(    
     rootFolder:FolderType,
     filePath:string,

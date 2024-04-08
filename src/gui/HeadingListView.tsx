@@ -7,5 +7,5 @@ export interface HeadingListViewProps {
 }
 
 export const HeadingListView: React.FunctionComponent<HeadingListViewProps> = (props: HeadingListViewProps) => {
-    return <List>{props.headingList.map((token)=><ListItem>{token.text}</ListItem>)}</List>    
+    return <List>{props.headingList.map((token)=><ListItem sx={{ ml:token.depth-1 }}>{token.text}</ListItem>)}</List>    
 }
