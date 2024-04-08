@@ -1,7 +1,7 @@
 import { FileTreeFolderType, convertFileTree } from "./FileTree"
 import { FolderType, WikiFileType } from "./WikiFile"
 
-export type ScanTreeFileType = {
+export type ScanTreeItemType = {
     file: {
         type: keyof WikiFileType,
         fileStamp: string,
@@ -9,9 +9,9 @@ export type ScanTreeFileType = {
     }
 }
 
-export type ScanTreeFolderType = FileTreeFolderType<ScanTreeFileType>
+export type ScanTreeFolderType = FileTreeFolderType<ScanTreeItemType>
 
-function convertToScanTreeFile(fileData:WikiFileType[keyof WikiFileType]):ScanTreeFileType[keyof ScanTreeFileType] {
+function convertToScanTreeItem(fileData:WikiFileType[keyof WikiFileType]):ScanTreeItemType[keyof ScanTreeItemType] {
     return {
         type: fileData.type,
         fileStamp: fileData.fileStamp,
@@ -20,5 +20,5 @@ function convertToScanTreeFile(fileData:WikiFileType[keyof WikiFileType]):ScanTr
 }
 
 export function convertToScanTreeFolder(folder:FolderType):ScanTreeFolderType {
-    return convertFileTree(folder, convertToScanTreeFile)
+    return convertFileTree(folder, convertToScanTreeItem)
 }

@@ -1,5 +1,6 @@
-import { MarkdownFileType, CssFileType, WorkerDataFileType, FileSrcType, TextFileSrcType, BinaryFileSrcType } from "../fileTree/WikiFile"
+import { MarkdownFileType, CssFileType, WorkerDataFileType, FileSrcType /*, TextFileSrcType, BinaryFileSrcType */} from "../fileTree/WikiFile"
 import { ScanTreeFolderType } from "../fileTree/ScanTree"
+import { ConfigType } from "../config"
 
 // export type PartialDataFileType = Omit<Omit<DataFileType, 'dataRef'>, 'buffer'> & { buffer: ArrayBuffer}
 
@@ -32,8 +33,8 @@ export type WorkerMessageType = {
     }
     checkCurrentPage: {
         request: {
-            fileSrc:FileSrcType,
-            fileName: string,
+            pagePath: string,
+            fileSrc:FileSrcType,            
             fileStamp: string | undefined
             markdownFileRegex: string[] 
         }
@@ -41,6 +42,18 @@ export type WorkerMessageType = {
     checkCurrentPageDone: {
         response: {
             updated: boolean
+        }
+    }
+    checkConfigFile: {
+        request: {
+            fileSrc:FileSrcType,            
+            fileStamp: string | undefined            
+        }
+    }
+    updateConfigFile: {
+        response: {
+            config: ConfigType
+            fileStamp: string | undefined            
         }
     }
     readCssFile: {
@@ -63,6 +76,7 @@ export type WorkerMessageType = {
             url: string     
         }
     },
+    /*
     updateTextFile: {
         response: {
             type: 'css',
@@ -80,30 +94,31 @@ export type WorkerMessageType = {
             file: BinaryFileSrcType            
         }
     },
+    */
     updateMarkdownFile: {
         response: {
-            fileName: string,
+            pagePath: string,
             fileSrc: FileSrcType,
             markdownFile: MarkdownFileType
         }
     },
     updateCssFile: {
         response: {
-            fileName: string,
+            pagePath: string,
             fileSrc: FileSrcType,
             cssFile: CssFileType
         }
     },
     updateDataFile: {
         response: {
-            fileName: string, 
+            pagePath: string, 
             fileSrc: FileSrcType,
             dataFile: WorkerDataFileType
         }
     },
     deleteFile: {
         response: {
-            fileName: string  
+            pagePath: string  
         }
     }
 }

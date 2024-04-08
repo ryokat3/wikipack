@@ -5,14 +5,14 @@ import { readMarkdownFile, isWikiFile, getFileSrcHandler } from "../fileTree/Wik
 
 export async function checkCurrentPageWorkerCallback(payload: WorkerMessageType['checkCurrentPage']['request'], postEvent: PostEvent<WorkerMessageType>) {    
     const isMarkdownFile = makeFileRegexChecker(payload.markdownFileRegex)
-    const markdownFile = await readMarkdownFile(getFileSrcHandler(payload.fileSrc), payload.fileName, payload.fileStamp, isMarkdownFile)
+    const markdownFile = await readMarkdownFile(getFileSrcHandler(payload.fileSrc), payload.pagePath, payload.fileStamp, isMarkdownFile)
     
     let updated:boolean = false
 
     if (isWikiFile(markdownFile)) {        
         updated = true
         postEvent.send("updateMarkdownFile", {
-            fileName: payload.fileName,
+            pagePath: payload.pagePath,
             fileSrc: markdownFile.fileSrc,          
             markdownFile: markdownFile
         })

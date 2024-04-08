@@ -5,19 +5,19 @@ import { dataUrlEncode } from '../utils/appUtils'
 import { addPath } from "../utils/appUtils"
 
 
-function createFileElement(fileName:string, fileStamp:string):HTMLScriptElement {
+function createFileElement(pagePath:string, fileStamp:string):HTMLScriptElement {
     const elem = document.createElement('script')
-    elem.setAttribute('id', `${EMBEDDED_FILE_ID_PREFIX}${fileName}`)    
+    elem.setAttribute('id', `${EMBEDDED_FILE_ID_PREFIX}${pagePath}`)    
     elem.setAttribute('type', APPLICATION_DATA_MIME_TYPE)
     elem.setAttribute(FILE_STAMP_ATTR, fileStamp)    
 
     return elem
 }
 
-async function saveMarkdownFileToElement(fileName:string, markdownFile:MarkdownFileType):Promise<HTMLScriptElement|undefined> {
+async function saveMarkdownFileToElement(pagePath:string, markdownFile:MarkdownFileType):Promise<HTMLScriptElement|undefined> {
     const dataUrl = await dataUrlEncode(markdownFile.markdown, 'text/plain')    
     if (dataUrl !== null) {
-        const elem = createFileElement(fileName, markdownFile.fileStamp)        
+        const elem = createFileElement(pagePath, markdownFile.fileStamp)        
         elem.setAttribute('class', EMBEDDED_MARKDOWN_FILE_CLASS)
         elem.innerHTML = dataUrl                
         return elem
@@ -27,10 +27,10 @@ async function saveMarkdownFileToElement(fileName:string, markdownFile:MarkdownF
     }
 }
 
-async function saveCssFileToElement(fileName:string, cssFile:CssFileType):Promise<HTMLScriptElement|undefined> {
+async function saveCssFileToElement(pagePath:string, cssFile:CssFileType):Promise<HTMLScriptElement|undefined> {
     const dataUrl = await dataUrlEncode(cssFile.css, 'text/css')    
     if (dataUrl !== null) {
-        const elem = createFileElement(fileName, cssFile.fileStamp)        
+        const elem = createFileElement(pagePath, cssFile.fileStamp)        
         elem.setAttribute('class', EMBEDDED_CSS_FILE_CLASS)
         elem.innerHTML = dataUrl                
         return elem
@@ -65,10 +65,10 @@ async function saveDataFileToElement(fileName:string, dataFile:DataFileType):Pro
 }
 */
 
-async function saveDataFileToElement(fileName:string, dataFile:DataFileType):Promise<HTMLScriptElement|undefined> {
+async function saveDataFileToElement(pagePath:string, dataFile:DataFileType):Promise<HTMLScriptElement|undefined> {
     const dataUrl = await dataUrlEncode(dataFile.buffer, dataFile.mime)        
     if (dataUrl !== null) {            
-        const elem = createFileElement(fileName, dataFile.fileStamp)
+        const elem = createFileElement(pagePath, dataFile.fileStamp)
         elem.setAttribute('class', EMBEDDED_DATA_FILE_CLASS)
         elem.setAttribute('mime', dataFile.mime)
         elem.innerHTML = dataUrl                        
@@ -79,36 +79,36 @@ async function saveDataFileToElement(fileName:string, dataFile:DataFileType):Pro
     }
 }
 
-export function saveJsonToElement(fileName:string, data:Object, fileStamp:string) {
-    const elem = createFileElement(fileName, fileStamp)
+export function saveJsonToElement(pagePath:string, data:Object, fileStamp:string) {
+    const elem = createFileElement(pagePath, fileStamp)
     elem.innerHTML = JSON.stringify(data)
     return elem
 }
 
 
-export async function saveFolderToElement(doc:Document, folder:FolderType, pathName:string) {
-    for (const [fileName, info] of Object.entries(folder.children)) {
-        const filePath = addPath(pathName, fileName)
+export async function saveFolderToElement(doc:Document, folder:FolderType, pageFolderPath:string) {
+    for (const [pageName, info] of Object.entries(folder.children)) {
+        const pagePath = addPath(pageFolderPath, pageName)
         if (info.type === "markdown") {
-            const elem = await saveMarkdownFileToElement(filePath, info)            
+            const elem = await saveMarkdownFileToElement(pagePath, info)            
             if (elem !== undefined) {   
                 doc.head.appendChild(elem)
             }
         }
         else if (info.type === "data") {
-            const elem = await saveDataFileToElement(filePath, info)     
+            const elem = await saveDataFileToElement(pagePath, info)     
             if (elem !== undefined) {
                 doc.head.appendChild(elem)
             }
         }
         else if (info.type === "css") {
-            const elem = await saveCssFileToElement(filePath, info)
+            const elem = await saveCssFileToElement(pagePath, info)
             if (elem !== undefined) {                
                 doc.head.appendChild(elem)                
             }           
         }
         else {
-            await saveFolderToElement(doc, info, filePath)            
+            await saveFolderToElement(doc, info, pagePath)            
         }
     }
 }

@@ -1,4 +1,5 @@
-import { MarkdownMenuFolderType} from "../fileTree/MarkdownMenu"
+import { PageTreeFolderType} from "../fileTree/PageTree"
+import { HeadingTokenType } from "../fileTree/WikiFile"
 
 export type TopFdt = {
     updatePackFileName: {
@@ -12,6 +13,9 @@ export type TopFdt = {
         seq: number
     },
     updateMenuRoot: {
-        menuRoot: MarkdownMenuFolderType
+        menuRoot: PageTreeFolderType
+    },
+    updateHeadingList: {
+        headingList: HeadingTokenType[]
     }
 }

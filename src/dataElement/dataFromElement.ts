@@ -1,32 +1,42 @@
 import { DataFileType, CssFileType, MarkdownFileType } from "../fileTree/WikiFile"
 import { EMBEDDED_FILE_ID_PREFIX, EMBEDDED_DATA_FILE_CLASS, EMBEDDED_MARKDOWN_FILE_CLASS, EMBEDDED_CSS_FILE_CLASS, FILE_STAMP_ATTR } from "../constant"
 import { dataUrlDecode, dataUrlDecodeAsBlob } from "../utils/appUtils"
-import { getMarkdownFile } from "../markdown/converter"
+import { /* getMarkdownFile, */ getTokenList } from "../markdown/converter"
 import { updateFileOfTree } from "../fileTree/FileTree"
 import { FolderType } from "../fileTree/WikiFile"
+import { getDir } from "../utils/appUtils"
 
-export function getElementFile(fileName:string):HTMLElement|null {
-    return document.getElementById(EMBEDDED_FILE_ID_PREFIX + fileName)
+export function getElementFile(pagePath:string):HTMLElement|null {
+    return document.getElementById(EMBEDDED_FILE_ID_PREFIX + pagePath)
 }
 
-export function getElementFileText(fileName:string) {
-    const elem = getElementFile(fileName)
+export function getElementFileText(pagePath:string) {
+    const elem = getElementFile(pagePath)
     return elem !== null ? elem.innerHTML : undefined
 }
 
-function getFileNameFromElement(elem:Element):string|undefined {
+function getPagePathFromElement(elem:Element):string|undefined {
     const id = elem.getAttribute("id")
     return (id !== null) && id.startsWith(EMBEDDED_FILE_ID_PREFIX) ? id.slice(EMBEDDED_FILE_ID_PREFIX.length) : undefined
 }
 
 async function getMarkdownFileFromElement(elem:Element, isMarkdownFile:(fileName:string)=>boolean):Promise<[string, MarkdownFileType] | undefined> {    
-    const fileName = getFileNameFromElement(elem)
+    const pagePath = getPagePathFromElement(elem)
 
-    if (fileName !== undefined) {    
+    if (pagePath !== undefined) {    
         const markdown = await dataUrlDecode(elem.innerHTML)
-        const fileStamp = elem.getAttribute(FILE_STAMP_ATTR) || ""        
-
-        return [fileName, getMarkdownFile(markdown, fileName, fileStamp, isMarkdownFile)]
+        const fileStamp = elem.getAttribute(FILE_STAMP_ATTR) || ""   
+        
+        // return [pagePath, getMarkdownFile(markdown, pagePath, fileStamp, isMarkdownFile)]
+        return [pagePath, {
+            ...getTokenList(markdown, getDir(pagePath), isMarkdownFile),
+            type: "markdown",
+            markdown: markdown,
+            fileStamp: fileStamp,
+            fileSrc: {
+                type: 'never'
+            }
+        }]
     }
     else {
         return undefined
@@ -34,13 +44,13 @@ async function getMarkdownFileFromElement(elem:Element, isMarkdownFile:(fileName
 }
 
 async function getCssFileFromElement(elem:Element):Promise<[string, CssFileType] | undefined> {    
-    const fileName = getFileNameFromElement(elem)
+    const pagePath = getPagePathFromElement(elem)
 
-    if (fileName !== undefined) {    
+    if (pagePath !== undefined) {    
         const css = await dataUrlDecode(elem.innerHTML)
         const fileStamp = elem.getAttribute(FILE_STAMP_ATTR) || ""        
 
-        return [fileName, {
+        return [pagePath, {
             type: "css",
             fileStamp: fileStamp,
             fileSrc: {
@@ -55,16 +65,16 @@ async function getCssFileFromElement(elem:Element):Promise<[string, CssFileType]
 }
 
 async function getDataFileFromElement(elem:Element):Promise<[string, DataFileType] | undefined> {
-    const fileName = getFileNameFromElement(elem)
+    const pagePath = getPagePathFromElement(elem)
 
-    if (fileName !== undefined) {    
+    if (pagePath !== undefined) {    
         const blob = await dataUrlDecodeAsBlob(elem.innerHTML)
         const dataRef = URL.createObjectURL(blob)
         // const dataRef = elem.innerHTML
         const fileStamp = elem.getAttribute(FILE_STAMP_ATTR) || ""        
         const mime = elem.getAttribute("mime") || dataRef.substring(dataRef.indexOf(":")+1, dataRef.indexOf(";"))
 
-        return [fileName, {
+        return [pagePath, {
             type: "data",
             dataRef: dataRef,
             // buffer: elem.innerHTML,

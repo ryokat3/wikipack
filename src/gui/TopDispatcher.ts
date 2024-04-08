@@ -7,6 +7,7 @@ export const topDispatcher = new Dispatcher<TopFdt>()
     .addParameterAction("updatePackFileName")    
     .addParameterAction("updateSeq")    
     .addParameterAction("updateMenuRoot")
+    .addParameterAction("updateHeadingList")
 
 export type TopDispatcherType = DispatcherType<typeof topDispatcher>
 

@@ -3,44 +3,55 @@ import marked, { Marked } from 'marked'
 import { markedHighlight } from "marked-highlight"
 import hljs from 'highlight.js'
 import { getFileFromTree } from "../fileTree/FileTree"
-import { MarkdownFileType, MarkdownLinkType, FolderType } from "../fileTree/WikiFile"
-import { splitPath, getDir, addPath, isURL } from "../utils/appUtils"
+import { /* MarkdownFileType,*/ TokenListType, FolderType } from "../fileTree/WikiFile"
+import { getDir, addPath, isURL } from "../utils/appUtils"
 
 
-function collectMarkdownLink(token:marked.Token, link:MarkdownLinkType, dirPath:string, isMarkdownFile:(fileName:string)=>boolean):void {
-    if (token.type === "image") {            
-        if (! isURL(token.href)) {                
-            link.imageList.push(splitPath(`${dirPath}/${token.href}`).join('/'))
+function getWalkTokenExtension(link: TokenListType, dirPath: string, isMarkdownFile: (fileName: string) => boolean): (token:marked.Token)=>void {
+    return (token: marked.Token) => {
+        if (token.type === "image") {
+            if (!isURL(token.href)) {
+                // link.imageList.push(splitPath(`${dirPath}/${token.href}`).join('/'))
+                link.imageList.push(addPath(dirPath, token.href))
+            }
         }
-    }
-    else if (token.type === "link") {   
-        const fileName = splitPath(`${dirPath}/${token.href}`).join('/')                     
-        if (! isURL(token.href)) {
-            if (isMarkdownFile(token.href)) {                
-                link.markdownList.push(fileName)
+        else if (token.type === "link") {
+            const pagePath = addPath(dirPath, token.href)
+            if (!isURL(token.href)) {
+                if (isMarkdownFile(token.href)) {
+                    link.markdownList.push(pagePath)
+                }
+                else {
+                    link.linkList.push(pagePath)
+                }
             }
-            else {
-                link.linkList.push(fileName)
-            }
+        }
+        else if (token.type === "heading") {
+            link.headingList.push({ depth:token.depth, text:token.text })
         }
     }
 }
-export function getMarkdownLink(markdown:string, dirPath:string, isMarkdownFile:(fileName:string)=>boolean):MarkdownLinkType {
 
-    const link:MarkdownLinkType = {
-        imageList: [],
-        linkList: [],
-        markdownList: []
-    }
-    marked.use({ walkTokens: (token:marked.Token) => collectMarkdownLink(token, link, dirPath, isMarkdownFile) })
+const emptyTokenList: TokenListType = {
+    imageList: [],
+    linkList: [],
+    markdownList: [],
+    headingList: []
+}
+
+export function getTokenList(markdown:string, dirPath:string, isMarkdownFile:(fileName:string)=>boolean):TokenListType {
+
+    const tokenList = structuredClone(emptyTokenList)
+    marked.use({ walkTokens: getWalkTokenExtension(tokenList, dirPath, isMarkdownFile) })
     marked.parse(markdown)
 
-    return link
+    return tokenList
 }
 
+/*
 export function getMarkdownFile(markdown:string, fileName:string, fileStamp:string, isMarkdownFile:(fileName:string)=>boolean):MarkdownFileType {
 
-    const result:MarkdownFileType = {
+    const markdownFile:MarkdownFileType = {
         type: "markdown",
         markdown: markdown,
         fileStamp: fileStamp,
@@ -56,17 +67,17 @@ export function getMarkdownFile(markdown:string, fileName:string, fileStamp:stri
     const warlkTokens = (token:marked.Token) => {        
         if (token.type === "image") {            
             if (! isURL(token.href)) {                
-                result.imageList.push(splitPath(`${dirPath}/${token.href}`).join('/'))
+                markdownFile.imageList.push(splitPath(`${dirPath}/${token.href}`).join('/'))
             }
         }
         else if (token.type === "link") {   
             const fileName = splitPath(`${dirPath}/${token.href}`).join('/')                     
             if (! isURL(token.href)) {
                 if (isMarkdownFile(token.href)) {                
-                    result.markdownList.push(fileName)
+                    markdownFile.markdownList.push(fileName)
                 }
                 else {
-                    result.linkList.push(fileName)
+                    markdownFile.linkList.push(fileName)
                 }
             }
         }
@@ -74,8 +85,9 @@ export function getMarkdownFile(markdown:string, fileName:string, fileStamp:stri
     marked.use({ walkTokens: warlkTokens })
     marked.parse(markdown)
 
-    return result
+    return markdownFile
 }
+*/
 
 function getRendererExtension(    
     rootFolder:FolderType,

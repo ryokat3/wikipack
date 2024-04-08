@@ -2,8 +2,9 @@ import React from "react"
 import { topDispatcher } from "./TopDispatcher"
 import { createContext, useEffect } from "react"
 import { topReducer, TopStateType } from "./TopReducer"
-import { MarkdownView } from "./MarkdownView"
-import { MarkdownMenuView } from "./MarkdownMenuView"
+import { PageView } from "./PageView"
+import { PageTreeView } from "./PageTreeView"
+import { HeadingListView } from "./HeadingListView"
 import { Mediator, MediatorProxy } from "../Mediator"
 import { SearchAppBar } from "./SearchAppBar"
 import { WorkerInvoke } from "../utils/WorkerMessage"
@@ -50,12 +51,13 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
         ></SearchAppBar>
         <Grid container spacing={2}>
             <Grid item xs={3}>
-                <MarkdownMenuView root={state.menuRoot}></MarkdownMenuView>
+                <PageTreeView root={state.pageTree}></PageTreeView>
             </Grid>
             <Grid item xs={6}>
-                <MarkdownView html={state.html}></MarkdownView>
+                <PageView html={state.html}></PageView>
             </Grid>
             <Grid item xs={3}>
+                <HeadingListView headingList={state.headingList}></HeadingListView>
             </Grid>
         </Grid>
     </TopContext.Provider>

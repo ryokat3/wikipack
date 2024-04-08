@@ -17,3 +17,7 @@ export const FILE_NAME_ATTR = "file-name"
 export const FILE_STAMP_ATTR = "file-stamp"
 
 export const APPLICATION_DATA_MIME_TYPE = "text/x-this-application"
+
+export const WIKIPACK_DIR = '.wikipack'
+export const WIKIPACK_CONFIG_FILE = 'config.json'
+export const WIKIPACK_PAGE_TREE_FILE = 'page-tree.json'

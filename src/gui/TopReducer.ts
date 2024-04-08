@@ -1,13 +1,15 @@
 import { Reducer } from "../utils/FdtFlux"
 import { TopFdt } from "./TopFdt"
-import { MarkdownMenuFolderType } from "../fileTree/MarkdownMenu"
+import { PageTreeFolderType } from "../fileTree/PageTree"
+import { HeadingTokenType } from "../fileTree/WikiFile"
 
 export type TopStateType = {
     title: string
     html: string
+    headingList: HeadingTokenType[]
     packFileName: string
     seq: number
-    menuRoot: MarkdownMenuFolderType
+    pageTree: PageTreeFolderType
 }
 
 export const topReducer = new Reducer<TopFdt, TopStateType>()
@@ -33,7 +35,13 @@ export const topReducer = new Reducer<TopFdt, TopStateType>()
     .add("updateMenuRoot", (state, payload)=>{            
         return {
             ...state,
-            menuRoot: payload.menuRoot
+            pageTree: payload.menuRoot
+        }
+    })
+    .add("updateHeadingList", (state, payload)=>{            
+        return {
+            ...state,
+            headingList: payload.headingList
         }
     })
     .build()

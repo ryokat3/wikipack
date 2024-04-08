@@ -1,5 +1,5 @@
 import React from "react"
-import { MarkdownMenuFolderType } from "../fileTree/MarkdownMenu"
+import { PageTreeFolderType } from "../fileTree/PageTree"
 import { getFileFromTree } from "../fileTree/FileTree"
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
@@ -7,25 +7,25 @@ import { SimpleTreeView, TreeItem } from '@mui/x-tree-view'
 import { addPath, getFileName } from "../utils/appUtils"
 
 
-interface MarkdownMenuFileProps {
-    pathName: string
+interface PageTreeViewItemProps {
+    pagePath: string
 }
 
-const MarkdownMenuFile: React.FunctionComponent<MarkdownMenuFileProps> = (props: MarkdownMenuFileProps) => {
-    return <TreeItem itemId={props.pathName} label={getFileName(props.pathName)}></TreeItem>
+const PageTreeViewItem: React.FunctionComponent<PageTreeViewItemProps> = (props: PageTreeViewItemProps) => {
+    return <TreeItem itemId={props.pagePath} label={getFileName(props.pagePath)}></TreeItem>
 }
 
-interface MarkdownMenuViewProps {
-    root: MarkdownMenuFolderType    
-    pathName?: string  
+interface PageTreeViewProps {
+    root: PageTreeFolderType    
+    pagePath?: string  
 }
 
-export const MarkdownMenuView: React.FunctionComponent<MarkdownMenuViewProps> = (props: MarkdownMenuViewProps) => {
+export const PageTreeView: React.FunctionComponent<PageTreeViewProps> = (props: PageTreeViewProps) => {
     
     const childrenView = Object.entries(props.root.children).map(([name, value])=>{
         return (value.type === "markdown")
-            ? <MarkdownMenuFile pathName={addPath(props.pathName, name)} key={name}></MarkdownMenuFile>            
-            : <MarkdownMenuView root={value} pathName={addPath(props.pathName, name)} key={name}></MarkdownMenuView>        
+            ? <PageTreeViewItem pagePath={addPath(props.pagePath, name)} key={name}></PageTreeViewItem>            
+            : <PageTreeView root={value} pagePath={addPath(props.pagePath, name)} key={name}></PageTreeView>        
     })
 
     const onNodeSelect = (_: React.SyntheticEvent, itemId: string, isSelected:boolean):void =>{
@@ -37,13 +37,13 @@ export const MarkdownMenuView: React.FunctionComponent<MarkdownMenuViewProps> = 
         }
     }
 
-    return ((props.pathName === "") || (props.pathName === undefined)) ? <SimpleTreeView
+    return ((props.pagePath === "") || (props.pagePath === undefined)) ? <SimpleTreeView
             aria-label="file system navigator"
             slots={{ collapseIcon: ChevronRightIcon, expandIcon: ExpandMoreIcon }}                    
             onItemSelectionToggle={onNodeSelect}            
         >            
             {childrenView}
-        </SimpleTreeView> : <TreeItem itemId={props.pathName} label={getFileName(props.pathName) }>
+        </SimpleTreeView> : <TreeItem itemId={props.pagePath} label={getFileName(props.pagePath) }>
             {childrenView}
         </TreeItem>         
 }

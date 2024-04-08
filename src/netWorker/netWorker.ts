@@ -3,7 +3,7 @@ import { PostEvent } from "../utils/WorkerMessage"
 import { makeFileRegexChecker } from "../utils/appUtils"
 import { UrlSrcType, FileSrcType, FileSrcHandler, BinaryFileSrcType, FileSrcData, TextFileSrcType, readMarkdownFile, isWikiFile, getFileSrcHandler, readDataFile, readCssFile } from "../fileTree/WikiFile"
 import { updateFileOfTree, reduceFileOfTree, getFileFromTree } from "../fileTree/FileTree"
-import { ScanTreeFileType, ScanTreeFolderType } from "../fileTree/ScanTree"
+import { ScanTreeItemType, ScanTreeFolderType } from "../fileTree/ScanTree"
 import { getDir, addPath } from "../utils/appUtils"
 
 function getFileStamp(headers:Headers):string {
@@ -69,7 +69,7 @@ export class WikiFileHandlerForUrl implements FileSrcHandler {
     }    
 }
 
-async function scanUrlMarkdownHandler(url: string, fileName: string, fileData:ScanTreeFileType['file'], rootScanTree:ScanTreeFolderType, postEvent: PostEvent<WorkerMessageType>, isMarkdownFile: (fileName: string) => boolean):Promise<Set<string>> {
+async function scanUrlMarkdownHandler(url: string, fileName: string, fileData:ScanTreeItemType['file'], rootScanTree:ScanTreeFolderType, postEvent: PostEvent<WorkerMessageType>, isMarkdownFile: (fileName: string) => boolean):Promise<Set<string>> {
     
     if (fileData.status === false) {
         fileData.status = true
@@ -82,7 +82,7 @@ async function scanUrlMarkdownHandler(url: string, fileName: string, fileData:Sc
            
            if (isWikiFile(markdownFile)) {
                 postEvent.send("updateMarkdownFile", {
-                    fileName: fileName,
+                    pagePath: fileName,
                     fileSrc: fileSrc,          
                     markdownFile: markdownFile
                 })                
@@ -97,7 +97,7 @@ async function scanUrlMarkdownHandler(url: string, fileName: string, fileData:Sc
             const dataFile = await readDataFile(handler, fileData.fileStamp)
             if (isWikiFile(dataFile)) {            
                 postEvent.send("updateDataFile", {
-                    fileName: fileName,
+                    pagePath: fileName,
                     fileSrc: fileSrc,            
                     dataFile: dataFile
                 })                
@@ -112,7 +112,7 @@ export async function scanUrlWorkerCallback(payload: WorkerMessageType['scanUrl'
     const isMarkdownFile = makeFileRegexChecker(payload.markdownFileRegex)
 
     while (true) {
-        const fileNameSet = await reduceFileOfTree(rootScanTree, "", async (fileName: string, fileData: ScanTreeFileType['file'], _acc: Promise<Set<string>>): Promise<Set<string>> => {            
+        const fileNameSet = await reduceFileOfTree(rootScanTree, "", async (fileName: string, fileData: ScanTreeItemType['file'], _acc: Promise<Set<string>>): Promise<Set<string>> => {            
             if (fileData.status == false) {
                 const acc = Array.from(await _acc)
                 const notInTree = Array.from(await scanUrlMarkdownHandler(payload.url, fileName, fileData, rootScanTree, postEvent, isMarkdownFile))                
@@ -144,7 +144,7 @@ export async function downloadCssFilelWorkerCallback(payload: WorkerMessageType[
     const cssFile = await readCssFile(getFileSrcHandler(fileSrc), payload.fileStamp)
     if (isWikiFile(cssFile)) {
         postEvent.send('updateCssFile', {
-            fileName: payload.fileName,
+            pagePath: payload.fileName,
             fileSrc: fileSrc,
             cssFile: cssFile
         })        

@@ -1,14 +1,18 @@
 import { FileTreeFolderType } from "./FileTree"
 import { WikiFileHandlerForUrl } from "../netWorker/netWorker"
 import { WikiFileHandlerForFileHandle, WikiFileHandlerForDirHandle }  from "../fileWorker/fileRW"
-import { getMarkdownLink }  from "../markdown/converter"
+import { getTokenList }  from "../markdown/converter"
 import { getDir } from "../utils/appUtils"
 
-export type MarkdownLinkType = {
+export type HeadingTokenType = {
+    depth: number,
+    text: string
+}
+export type TokenListType = {
     imageList: string[],
     linkList: string[],
     markdownList: string[]
-
+    headingList: HeadingTokenType[]
 }
 
 export type WikiFileType = {
@@ -17,7 +21,7 @@ export type WikiFileType = {
         markdown: string,
         fileStamp: string,
         fileSrc: FileSrcType,
-    } & MarkdownLinkType,
+    } & TokenListType,
     css: {
         type: "css",
         css: string,
@@ -26,8 +30,7 @@ export type WikiFileType = {
     },
     data: {
         type: "data",
-        dataRef: string,
-        // TODO: buffer: ArrayBuffer | string,
+        dataRef: string,        
         buffer: ArrayBuffer,
         fileStamp: string,
         fileSrc: FileSrcType,
@@ -38,7 +41,7 @@ export type WikiFileType = {
 export type DataFileType = WikiFileType['data']
 export type MarkdownFileType = WikiFileType['markdown']
 export type CssFileType = WikiFileType['css']
-export type WorkerDataFileType = Omit<Omit<DataFileType, 'dataRef'>, 'buffer'> & { buffer: ArrayBuffer}
+export type WorkerDataFileType = Omit<DataFileType, 'dataRef'>
 
 export type FolderType = FileTreeFolderType<WikiFileType>
 
@@ -183,7 +186,7 @@ export function isWikiFile<T>(target:T):target is Exclude<Exclude<T, "NO_UPDATE"
 
 function convertToMarkdownFile(textFile:TextFileSrcType, dirPath:string, isMarkdownFile:(fileName:string)=>boolean):MarkdownFileType {
     return {
-        ...getMarkdownLink(textFile.data, dirPath, isMarkdownFile),
+        ...getTokenList(textFile.data, dirPath, isMarkdownFile),
         type: "markdown",
         markdown: textFile.data,
         fileStamp: textFile.fileStamp,

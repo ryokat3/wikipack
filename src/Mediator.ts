@@ -9,7 +9,7 @@ import { canonicalFileName, getDir, addPath } from "./utils/appUtils"
 import { getRenderer } from "./markdown/converter"
 import { makeFileRegexChecker, isURL, addPathToUrl } from "./utils/appUtils"
 import { getProxyDataClass } from "./utils/proxyData"
-import { getMarkdownMenu, MarkdownMenuFileType } from "./fileTree/MarkdownMenu"
+import { getPageTree, PageTreeItemType } from "./fileTree/PageTree"
 import { convertToScanTreeFolder } from "./fileTree/ScanTree"
 import { setupDragAndDrop } from "./fileIO/dragAndDrop"
 import { hasMarkdownFileElement } from "./dataElement/dataFromElement"
@@ -108,13 +108,20 @@ export class Mediator extends MediatorData {
     // Handler for React Dispatcher
     ////////////////////////////////////////////////////////////////////////
 
-    updateCurrentPage(filePath:string):void {
-        console.log(`updateCurrentPage(${filePath})`)
-        this.currentPage = canonicalFileName(filePath)        
+    updateCurrentPage(pagePath:string):void {
+        
+        this.currentPage = canonicalFileName(pagePath)        
 
         // Update HTML
         const html = this.convertToHtml(this.currentPage)
+        
         this.dispatcher.updateHtml({ title: this.currentPage, html: (html !== undefined) ? html : `${this.currentPage} not found` })
+
+        // Update Heading List
+        const markdownFile = getFileFromTree(this.rootFolder, pagePath)
+        if (markdownFile !== undefined && markdownFile.type === "markdown") {
+            this.dispatcher.updateHeadingList({ headingList: markdownFile.headingList })
+        }
         
         // Update CSS
         const newCssList = getNewCssList(this.cssRules.getCssList(this.currentPage))        
@@ -147,10 +154,7 @@ export class Mediator extends MediatorData {
                     this.downloadCssFile(addPathToUrl(this.rootUrl.toString(), fileName, this.isMarkdown), canonicalFileName(fileName), fileStamp)
                 }
             })
-        }
-        
-        
-        // applyCssInfo(this.rootFolder, this.currentCss)        
+        }   
     }
 
     updateSeq():void {
@@ -231,7 +235,7 @@ export class Mediator extends MediatorData {
             if ((currentFile !== undefined) && (currentFile.type === 'markdown') && (currentFile.fileSrc.type !== 'never')) {
                 this.worker.request("checkCurrentPage", {
                     fileSrc: currentFile.fileSrc,
-                    fileName: this.currentPage,
+                    pagePath: this.currentPage,
                     fileStamp: currentFile.fileStamp,
                     markdownFileRegex: this.config.markdownFileRegex                                
                 })
@@ -253,36 +257,40 @@ export class Mediator extends MediatorData {
     ////////////////////////////////////////////////////////////////////////
 
     updateMarkdownFile(payload:WorkerMessageType['updateMarkdownFile']['response']):void {     
-        console.log(`updateMarkdownFile(${payload.fileName})`)
+        console.log(`updateMarkdownFile(${payload.pagePath})`)
 
-        const fileName = canonicalFileName(payload.fileName)
-        const isNewFile = getFileFromTree(this.rootFolder, fileName) === undefined
-        const isSame = updateFileOfTree(this.rootFolder, fileName, payload.markdownFile, isSameFile)
-        const isCurrentPageExist = getFileFromTree(this.rootFolder, this.currentPage) !== undefined
+        const pagePath = canonicalFileName(payload.pagePath)
+        const isNewFile = getFileFromTree(this.rootFolder, pagePath) === undefined
+        const isSame = updateFileOfTree(this.rootFolder, pagePath, payload.markdownFile, isSameFile)
+        const markdownFile = getFileFromTree(this.rootFolder, this.currentPage)
+        const isCurrentPageExist = markdownFile !== undefined
         
         if (isNewFile) {
-            const menuRoot = getMarkdownMenu(this.rootFolder) || createRootFolder<MarkdownMenuFileType>()
+            const menuRoot = getPageTree(this.rootFolder) || createRootFolder<PageTreeItemType>()
             this.dispatcher.updateMenuRoot({ menuRoot:menuRoot })
         }
 
         if (this.currentPage === NO_CURRENT_PAGE) {
-            window.location.hash = `#${fileName}`            
+            window.location.hash = `#${pagePath}`            
         }
-        else if (isCurrentPageExist && this.currentPage === fileName && !isSame) {            
+        else if (isCurrentPageExist && this.currentPage === pagePath && !isSame) {            
             const html = this.convertToHtml(this.currentPage)
             if (html !== undefined) {                
                 this.dispatcher.updateHtml({ title: this.currentPage, html: html})
+                if (markdownFile.type === "markdown") {
+                    this.dispatcher.updateHeadingList({ headingList: markdownFile.headingList})
+                }
             }
         }          
     }
 
     updateCssFile(payload:WorkerMessageType['updateCssFile']['response']):void {        
-        updateCssElement(payload.cssFile.css, canonicalFileName(payload.fileName), payload.cssFile.fileStamp)  
+        updateCssElement(payload.cssFile.css, canonicalFileName(payload.pagePath), payload.cssFile.fileStamp)  
     }
 
     updateDataFile(payload:WorkerMessageType['updateDataFile']['response']):void {        
 
-        const fileName = canonicalFileName(payload.fileName)
+        const fileName = canonicalFileName(payload.pagePath)
         const blob = new Blob( [payload.dataFile.buffer], { type: payload.dataFile.mime })
         const dataRef = URL.createObjectURL(blob)        
         const isSame = updateFileOfTree(this.rootFolder, fileName, { ...payload.dataFile, dataRef: dataRef }, isSameFile)
@@ -294,12 +302,13 @@ export class Mediator extends MediatorData {
                 if (html !== undefined) {
                     this.dispatcher.updateHtml({ title: this.currentPage, html: html })
                 }
+                this.dispatcher.updateHeadingList({ headingList: markdownFile.headingList })
             }
         }
     }
 
     deleteFile(payload:WorkerMessageType['deleteFile']['response']):void {
-        const filePath = canonicalFileName(payload.fileName)        
+        const filePath = canonicalFileName(payload.pagePath)        
         deleteFileFromTree(this.rootFolder, filePath)        
     }    
 }

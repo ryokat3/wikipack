@@ -11,7 +11,8 @@ import { injectAllMarkdownFileFromElement, injectAllCssFileFromElement, injectAl
 import { TOP_COMPONENT_ID } from "./constant"
 import { makeFileRegexChecker } from "./utils/appUtils"
 import { createRootFolder } from "./fileTree/FileTree"
-import { MarkdownMenuFileType, getMarkdownMenu } from "./fileTree/MarkdownMenu"
+import { PageTreeItemType, getPageTree } from "./fileTree/PageTree"
+import { getTokenList } from "./markdown/converter"
 
 import workerJS from "./tmp/worker.bundle.js.asdata"
 import defaultMarkdown from "./defaultMarkdown.md"
@@ -36,22 +37,21 @@ window.onload = async function () {
     //
     if (isEmptyFileTreeFolder(mediatorData.rootFolder)) {
         updateFileOfTree(mediatorData.rootFolder, config.topPage, {
+            ...getTokenList(defaultMarkdown, "", isMarkdownFile),
             type: "markdown",
             markdown: defaultMarkdown,
             fileStamp: "",
-            fileSrc: { type: "never" },
-            imageList: [],
-            linkList: [],
-            markdownList: []
+            fileSrc: { type: "never" }
         })
     }
     
     const initialState:TopStateType = {
         title: "",
         html: "",
+        headingList: [],
         packFileName: "wikipack",
         seq: 0,
-        menuRoot: getMarkdownMenu(mediatorData.rootFolder) || createRootFolder<MarkdownMenuFileType>()
+        pageTree: getPageTree(mediatorData.rootFolder) || createRootFolder<PageTreeItemType>()
     }
 
     if (container !== null) {     
