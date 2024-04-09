@@ -92,7 +92,7 @@ export const SearchAppBar: React.FunctionComponent<SearchAppBarProps> = (props: 
     // @ts-ignore (context is not used)
     return <TopContext.Consumer>{(context) =>
         <Box sx={{ flexGrow: 1, mb: 1 }}>
-            <AppBar position="static">
+            <AppBar position="fixed">
                 <Toolbar>
                     <IconButton
                         size="large"

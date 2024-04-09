@@ -40,7 +40,8 @@ export const PageTreeView: React.FunctionComponent<PageTreeViewProps> = (props: 
     return ((props.pagePath === "") || (props.pagePath === undefined)) ? <SimpleTreeView
             aria-label="file system navigator"
             slots={{ collapseIcon: ChevronRightIcon, expandIcon: ExpandMoreIcon }}                    
-            onItemSelectionToggle={onNodeSelect}            
+            onItemSelectionToggle={onNodeSelect}
+            sx={{ overflow:'hidden'}}            
         >            
             {childrenView}
         </SimpleTreeView> : <TreeItem itemId={props.pagePath} label={getFileName(props.pagePath) }>

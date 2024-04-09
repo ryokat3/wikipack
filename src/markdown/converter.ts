@@ -88,7 +88,7 @@ function getRendererExtension(
         }, 
 
         heading(text:string, level:number, _raw:string) {
-            return `<h${level} id="${HEADING_ID_PREFIX}${headingNumber.increase(level)}">${text}</h${level}>`
+            return `<h${level} id="${HEADING_ID_PREFIX}${headingNumber.increase(level)}" style="scroll-margin-top:80px;">${text}</h${level}>`
         }
     }
 }

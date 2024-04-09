@@ -13,6 +13,7 @@ import { ConfigType } from "../config"
 import { createPack } from "../fileIO/saveAsHtml"
 import { extract } from "../fileIO/extract"
 import Grid from "@mui/material/Grid"
+import { styled } from "@mui/material/styles"
 
 export interface TopContextType {
     mediator: Mediator
@@ -26,6 +27,8 @@ export interface TopProps {
     templateHtml: string,
     initialState: TopStateType,    
 }
+
+const Offset = styled('div')(({ theme }) => theme.mixins.toolbar)
 
 export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
 
@@ -49,6 +52,7 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
             pack={async () => await createPack(props.templateHtml, mediator)}
             unpack={async () => extract(rootFolder)}
         ></SearchAppBar>
+        <Offset />
         <Grid container spacing={2}>
             <Grid item xs={3}>
                 <PageTreeView root={state.pageTree}></PageTreeView>
