@@ -6,7 +6,8 @@ import { getDir } from "../utils/appUtils"
 
 export type HeadingTokenType = {
     depth: number,
-    text: string
+    text: string,
+    id: string
 }
 export type TokenListType = {
     imageList: string[],

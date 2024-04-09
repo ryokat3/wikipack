@@ -1,6 +1,7 @@
 import * as chai from "chai"
 import { splitPath } from "../src/utils/appUtils"
 import { addProxyProperty, getProxyDataFunction, getProxyDataClass } from "../src/utils/proxyData"
+import { HeadingNumber } from "../src/markdown/HeadingNumber"
 
 describe("Javascript common", ()=>{
     it("splitPath", ()=>{        
@@ -107,5 +108,20 @@ describe("ProxyData", ()=>{
 
         chai.assert.equal(nt1.value2, 3)
         chai.assert.equal(nt2.value2, 4)        
+    })
+})
+
+describe("HeadingNumber", ()=>{
+    it("basic", ()=>{
+        const heading = new HeadingNumber(8)
+
+        chai.assert.equal(heading.toString(), "0")
+        chai.assert.equal(heading.increase(1), "1")
+        chai.assert.equal(heading.increase(2), "1.1")
+        chai.assert.equal(heading.increase(4), "1.1.1.1")
+        chai.assert.equal(heading.increase(3), "1.1.2")
+        chai.assert.equal(heading.increase(1), "2")
+        chai.assert.equal(heading.increase(7), "2.1.1.1.1.1.1")
+        
     })
 })

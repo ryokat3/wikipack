@@ -78,6 +78,13 @@ export class Mediator extends MediatorData {
         this.rootFolder = createRootFolder<WikiFileType>()
     }
 
+    scrollToElement(id:string):void {        
+        const element = document.getElementById(id)
+        if (element !== null) {            
+            element.scrollIntoView({behavior:'smooth'})
+        }
+    }
+
     ////////////////////////////////////////////////////////////////////////
     // Handler for Application Setup
     ////////////////////////////////////////////////////////////////////////

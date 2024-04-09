@@ -3,11 +3,15 @@ import marked, { Marked } from 'marked'
 import { markedHighlight } from "marked-highlight"
 import hljs from 'highlight.js'
 import { getFileFromTree } from "../fileTree/FileTree"
-import { /* MarkdownFileType,*/ TokenListType, FolderType } from "../fileTree/WikiFile"
+import { TokenListType, FolderType } from "../fileTree/WikiFile"
 import { getDir, addPath, isURL } from "../utils/appUtils"
+import { HeadingNumber } from "./HeadingNumber"
+import { HEADING_ID_PREFIX } from "../constant"
 
 
 function getWalkTokenExtension(link: TokenListType, dirPath: string, isMarkdownFile: (fileName: string) => boolean): (token:marked.Token)=>void {
+    const headingNumber = new HeadingNumber(10)
+
     return (token: marked.Token) => {
         if (token.type === "image") {
             if (!isURL(token.href)) {
@@ -27,7 +31,7 @@ function getWalkTokenExtension(link: TokenListType, dirPath: string, isMarkdownF
             }
         }
         else if (token.type === "heading") {
-            link.headingList.push({ depth:token.depth, text:token.text })
+            link.headingList.push({ depth:token.depth, text:token.text, id:`${HEADING_ID_PREFIX}${headingNumber.increase(token.depth)}` })
         }
     }
 }
@@ -55,6 +59,7 @@ function getRendererExtension(
 ): marked.MarkedExtension['renderer'] {
     const dirPath = getDir(filePath)
     const renderer = new marked.Renderer()
+    const headingNumber = new HeadingNumber(10)
        
     return {
         link(href: string, title: string|null|undefined, text: string) {            
@@ -80,6 +85,10 @@ function getRendererExtension(
                 return renderer.image(imageFile.dataRef, title, text)
             }
             return renderer.image(href, title, text)
+        }, 
+
+        heading(text:string, level:number, _raw:string) {
+            return `<h${level} id="${HEADING_ID_PREFIX}${headingNumber.increase(level)}">${text}</h${level}>`
         }
     }
 }
