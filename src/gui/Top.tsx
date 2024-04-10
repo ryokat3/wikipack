@@ -13,7 +13,7 @@ import { ConfigType } from "../config"
 import { createPack } from "../fileIO/saveAsHtml"
 import { extract } from "../fileIO/extract"
 import Grid from "@mui/material/Grid"
-import { styled } from "@mui/material/styles"
+// import { styled } from "@mui/material/styles"
 
 export interface TopContextType {
     mediator: Mediator
@@ -28,7 +28,14 @@ export interface TopProps {
     initialState: TopStateType,    
 }
 
-const Offset = styled('div')(({ theme }) => theme.mixins.toolbar)
+// const Offset = styled('div')(({ theme }) => theme.mixins.toolbar)
+
+/*
+const StickyGrid = styled(Grid)(({})=>({     
+    position: "sticky",
+    top: 0    
+}))
+*/
 
 export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
 
@@ -51,18 +58,17 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
             packFileName={state.packFileName}
             pack={async () => await createPack(props.templateHtml, mediator)}
             unpack={async () => extract(rootFolder)}
-        ></SearchAppBar>
-        <Offset />
+        ></SearchAppBar>        
         <Grid container spacing={2}>
             <Grid item xs={3}>
                 <PageTreeView root={state.pageTree}></PageTreeView>
             </Grid>
             <Grid item xs={6}>
                 <PageView html={state.html}></PageView>
-            </Grid>
-            <Grid item xs={3}>
-                <HeadingListView headingList={state.headingList}></HeadingListView>
-            </Grid>
+            </Grid>            
+            <Grid item xs={3}>                
+                <HeadingListView headingList={state.headingList}></HeadingListView>                
+            </Grid>            
         </Grid>
     </TopContext.Provider>
 }

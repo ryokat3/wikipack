@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { styled, alpha } from '@mui/material/styles';
 import AppBar from '@mui/material/AppBar';
-import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
@@ -90,9 +89,8 @@ export const SearchAppBar: React.FunctionComponent<SearchAppBarProps> = (props: 
     }
 
     // @ts-ignore (context is not used)
-    return <TopContext.Consumer>{(context) =>
-        <Box sx={{ flexGrow: 1, mb: 1 }}>
-            <AppBar position="fixed">
+    return <TopContext.Consumer>{(context) =>        
+            <AppBar position="static" sx={{ flexGrow: 1, mb: 1}}>
                 <Toolbar>
                     <IconButton
                         size="large"
@@ -138,7 +136,6 @@ export const SearchAppBar: React.FunctionComponent<SearchAppBarProps> = (props: 
                         />
                     </Search>
                 </Toolbar>
-            </AppBar>
-        </Box>
+            </AppBar>        
     }</TopContext.Consumer>
 }

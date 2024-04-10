@@ -5,7 +5,12 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view'
 import { addPath, getFileName } from "../utils/appUtils"
+import { styled } from "@mui/material/styles"
 
+const StickySimpleTreeView = styled(SimpleTreeView)(({})=>({     
+    position: "sticky",
+    top: 0    
+}))
 
 interface PageTreeViewItemProps {
     pagePath: string
@@ -37,14 +42,14 @@ export const PageTreeView: React.FunctionComponent<PageTreeViewProps> = (props: 
         }
     }
 
-    return ((props.pagePath === "") || (props.pagePath === undefined)) ? <SimpleTreeView
+    return ((props.pagePath === "") || (props.pagePath === undefined)) ? <StickySimpleTreeView
             aria-label="file system navigator"
             slots={{ collapseIcon: ChevronRightIcon, expandIcon: ExpandMoreIcon }}                    
             onItemSelectionToggle={onNodeSelect}
-            sx={{ overflow:'hidden'}}            
+            sx={{ overflow:'hidden'}}                    
         >            
             {childrenView}
-        </SimpleTreeView> : <TreeItem itemId={props.pagePath} label={getFileName(props.pagePath) }>
+        </StickySimpleTreeView> : <TreeItem itemId={props.pagePath} label={getFileName(props.pagePath) }>
             {childrenView}
         </TreeItem>         
 }
