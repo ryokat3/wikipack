@@ -14,10 +14,10 @@ const StickyList = styled(List)(({})=>({
 }))
 
 export const HeadingListView: React.FunctionComponent<HeadingListViewProps> = (props: HeadingListViewProps) => {
-    return <TopContext.Consumer>{(context) =>        
-        <StickyList>
-            {props.headingList.map((token) => <ListItem sx={{ ml: token.depth - 1 }} onClick={() => context.mediator.scrollToElement(token.id)}>{token.text}</ListItem>)}
-        </StickyList>        
+    return <TopContext.Consumer>{(context) =>                
+        <StickyList>            
+            {props.headingList.map((token) => <ListItem sx={{ ml: token.depth - 1 }} onClick={() => context.mediator.scrollToElement(token.id)}>{token.text}</ListItem>)}            
+        </StickyList>               
     }
     </TopContext.Consumer>
 }
