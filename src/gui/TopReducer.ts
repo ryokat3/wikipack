@@ -6,6 +6,7 @@ import { HeadingTokenType } from "../fileTree/WikiFile"
 export type TopStateType = {
     title: string
     html: string
+    heading: string|undefined
     headingList: HeadingTokenType[]
     packFileName: string
     seq: number
@@ -18,6 +19,12 @@ export const topReducer = new Reducer<TopFdt, TopStateType>()
             ...state,
             title: payload.title,
             html: payload.html
+        }
+    })
+    .add("updateHeading", (state, payload)=>{
+        return {
+            ...state,            
+            heading: payload.heading
         }
     })
     .add("updatePackFileName", (state, payload)=>{            

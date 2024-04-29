@@ -129,3 +129,7 @@ export function isURL(url:string):boolean {
         return false;
     }   
 }
+
+export function parseQuery(queryStr:string) {
+    return [ ...(new URLSearchParams(queryStr)).entries() ].reduce((obj, e)=>({ ...obj, [e[0]]:e[1] }), Object.create(null))    
+}

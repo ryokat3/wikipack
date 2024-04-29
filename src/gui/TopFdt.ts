@@ -9,6 +9,9 @@ export type TopFdt = {
         title: string,
         html: string
     },
+    updateHeading: {
+        heading: string|undefined
+    },
     updateSeq: {        
         seq: number
     },

@@ -48,6 +48,7 @@ window.onload = async function () {
     const initialState:TopStateType = {
         title: "",
         html: "",
+        heading: undefined,
         headingList: [],
         packFileName: "wikipack",
         seq: 0,

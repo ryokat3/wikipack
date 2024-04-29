@@ -113,7 +113,7 @@ describe("ProxyData", ()=>{
 
 describe("HeadingNumber", ()=>{
     it("basic", ()=>{
-        const heading = new HeadingNumber(8)
+        const heading = new HeadingNumber()
 
         chai.assert.equal(heading.toString(), "0")
         chai.assert.equal(heading.increase(1), "1")
@@ -121,7 +121,14 @@ describe("HeadingNumber", ()=>{
         chai.assert.equal(heading.increase(4), "1.1.1.1")
         chai.assert.equal(heading.increase(3), "1.1.2")
         chai.assert.equal(heading.increase(1), "2")
-        chai.assert.equal(heading.increase(7), "2.1.1.1.1.1.1")
-        
+        chai.assert.equal(heading.increase(7), "2.1.1.1.1.1.1")        
+    })
+
+    it("Initial Value", ()=>{
+        const heading = new HeadingNumber("2.1")
+
+        chai.assert.equal(heading.toString(), "2.1")
+        chai.assert.equal(heading.increase(3), "2.1.1")
+        chai.assert.equal(heading.increase(1), "3")       
     })
 })

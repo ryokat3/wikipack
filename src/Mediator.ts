@@ -14,6 +14,7 @@ import { convertToScanTreeFolder } from "./fileTree/ScanTree"
 import { setupDragAndDrop } from "./fileIO/dragAndDrop"
 import { hasMarkdownFileElement } from "./dataElement/dataFromElement"
 import { getNewCssList } from "./dataElement/styleElement"
+import { HashInfo } from "./markdown/HashInfo"
 import { CssRules } from "./css/CssRules"
 import packageJson from "../package.json"
 
@@ -30,6 +31,7 @@ function getRootUrl():URL {
     url.hash = ""
     return url
 }
+
 
 class MediatorData {    
     readonly rootUrl: URL = getRootUrl()
@@ -93,10 +95,10 @@ export class Mediator extends MediatorData {
         const self = this        
         
         function gotoHashPage() {
-            const url = new URL(window.location.href)    
-            const hash = url.hash.startsWith('#') ? url.hash.slice(1) : url.hash
-                        
-            self.updateCurrentPage((hash !== "") ? hash : self.config.topPage)
+            const hashInfo = HashInfo.create(window.location.href)
+                                                
+            self.updateCurrentPage(hashInfo.fileName || self.config.topPage)    
+            self.dispatcher.updateHeading({ heading: hashInfo.heading })        
         }
         window.addEventListener("hashchange", ()=>{            
             gotoHashPage()

@@ -6,11 +6,10 @@ import { getFileFromTree } from "../fileTree/FileTree"
 import { TokenListType, FolderType } from "../fileTree/WikiFile"
 import { getDir, addPath, isURL } from "../utils/appUtils"
 import { HeadingNumber } from "./HeadingNumber"
-import { HEADING_ID_PREFIX } from "../constant"
 
 
 function getWalkTokenExtension(link: TokenListType, dirPath: string, isMarkdownFile: (fileName: string) => boolean): (token:marked.Token)=>void {
-    const headingNumber = new HeadingNumber(10)
+    const headingNumber = new HeadingNumber()    
 
     return (token: marked.Token) => {
         if (token.type === "image") {
@@ -31,7 +30,7 @@ function getWalkTokenExtension(link: TokenListType, dirPath: string, isMarkdownF
             }
         }
         else if (token.type === "heading") {
-            link.headingList.push({ depth:token.depth, text:token.text, id:`${HEADING_ID_PREFIX}${headingNumber.increase(token.depth)}` })
+            link.headingList.push({ depth:token.depth, text:token.text, id: headingNumber.increase(token.depth) })                        
         }
     }
 }
@@ -59,7 +58,7 @@ function getRendererExtension(
 ): marked.MarkedExtension['renderer'] {
     const dirPath = getDir(filePath)
     const renderer = new marked.Renderer()
-    const headingNumber = new HeadingNumber(10)
+    const headingNumber = new HeadingNumber()    
        
     return {
         link(href: string, title: string|null|undefined, text: string) {            
@@ -88,7 +87,7 @@ function getRendererExtension(
         }, 
 
         heading(text:string, level:number, _raw:string) {
-            return `<h${level} id="${HEADING_ID_PREFIX}${headingNumber.increase(level)}" style="scroll-margin-top:16px;">${text}</h${level}>`
+            return `<h${level} id="${headingNumber.increase(level)}" style="scroll-margin-top:16px;">${text}</h${level}>`            
         }
     }
 }

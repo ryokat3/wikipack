@@ -8,8 +8,6 @@ export const EMBEDDED_DATA_FILE_CLASS = "embedded-data-file"
 export const EMBEDDED_FILE_ID_PREFIX = "embedded-file:"
 export const EMBEDDED_FILE_CONFIG_ID="embedded-file-config"
 
-export const HEADING_ID_PREFIX = 'HEADING_'
-
 export const TOP_COMPONENT_ID="top-component"
 export const WIKIPACK_SCRIPT_ID="wikipack-script"
 

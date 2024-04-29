@@ -13,7 +13,6 @@ import { ConfigType } from "../config"
 import { createPack } from "../fileIO/saveAsHtml"
 import { extract } from "../fileIO/extract"
 import Grid from "@mui/material/Grid"
-// import { styled } from "@mui/material/styles"
 
 export interface TopContextType {
     mediator: Mediator
@@ -27,15 +26,6 @@ export interface TopProps {
     templateHtml: string,
     initialState: TopStateType,    
 }
-
-// const Offset = styled('div')(({ theme }) => theme.mixins.toolbar)
-
-/*
-const StickyGrid = styled(Grid)(({})=>({     
-    position: "sticky",
-    top: 0    
-}))
-*/
 
 export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
 
@@ -51,6 +41,16 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
     useEffect(() => {
         mediator.onGuiInitialized()       
     }, [])
+    
+    // Scroll to heading when changed
+    useEffect(() => {
+        if (state.heading !== undefined) {
+            const element = document.getElementById(state.heading)
+            if (element !== null) {            
+                element.scrollIntoView({behavior:'smooth'})
+            }
+        }
+    }, [state.heading])
 
     return <TopContext.Provider value={context}>
         <SearchAppBar
@@ -67,7 +67,7 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
                 <PageView html={state.html}></PageView>
             </Grid>            
             <Grid item xs={3}>                
-                <HeadingListView headingList={state.headingList}></HeadingListView>                
+                <HeadingListView currentPage={mediator.currentPage} headingList={state.headingList}></HeadingListView>
             </Grid>            
         </Grid>
     </TopContext.Provider>
