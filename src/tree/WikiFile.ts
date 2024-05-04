@@ -1,19 +1,30 @@
 import { FileTreeFolderType } from "./FileTree"
 import { WikiFileHandlerForUrl } from "../netWorker/netWorker"
 import { WikiFileHandlerForFileHandle, WikiFileHandlerForDirHandle }  from "../fileWorker/fileRW"
-import { getTokenList }  from "../markdown/converter"
+import { getHyperRefData }  from "../markdown/converter"
 import { getDir } from "../utils/appUtils"
+import { HeadingNumber } from "../markdown/HeadingNumber"
+import { createIndexTree, genHierachicalComparator } from "../tree/IndexTree"
 
-export type HeadingTokenType = {
-    depth: number,
-    text: string,
-    id: string
+type HeadingData = {
+    heading: HeadingNumber
+    text: string    
 }
-export type TokenListType = {
-    imageList: string[],
-    linkList: string[],
+
+const compnum = (v1:number, v2:number)=> (v1 === v2) ? 0 : (v1 > v2) ? 1 : -1
+const HeadingTreeClass = createIndexTree(genHierachicalComparator(compnum, (data:HeadingData)=>data.heading.value))
+
+export function genHeadingTreeRoot() {
+    return new HeadingTreeClass({ heading:HeadingNumber.create(), text:"" })
+}
+export type HeadingTreeType = ReturnType<typeof genHeadingTreeRoot>
+
+
+
+export type HyperRefData = {
+    imageList: string[]
+    linkList: string[]
     markdownList: string[]
-    headingList: HeadingTokenType[]
 }
 
 export type WikiFileType = {
@@ -22,7 +33,7 @@ export type WikiFileType = {
         markdown: string,
         fileStamp: string,
         fileSrc: FileSrcType,
-    } & TokenListType,
+    } & HyperRefData,
     css: {
         type: "css",
         css: string,
@@ -187,7 +198,7 @@ export function isWikiFile<T>(target:T):target is Exclude<Exclude<T, "NO_UPDATE"
 
 function convertToMarkdownFile(textFile:TextFileSrcType, dirPath:string, isMarkdownFile:(fileName:string)=>boolean):MarkdownFileType {
     return {
-        ...getTokenList(textFile.data, dirPath, isMarkdownFile),
+        ...getHyperRefData(textFile.data, dirPath, isMarkdownFile),
         type: "markdown",
         markdown: textFile.data,
         fileStamp: textFile.fileStamp,

@@ -1,6 +1,6 @@
 
 import { EMBEDDED_MARKDOWN_FILE_CLASS, EMBEDDED_DATA_FILE_CLASS, EMBEDDED_CSS_FILE_CLASS, EMBEDDED_FILE_ID_PREFIX, APPLICATION_DATA_MIME_TYPE, FILE_STAMP_ATTR } from "../constant"
-import { MarkdownFileType, CssFileType, DataFileType, FolderType } from '../fileTree/WikiFile'
+import { MarkdownFileType, CssFileType, DataFileType, FolderType } from '../tree/WikiFile'
 import { dataUrlEncode } from '../utils/appUtils'
 import { addPath } from "../utils/appUtils"
 

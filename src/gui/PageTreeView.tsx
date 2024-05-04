@@ -1,6 +1,7 @@
 import React from "react"
-import { PageTreeFolderType } from "../fileTree/PageTree"
-import { getFileFromTree } from "../fileTree/FileTree"
+import { PageTreeFolderType } from "../tree/PageTree"
+import { getFileFromTree } from "../tree/FileTree"
+import { HashInfo } from "../markdown/HashInfo"
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view'
@@ -37,7 +38,7 @@ export const PageTreeView: React.FunctionComponent<PageTreeViewProps> = (props: 
         if (isSelected) {
             const node = getFileFromTree(props.root, itemId)
             if ((node !== undefined) && (node.type === "markdown")) {
-                window.location.hash = `#${itemId}`                
+                new HashInfo(itemId, undefined).apply()                
             }
         }
     }

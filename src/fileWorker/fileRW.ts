@@ -1,4 +1,4 @@
-import { DirHandleSrcType, FileHandleSrcType, FileSrcHandler, BinaryFileSrcType, FileSrcData, TextFileSrcType } from "../fileTree/WikiFile"
+import { DirHandleSrcType, FileHandleSrcType, FileSrcHandler, BinaryFileSrcType, FileSrcData, TextFileSrcType } from "../tree/WikiFile"
 import { splitPath } from "../utils/appUtils"
 
 export async function getHandleMap(dirHandle:FileSystemDirectoryHandle):Promise<{ [name:string]:FileSystemHandle }> {

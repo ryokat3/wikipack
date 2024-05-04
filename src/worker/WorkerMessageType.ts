@@ -1,5 +1,5 @@
-import { MarkdownFileType, CssFileType, WorkerDataFileType, FileSrcType /*, TextFileSrcType, BinaryFileSrcType */} from "../fileTree/WikiFile"
-import { ScanTreeFolderType } from "../fileTree/ScanTree"
+import { MarkdownFileType, CssFileType, WorkerDataFileType, FileSrcType /*, TextFileSrcType, BinaryFileSrcType */} from "../tree/WikiFile"
+import { ScanTreeFolderType } from "../tree/ScanTree"
 import { ConfigType } from "../config"
 
 // export type PartialDataFileType = Omit<Omit<DataFileType, 'dataRef'>, 'buffer'> & { buffer: ArrayBuffer}

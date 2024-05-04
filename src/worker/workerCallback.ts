@@ -1,7 +1,7 @@
 import { WorkerMessageType } from "../worker/WorkerMessageType"
 import { PostEvent } from "../utils/WorkerMessage"
 import { makeFileRegexChecker } from "../utils/appUtils"
-import { readMarkdownFile, isWikiFile, getFileSrcHandler } from "../fileTree/WikiFile"
+import { readMarkdownFile, isWikiFile, getFileSrcHandler } from "../tree/WikiFile"
 
 export async function checkCurrentPageWorkerCallback(payload: WorkerMessageType['checkCurrentPage']['request'], postEvent: PostEvent<WorkerMessageType>) {    
     const isMarkdownFile = makeFileRegexChecker(payload.markdownFileRegex)

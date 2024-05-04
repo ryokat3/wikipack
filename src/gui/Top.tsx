@@ -67,7 +67,7 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
                 <PageView html={state.html}></PageView>
             </Grid>            
             <Grid item xs={3}>                
-                <HeadingListView currentPage={mediator.currentPage} headingList={state.headingList}></HeadingListView>
+                <HeadingListView currentPage={mediator.currentPage} headingTree={state.headingTree}></HeadingListView>
             </Grid>            
         </Grid>
     </TopContext.Provider>

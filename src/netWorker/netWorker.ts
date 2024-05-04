@@ -1,9 +1,9 @@
 import { WorkerMessageType } from "../worker/WorkerMessageType"
 import { PostEvent } from "../utils/WorkerMessage"
 import { makeFileRegexChecker } from "../utils/appUtils"
-import { UrlSrcType, FileSrcType, FileSrcHandler, BinaryFileSrcType, FileSrcData, TextFileSrcType, readMarkdownFile, isWikiFile, getFileSrcHandler, readDataFile, readCssFile } from "../fileTree/WikiFile"
-import { updateFileOfTree, reduceFileOfTree, getFileFromTree } from "../fileTree/FileTree"
-import { ScanTreeItemType, ScanTreeFolderType } from "../fileTree/ScanTree"
+import { UrlSrcType, FileSrcType, FileSrcHandler, BinaryFileSrcType, FileSrcData, TextFileSrcType, readMarkdownFile, isWikiFile, getFileSrcHandler, readDataFile, readCssFile } from "../tree/WikiFile"
+import { updateFileOfTree, reduceFileOfTree, getFileFromTree } from "../tree/FileTree"
+import { ScanTreeItemType, ScanTreeFolderType } from "../tree/ScanTree"
 import { getDir, addPath } from "../utils/appUtils"
 
 function getFileStamp(headers:Headers):string {
@@ -70,6 +70,7 @@ export class WikiFileHandlerForUrl implements FileSrcHandler {
 }
 
 async function scanUrlMarkdownHandler(url: string, fileName: string, fileData:ScanTreeItemType['file'], rootScanTree:ScanTreeFolderType, postEvent: PostEvent<WorkerMessageType>, isMarkdownFile: (fileName: string) => boolean):Promise<Set<string>> {
+    
     
     if (fileData.status === false) {
         fileData.status = true

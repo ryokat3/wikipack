@@ -1,32 +1,41 @@
 import React from "react"
-import { List, ListItem } from "@mui/material"
-import { HeadingTokenType } from "../fileTree/WikiFile"
-import { TopContext } from "./Top"
+import { SimpleTreeView, TreeItem } from '@mui/x-tree-view'
+import { HeadingTreeType } from "../tree/WikiFile"
 import { styled } from "@mui/material/styles"
 import { HashInfo } from "../markdown/HashInfo"
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 
-export interface HeadingListViewProps {
-    currentPage: string,
-    headingList: HeadingTokenType[]
-}
-
-const StickyList = styled(List)(({})=>({     
+const StickySimpleTreeView = styled(SimpleTreeView)(({})=>({     
     position: "sticky",
     top: 0    
 }))
 
-function movePage(currentPage:string, heading:string) {
-    const hashInfo = new HashInfo(currentPage, heading)
-    window.location.hash = `#${hashInfo.toUrl()}`
+export interface HeadingListViewProps {
+    currentPage: string,
+    headingTree: HeadingTreeType
 }
 
-// {props.headingList.map((token) => <ListItem sx={{ ml: token.depth - 1 }} onClick={() => context.mediator.scrollToElement(token.id)}>{token.text}</ListItem>)}            
-
 export const HeadingListView: React.FunctionComponent<HeadingListViewProps> = (props: HeadingListViewProps) => {
-    return <TopContext.Consumer>{(_context) =>                
-        <StickyList>            
-            {props.headingList.map((token) => <ListItem sx={{ ml: token.depth - 1 }} onClick={() => movePage(props.currentPage, token.id)}>{token.text}</ListItem>)}                        
-        </StickyList>               
+
+    const childrenView = props.headingTree.children.map((child)=>{        
+        return <HeadingListView currentPage={props.currentPage} headingTree={child}></HeadingListView>
+    })
+
+    const onNodeSelect = (_: React.SyntheticEvent, itemId: string, isSelected:boolean):void =>{
+        if (isSelected) {
+            new HashInfo(props.currentPage, itemId).apply()
+        }
     }
-    </TopContext.Consumer>
+
+    return (props.headingTree.isRoot) ? <StickySimpleTreeView
+        aria-label="file system navigator"
+        slots={{ collapseIcon: ChevronRightIcon, expandIcon: ExpandMoreIcon }}
+        onItemSelectionToggle={onNodeSelect}
+        sx={{ overflow: 'hidden' }}
+    >
+        {childrenView}
+    </StickySimpleTreeView> : <TreeItem itemId={props.headingTree.value.heading.toString()} label={props.headingTree.value.text}>
+        {childrenView}
+    </TreeItem>                
 }

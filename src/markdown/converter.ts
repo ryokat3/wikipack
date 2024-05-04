@@ -1,64 +1,58 @@
-// import { marked, Slugger } from 'marked'
 import marked, { Marked } from 'marked'
 import { markedHighlight } from "marked-highlight"
 import hljs from 'highlight.js'
-import { getFileFromTree } from "../fileTree/FileTree"
-import { TokenListType, FolderType } from "../fileTree/WikiFile"
+import { getFileFromTree } from "../tree/FileTree"
+import { HyperRefData, FolderType } from "../tree/WikiFile"
 import { getDir, addPath, isURL } from "../utils/appUtils"
 import { HeadingNumber } from "./HeadingNumber"
+import { HeadingTreeType } from "../tree/WikiFile"
 
 
-function getWalkTokenExtension(link: TokenListType, dirPath: string, isMarkdownFile: (fileName: string) => boolean): (token:marked.Token)=>void {
-    const headingNumber = new HeadingNumber()    
+function getWalkTokenExtension(hrefData: HyperRefData, dirPath: string, isMarkdownFile: (fileName: string) => boolean): (token:marked.Token)=>void {    
 
     return (token: marked.Token) => {
         if (token.type === "image") {
-            if (!isURL(token.href)) {
-                // link.imageList.push(splitPath(`${dirPath}/${token.href}`).join('/'))
-                link.imageList.push(addPath(dirPath, token.href))
+            if (!isURL(token.href)) {                
+                hrefData.imageList.push(addPath(dirPath, token.href))
             }
         }
         else if (token.type === "link") {
             const pagePath = addPath(dirPath, token.href)
             if (!isURL(token.href)) {
                 if (isMarkdownFile(token.href)) {
-                    link.markdownList.push(pagePath)
+                    hrefData.markdownList.push(pagePath)
                 }
                 else {
-                    link.linkList.push(pagePath)
+                    hrefData.linkList.push(pagePath)
                 }
             }
-        }
-        else if (token.type === "heading") {
-            link.headingList.push({ depth:token.depth, text:token.text, id: headingNumber.increase(token.depth) })                        
         }
     }
 }
 
-const emptyTokenList: TokenListType = {
-    imageList: [],
-    linkList: [],
-    markdownList: [],
-    headingList: []
-}
+export function getHyperRefData(markdown:string, dirPath:string, isMarkdownFile:(fileName:string)=>boolean):HyperRefData {
 
-export function getTokenList(markdown:string, dirPath:string, isMarkdownFile:(fileName:string)=>boolean):TokenListType {
+    const mark = new Marked()
+    const hrefData:HyperRefData = {
+        imageList: [],
+        linkList: [],
+        markdownList: []
+    }
+    mark.use({ walkTokens: getWalkTokenExtension(hrefData, dirPath, isMarkdownFile) })
+    mark.parse(markdown)    
 
-    const tokenList = structuredClone(emptyTokenList)
-    marked.use({ walkTokens: getWalkTokenExtension(tokenList, dirPath, isMarkdownFile) })
-    marked.parse(markdown)
-
-    return tokenList
+    return hrefData
 }
 
 function getRendererExtension(    
     rootFolder:FolderType,
     filePath:string,
-    isMarkdown:(fileName:string)=>boolean
+    isMarkdown:(fileName:string)=>boolean,
+    headingTree:HeadingTreeType
 ): marked.MarkedExtension['renderer'] {
     const dirPath = getDir(filePath)
     const renderer = new marked.Renderer()
-    const headingNumber = new HeadingNumber()    
+    let headingNumber = HeadingNumber.create()
        
     return {
         link(href: string, title: string|null|undefined, text: string) {            
@@ -87,7 +81,9 @@ function getRendererExtension(
         }, 
 
         heading(text:string, level:number, _raw:string) {
-            return `<h${level} id="${headingNumber.increase(level)}" style="scroll-margin-top:16px;">${text}</h${level}>`            
+            headingNumber = headingNumber.increase(level)
+            headingTree.add({ text:text, heading: headingNumber })                                    
+            return `<h${level} id="${headingNumber}" style="scroll-margin-top:16px;">${text}</h${level}>`            
         }
     }
 }
@@ -107,7 +103,7 @@ function decodeUriOrEcho(uri: string) {
 }
 
 
-export function getRenderer(rootFolder: FolderType,  filePath:string, isMarkdown:(fileName:string)=>boolean) {
+export function getRenderer(rootFolder: FolderType,  filePath:string, isMarkdown:(fileName:string)=>boolean, headingTree:HeadingTreeType) {
     const highlightExtension = markedHighlight({
         langPrefix: 'hljs language-',
         highlight(code, _lang, _info) {
@@ -147,7 +143,7 @@ export function getRenderer(rootFolder: FolderType,  filePath:string, isMarkdown
     return (text: string): string => {
         const highlightMarked = new Marked(highlightExtension)
         
-        highlightMarked.use({ renderer:getRendererExtension(rootFolder, filePath, isMarkdown) })
+        highlightMarked.use({ renderer:getRendererExtension(rootFolder, filePath, isMarkdown, headingTree) })
         return highlightMarked.parse(text, { async: false} ) as string
     }
 }

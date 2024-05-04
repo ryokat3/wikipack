@@ -2,9 +2,9 @@ import { WorkerMessageType } from "../worker/WorkerMessageType"
 import { PostEvent } from "../utils/WorkerMessage"
 import { collectFiles, getHandle, isFileHandle, WikiFileHandlerForFileHandle } from "./fileRW"
 import { makeFileRegexChecker } from "../utils/appUtils"
-import { getFileFromTree, updateFileOfTree } from "../fileTree/FileTree"
-import { readMarkdownFile, readDataFile, readCssFile, isWikiFile, getFileSrcHandler, FileSrcType } from "../fileTree/WikiFile"
-import { ScanTreeFolderType } from "../fileTree/ScanTree"
+import { getFileFromTree, updateFileOfTree } from "../tree/FileTree"
+import { readMarkdownFile, readDataFile, readCssFile, isWikiFile, getFileSrcHandler, FileSrcType } from "../tree/WikiFile"
+import { ScanTreeFolderType } from "../tree/ScanTree"
 
 async function updateDataFileList(rootHandle:FileSystemDirectoryHandle, fileNameList:string[], rootScanTree:ScanTreeFolderType, postEvent:PostEvent<WorkerMessageType>) {
     for (const fileName of fileNameList) {

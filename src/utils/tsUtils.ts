@@ -28,3 +28,5 @@ export type BoxUnpromise<T extends BoxType<any>> = T extends BoxType<Promise<inf
 export type Unpromise<T> = BoxUnpromise<BoxType<T>>
 
 export type PromiseUnion<T> = Unpromise<T> | Promise<Unpromise<T>>
+
+

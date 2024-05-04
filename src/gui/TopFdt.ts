@@ -1,5 +1,5 @@
-import { PageTreeFolderType} from "../fileTree/PageTree"
-import { HeadingTokenType } from "../fileTree/WikiFile"
+import { PageTreeFolderType} from "../tree/PageTree"
+import { HeadingTreeType } from "../tree/WikiFile"
 
 export type TopFdt = {
     updatePackFileName: {
@@ -19,6 +19,6 @@ export type TopFdt = {
         menuRoot: PageTreeFolderType
     },
     updateHeadingList: {
-        headingList: HeadingTokenType[]
+        headingTree: HeadingTreeType
     }
 }

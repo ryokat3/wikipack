@@ -22,4 +22,8 @@ export class HashInfo {
     toUrl():string {
         return (this.fileName || "") + (this.heading ? `?heading=${this.heading}` : "")
     }
+
+    apply():void {
+        window.location.hash = `#${this.toUrl()}`
+    }
 }

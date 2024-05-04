@@ -2,6 +2,8 @@ import * as chai from "chai"
 import { splitPath } from "../src/utils/appUtils"
 import { addProxyProperty, getProxyDataFunction, getProxyDataClass } from "../src/utils/proxyData"
 import { HeadingNumber } from "../src/markdown/HeadingNumber"
+import { TreeRel, createIndexTree, genHierachicalComparator } from "../src/tree/IndexTree"
+import { takeWhile, zip } from "../src/utils/itertools"
 
 describe("Javascript common", ()=>{
     it("splitPath", ()=>{        
@@ -113,22 +115,97 @@ describe("ProxyData", ()=>{
 
 describe("HeadingNumber", ()=>{
     it("basic", ()=>{
-        const heading = new HeadingNumber()
+        let heading = HeadingNumber.create()
 
-        chai.assert.equal(heading.toString(), "0")
-        chai.assert.equal(heading.increase(1), "1")
-        chai.assert.equal(heading.increase(2), "1.1")
-        chai.assert.equal(heading.increase(4), "1.1.1.1")
-        chai.assert.equal(heading.increase(3), "1.1.2")
-        chai.assert.equal(heading.increase(1), "2")
-        chai.assert.equal(heading.increase(7), "2.1.1.1.1.1.1")        
+        chai.assert.equal(heading.toString(), "")
+        heading = heading.increase(1)
+        chai.assert.equal(heading.toString(), "1")
+        heading = heading.increase(2)
+        chai.assert.equal(heading.toString(), "1.1")
+        heading = heading.increase(4)
+        chai.assert.equal(heading.toString(), "1.1.0.1")
+        heading = heading.increase(3)
+        chai.assert.equal(heading.toString(), "1.1.1")
+        heading = heading.increase(1)
+        chai.assert.equal(heading.toString(), "2")
+        heading = heading.increase(7)
+        chai.assert.equal(heading.toString(), "2.0.0.0.0.0.1")        
     })
 
     it("Initial Value", ()=>{
-        const heading = new HeadingNumber("2.1")
+        const heading = HeadingNumber.fromString("2.1")
 
         chai.assert.equal(heading.toString(), "2.1")
-        chai.assert.equal(heading.increase(3), "2.1.1")
-        chai.assert.equal(heading.increase(1), "3")       
+        chai.assert.equal(heading.increase(3).toString(), "2.1.1")
+        chai.assert.equal(heading.increase(1).toString(), "3")       
+    })
+
+    it("comp", ()=>{
+        const heading = HeadingNumber.fromString("1.1.1")
+
+        const compHeadingNumber = genHierachicalComparator((v1:number, v2:number)=> (v1 === v2) ? 0 : (v1 > v2) ? 1 : -1, (h:HeadingNumber)=>h.value)
+
+        chai.assert.equal(compHeadingNumber(heading, HeadingNumber.fromString("1.1.1.1")), TreeRel.decendants)
+        chai.assert.equal(compHeadingNumber(heading, HeadingNumber.fromString("1.1")), TreeRel.ancestor)
+        chai.assert.equal(compHeadingNumber(heading, HeadingNumber.fromString("1.2")), TreeRel.greater)
+        chai.assert.equal(compHeadingNumber(heading, HeadingNumber.fromString("1.1.1")), TreeRel.same)
+        chai.assert.equal(compHeadingNumber(heading, HeadingNumber.fromString("1.1.0.3")), TreeRel.less)
+
+        chai.assert.equal(compHeadingNumber(HeadingNumber.fromString("1.1.1.1"), HeadingNumber.fromString("1.1.1")), TreeRel.ancestor)
+        chai.assert.equal(compHeadingNumber(HeadingNumber.fromString("1.1.1.1"), HeadingNumber.fromString("1.1.1.1.1")), TreeRel.decendants)
+        chai.assert.equal(compHeadingNumber(HeadingNumber.fromString("1.1.1.1"), HeadingNumber.fromString("1.1.1.1")), TreeRel.same)
+        chai.assert.equal(compHeadingNumber(HeadingNumber.fromString("1.1.1.1.1"), HeadingNumber.fromString("1.1.2.1")), TreeRel.greater)
+        chai.assert.equal(compHeadingNumber(HeadingNumber.fromString("1.1.3"), HeadingNumber.fromString("1.1.2.1")), TreeRel.less)
+        chai.assert.equal(compHeadingNumber(HeadingNumber.fromString("1.1.3"), HeadingNumber.fromString("2")), TreeRel.greater)
+    })
+})
+
+describe("takeWhile", ()=>{
+    it("basic", ()=>{
+        chai.assert.deepEqual(Array.from(takeWhile([1, 2, 0, 4, 0], (x)=>x > 0)), [1, 2])
+        chai.assert.deepEqual(Array.from(takeWhile([], (x)=>x > 0)), [])
+        chai.assert.deepEqual(Array.from(takeWhile([0, 2, 0, 4, 0], (x)=>x > 0)), [])
+        chai.assert.deepEqual(Array.from(takeWhile([1, 2, 3, 4, 5], (x)=>x > 0)), [1, 2, 3, 4, 5])
+
+        chai.assert.deepEqual(Array.from(takeWhile(takeWhile([1, 2, 3, 4, 5], (x)=>x > 0), (x)=>x < 4)), [1, 2, 3])
+    })
+})
+
+describe("HierachicalValue", ()=>{
+    it("basic", ()=>{
+        const compHeadingNumber = genHierachicalComparator((v1:number, v2:number)=> (v1 === v2) ? 0 : (v1 > v2) ? 1 : -1, (h:HeadingNumber)=>h.value)
+        const tree = createIndexTree(compHeadingNumber)
+
+        const root = new tree(HeadingNumber.create())
+        chai.assert.isTrue(root.isRoot)
+
+        root.add(HeadingNumber.fromString("1.2.1"))
+        chai.assert.equal(root.children[0].value.toString(), "1.2.1")
+
+        root.add(HeadingNumber.fromString("1"))
+        chai.assert.equal(root.children[0].value.toString(), "1")
+
+        root.add(HeadingNumber.fromString("1.2.1.2"))
+        root.add(HeadingNumber.fromString("2"))
+        root.add(HeadingNumber.fromString("1.2"))
+        root.add(HeadingNumber.fromString("1.1.1"))
+
+        chai.assert.equal(root.children[0].value.toString(), "1")
+        chai.assert.equal(root.children[1].value.toString(), "2")
+        chai.assert.equal(root.children[0].children[0].value.toString(), "1.1.1")
+        chai.assert.equal(root.children[0].children[1].value.toString(), "1.2")
+        chai.assert.equal(root.children[0].children[1].children[0].value.toString(), "1.2.1")
+        chai.assert.equal(root.children[0].children[1].children[0].children[0].value.toString(), "1.2.1.2")            
+    })
+})
+
+describe("zip", ()=>{
+    it("basic", ()=>{        
+        chai.assert.deepEqual(Array.from(zip([1,2,3], ["1","2","3"])), [[1, "1"],[2, "2"],[3, "3"]])
+        chai.assert.deepEqual(Array.from(zip([1,2,3,4], ["1","2","3"])), [[1, "1"],[2, "2"],[3, "3"]])
+        chai.assert.deepEqual(Array.from(zip([1,2,3], ["1","2","3","4"])), [[1, "1"],[2, "2"],[3, "3"]])
+
+        chai.assert.deepEqual(Array.from(zip([1,2,3], ["1","2","3"], [true, false, true])), [[1, "1", true],[2, "2", false],[3, "3", true]])
+        chai.assert.deepEqual(Array.from(zip([1,2,3], ["1","2","3"], [])), [])
     })
 })

@@ -1,32 +1,33 @@
-import { assert } from "chai"
 
-export class HeadingNumber {
-    private static MAX_HEADING_LENGTH:number = 32
+export class HeadingNumber {    
+    readonly value: number[]
 
-    private readonly headingNumber: number[]
-
-    constructor(initialStr:string = "") {
-        const initial = initialStr ? initialStr.split('.').map((numStr)=>parseInt(numStr, 10)) : []
-        this.headingNumber = [ ...initial, ...(new Array(HeadingNumber.MAX_HEADING_LENGTH - initial.length).fill(0)) ]
+    private constructor(value:number[]) {
+        this.value = value
     }
 
-    public toString():string {
-        return this.headingNumber.filter((n)=>n > 0).map(String).join('.') || "0"
+    static create():HeadingNumber {
+        return new HeadingNumber([])
     }
 
-    public increase(level:number):string {
-        assert(0 < level && level <= this.headingNumber.length)
-        for (let i = 0; i < this.headingNumber.length; ++i) {
-            if ((i < (level - 1)) && (this.headingNumber[i] === 0)) {
-                this.headingNumber[i] = 1
+    static fromString(initialStr:string):HeadingNumber {
+        return new HeadingNumber(initialStr.split('.').map((numStr)=>parseInt(numStr, 10)))        
+    }    
+
+    public toString():string {        
+        return this.value.map(String).join('.')
+    }
+
+    public increase(level:number):HeadingNumber {
+        const value = new Array<number>(level).fill(0)
+        for (const idx of value.keys()) {
+            if (idx === level - 1) {
+                value[idx] = (this.value.length > idx) ? this.value[idx] + 1 : 1
             }
-            else if (i === level - 1) {
-                this.headingNumber[i] = this.headingNumber[i] + 1
-            }
-            else if (i > level - 1) {
-                this.headingNumber[i] = 0
+            else {
+                value[idx] = (this.value.length > idx) ? this.value[idx] : 0
             }
         }
-        return this.toString()
+        return new HeadingNumber(value)
     }
 }

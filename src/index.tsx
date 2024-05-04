@@ -6,13 +6,14 @@ import { WorkerMessageType } from "./worker/WorkerMessageType"
 import { mediatorData } from "./Mediator"
 import { readConfig } from "./config"
 import { TopStateType } from "./gui/TopReducer"
-import { isEmptyFileTreeFolder, updateFileOfTree } from "./fileTree/FileTree"
+import { isEmptyFileTreeFolder, updateFileOfTree } from "./tree/FileTree"
+import { genHeadingTreeRoot } from "./tree/WikiFile"
 import { injectAllMarkdownFileFromElement, injectAllCssFileFromElement, injectAllDataFileFromElement } from "./dataElement/dataFromElement"
 import { TOP_COMPONENT_ID } from "./constant"
 import { makeFileRegexChecker } from "./utils/appUtils"
-import { createRootFolder } from "./fileTree/FileTree"
-import { PageTreeItemType, getPageTree } from "./fileTree/PageTree"
-import { getTokenList } from "./markdown/converter"
+import { createRootFolder } from "./tree/FileTree"
+import { PageTreeItemType, getPageTree } from "./tree/PageTree"
+import { getHyperRefData } from "./markdown/converter"
 
 import workerJS from "./tmp/worker.bundle.js.asdata"
 import defaultMarkdown from "./defaultMarkdown.md"
@@ -37,7 +38,7 @@ window.onload = async function () {
     //
     if (isEmptyFileTreeFolder(mediatorData.rootFolder)) {
         updateFileOfTree(mediatorData.rootFolder, config.topPage, {
-            ...getTokenList(defaultMarkdown, "", isMarkdownFile),
+            ...getHyperRefData(defaultMarkdown, "", isMarkdownFile),
             type: "markdown",
             markdown: defaultMarkdown,
             fileStamp: "",
@@ -49,7 +50,7 @@ window.onload = async function () {
         title: "",
         html: "",
         heading: undefined,
-        headingList: [],
+        headingTree: genHeadingTreeRoot(),
         packFileName: "wikipack",
         seq: 0,
         pageTree: getPageTree(mediatorData.rootFolder) || createRootFolder<PageTreeItemType>()

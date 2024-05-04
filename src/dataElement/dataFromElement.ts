@@ -1,9 +1,9 @@
-import { DataFileType, CssFileType, MarkdownFileType } from "../fileTree/WikiFile"
+import { DataFileType, CssFileType, MarkdownFileType } from "../tree/WikiFile"
 import { EMBEDDED_FILE_ID_PREFIX, EMBEDDED_DATA_FILE_CLASS, EMBEDDED_MARKDOWN_FILE_CLASS, EMBEDDED_CSS_FILE_CLASS, FILE_STAMP_ATTR } from "../constant"
 import { dataUrlDecode, dataUrlDecodeAsBlob } from "../utils/appUtils"
-import { /* getMarkdownFile, */ getTokenList } from "../markdown/converter"
-import { updateFileOfTree } from "../fileTree/FileTree"
-import { FolderType } from "../fileTree/WikiFile"
+import { /* getMarkdownFile, */ getHyperRefData } from "../markdown/converter"
+import { updateFileOfTree } from "../tree/FileTree"
+import { FolderType } from "../tree/WikiFile"
 import { getDir } from "../utils/appUtils"
 
 export function getElementFile(pagePath:string):HTMLElement|null {
@@ -29,7 +29,7 @@ async function getMarkdownFileFromElement(elem:Element, isMarkdownFile:(fileName
         
         // return [pagePath, getMarkdownFile(markdown, pagePath, fileStamp, isMarkdownFile)]
         return [pagePath, {
-            ...getTokenList(markdown, getDir(pagePath), isMarkdownFile),
+            ...getHyperRefData(markdown, getDir(pagePath), isMarkdownFile),
             type: "markdown",
             markdown: markdown,
             fileStamp: fileStamp,
