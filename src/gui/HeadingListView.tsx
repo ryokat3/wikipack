@@ -3,6 +3,7 @@ import { SimpleTreeView, TreeItem } from '@mui/x-tree-view'
 import { HeadingTreeType } from "../tree/WikiFile"
 import { styled } from "@mui/material/styles"
 import { HashInfo } from "../markdown/HashInfo"
+
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 
@@ -10,6 +11,7 @@ const StickySimpleTreeView = styled(SimpleTreeView)(({})=>({
     position: "sticky",
     top: 0    
 }))
+
 
 export interface HeadingListViewProps {
     currentPage: string,
@@ -24,7 +26,7 @@ export const HeadingListView: React.FunctionComponent<HeadingListViewProps> = (p
 
     const onNodeSelect = (_: React.SyntheticEvent, itemId: string, isSelected:boolean):void =>{
         if (isSelected) {
-            new HashInfo(props.currentPage, itemId).apply()
+            HashInfo.fromString(itemId).apply()
         }
     }
 
@@ -35,7 +37,8 @@ export const HeadingListView: React.FunctionComponent<HeadingListViewProps> = (p
         sx={{ overflow: 'hidden' }}
     >
         {childrenView}
-    </StickySimpleTreeView> : <TreeItem itemId={props.headingTree.value.heading.toString()} label={props.headingTree.value.text}>
+    </StickySimpleTreeView> : <TreeItem itemId={new HashInfo(props.currentPage, props.headingTree.value.heading.toString()).toString()} label={props.headingTree.value.text}>
         {childrenView}
     </TreeItem>                
+
 }

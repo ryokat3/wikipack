@@ -2,14 +2,14 @@ import { WorkerInvoke } from "./utils/WorkerMessage"
 import { WorkerMessageType } from "./worker/WorkerMessageType"
 import { ConfigType } from "./config"
 import { TopDispatcherType } from "./gui/TopDispatcher"
-import { FolderType, HeadingTreeType, WikiFileType, genHeadingTreeRoot } from "./tree/WikiFile"
-import { createRootFolder, getFileFromTree, updateFileOfTree, deleteFileFromTree } from "./tree/FileTree"
+import { FolderType, WikiFileType, genHeadingTreeRoot } from "./tree/WikiFile"
+import { createRootFolder, getFileFromTree, updateFileOfTree, deleteFileFromTree, FileTreeFolderType, walkThroughFileOfTree } from "./tree/FileTree"
 import { updateCssElement } from "./dataElement/styleElement"
 import { canonicalFileName, getDir, addPath } from "./utils/appUtils"
 import { getRenderer } from "./markdown/converter"
 import { makeFileRegexChecker, isURL, addPathToUrl } from "./utils/appUtils"
 import { getProxyDataClass } from "./utils/proxyData"
-import { getPageTree, PageTreeItemType } from "./tree/PageTree"
+import { PageTreeItemType, HtmlInfo } from "./tree/PageTree"
 import { convertToScanTreeFolder } from "./tree/ScanTree"
 import { setupDragAndDrop } from "./fileIO/dragAndDrop"
 import { hasMarkdownFileElement } from "./dataElement/dataFromElement"
@@ -32,10 +32,10 @@ function getRootUrl():URL {
     return url
 }
 
-
 class MediatorData {    
     readonly rootUrl: URL = getRootUrl()
     rootFolder: FolderType = createRootFolder<WikiFileType>()
+    pageTreeRoot: FileTreeFolderType<PageTreeItemType> = createRootFolder<PageTreeItemType>()
     currentPage: string = NO_CURRENT_PAGE    
     mode: 'directory' | 'url' | undefined = undefined
     directory: FileSystemDirectoryHandle | undefined = undefined    
@@ -70,7 +70,7 @@ export class Mediator extends MediatorData {
         this.worker.addEventHandler("checkCurrentPageDone", (payload)=>this.checkCurrentPageDone(payload))
     }
 
-    convertToHtml(fileName:string):{ html:string, heading:HeadingTreeType}|undefined {
+    convertToHtml(fileName:string):HtmlInfo|undefined {
         const currentFile = getFileFromTree(this.rootFolder, fileName)
         const headingTree = genHeadingTreeRoot()
         const renderer = getRenderer(this.rootFolder, fileName, this.isMarkdown, headingTree)
@@ -80,6 +80,7 @@ export class Mediator extends MediatorData {
     resetRootFolder():void {
         this.currentPage = NO_CURRENT_PAGE        
         this.rootFolder = createRootFolder<WikiFileType>()
+        this.pageTreeRoot = createRootFolder<PageTreeItemType>()
     }
 
     scrollToElement(id:string):void {        
@@ -97,7 +98,7 @@ export class Mediator extends MediatorData {
         const self = this        
         
         function gotoHashPage() {
-            const hashInfo = HashInfo.create(window.location.href)
+            const hashInfo = HashInfo.fromURL(window.location.href)
                                                 
             self.updateCurrentPage(hashInfo.fileName || self.config.topPage)    
             self.dispatcher.updateHeading({ heading: hashInfo.heading })        
@@ -124,11 +125,10 @@ export class Mediator extends MediatorData {
         this.currentPage = canonicalFileName(pagePath)        
 
         // Update HTML
-        const html = this.convertToHtml(this.currentPage)
-                
-        if (html !== undefined) {
-            this.dispatcher.updateHtml({ title: this.currentPage, html: html.html })        
-            this.dispatcher.updateHeadingList({ headingTree: html.heading })
+        const htmlInfo = getFileFromTree(this.pageTreeRoot, this.currentPage)            
+        if ((htmlInfo !== undefined) && (htmlInfo.type === "markdown")) {                                
+            this.dispatcher.updateHtml({ title: this.currentPage, html: htmlInfo.html })        
+            this.dispatcher.updateHeadingList({ headingTree: htmlInfo.heading })
         }
         else {
             this.dispatcher.updateHtml({ title: this.currentPage, html: `${this.currentPage} not found` })
@@ -193,6 +193,7 @@ export class Mediator extends MediatorData {
 
     scanDirectoryDone(_payload:WorkerMessageType['scanDirectoryDone']['response']):void {
         if (this.mode === "directory" && this.directory !== undefined) {
+            // TODO:
             // this.scanDirectory(this.directory)
         }
         this.checkCurrentPage()             
@@ -210,6 +211,7 @@ export class Mediator extends MediatorData {
 
     scanUrlDone(_payload:WorkerMessageType['scanUrlDone']['response']):void {        
         if (this.mode === "url") {
+            // TODO:
             // this.scanUrl(this.rootUrl)
         }
         this.checkCurrentPage()      
@@ -267,27 +269,30 @@ export class Mediator extends MediatorData {
     // Handler for Worker Message Responses
     ////////////////////////////////////////////////////////////////////////
 
-    updateMarkdownFile(payload:WorkerMessageType['updateMarkdownFile']['response']):void {             
+    updateMarkdownFile(payload:WorkerMessageType['updateMarkdownFile']['response']):void {      
         const pagePath = canonicalFileName(payload.pagePath)
         const isNewFile = getFileFromTree(this.rootFolder, pagePath) === undefined
         const isSame = updateFileOfTree(this.rootFolder, pagePath, payload.markdownFile, isSameFile)
+
+        if (isNewFile || !isSame) {            
+            const htmlInfo = this.convertToHtml(pagePath)
+            if (htmlInfo !== undefined) {                            
+                updateFileOfTree(this.pageTreeRoot, pagePath, { ...htmlInfo, type: "markdown" })                
+            }          
+            this.dispatcher.updateMenuRoot({ menuRoot:this.pageTreeRoot })            
+        }
+
         const markdownFile = getFileFromTree(this.rootFolder, this.currentPage)
         const isCurrentPageExist = markdownFile !== undefined
         
-        if (isNewFile) {
-            const menuRoot = getPageTree(this.rootFolder) || createRootFolder<PageTreeItemType>()
-            this.dispatcher.updateMenuRoot({ menuRoot:menuRoot })
-        }
-
         if (this.currentPage === NO_CURRENT_PAGE) {
             window.location.hash = `#${pagePath}`            
         }
-
-        else if (isCurrentPageExist && this.currentPage === pagePath && !isSame) {            
-            const html = this.convertToHtml(this.currentPage)
-            if (html !== undefined) {                
-                this.dispatcher.updateHtml({ title: this.currentPage, html: html.html})
-                this.dispatcher.updateHeadingList({ headingTree: html.heading})
+        else if (isCurrentPageExist && this.currentPage === pagePath && !isSame) {
+            const htmlInfo = getFileFromTree(this.pageTreeRoot, this.currentPage)            
+            if ((htmlInfo !== undefined) && (htmlInfo.type === "markdown")) {                
+                this.dispatcher.updateHtml({ title: this.currentPage, html: htmlInfo.html})
+                this.dispatcher.updateHeadingList({ headingTree: htmlInfo.heading})
             }
         }          
     }
@@ -296,20 +301,24 @@ export class Mediator extends MediatorData {
         updateCssElement(payload.cssFile.css, canonicalFileName(payload.pagePath), payload.cssFile.fileStamp)  
     }
 
-    updateDataFile(payload:WorkerMessageType['updateDataFile']['response']):void {        
-
+    updateDataFile(payload:WorkerMessageType['updateDataFile']['response']):void {
+        
         const fileName = canonicalFileName(payload.pagePath)
         const blob = new Blob( [payload.dataFile.buffer], { type: payload.dataFile.mime })
         const dataRef = URL.createObjectURL(blob)        
         const isSame = updateFileOfTree(this.rootFolder, fileName, { ...payload.dataFile, dataRef: dataRef }, isSameFile)
         
-        if (!isSame) {        
-            const markdownFile = getFileFromTree(this.rootFolder, this.currentPage)
-            if ((markdownFile !== undefined) && (markdownFile.type === "markdown") && (markdownFile.imageList.includes(fileName) || markdownFile.linkList.includes(fileName))) {        
-                const html = this.convertToHtml(this.currentPage)
-                if (html !== undefined) {
-                    this.dispatcher.updateHtml({ title: this.currentPage, html: html.html })
-                }                
+        if (!isSame) {
+            for (const [markdownFileName, fobj] of walkThroughFileOfTree(this.rootFolder)) {
+                if ((fobj.type == "markdown") && (fobj.imageList.includes(fileName) || fobj.linkList.includes(fileName))) {
+                    const htmlInfo = this.convertToHtml(markdownFileName)
+                    if (htmlInfo !== undefined) {
+                        updateFileOfTree(this.pageTreeRoot, markdownFileName, { ...htmlInfo, type: "markdown" })
+                        if (markdownFileName === this.currentPage) {
+                            this.dispatcher.updateHtml({ title: this.currentPage, html: htmlInfo.html })
+                        }
+                    }
+                }
             }
         }
     }

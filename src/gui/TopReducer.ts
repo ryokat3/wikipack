@@ -42,11 +42,10 @@ export const topReducer = new Reducer<TopFdt, TopStateType>()
     .add("updateMenuRoot", (state, payload)=>{            
         return {
             ...state,
-            pageTree: payload.menuRoot
+            pageTree: { ...payload.menuRoot }
         }
     })
-    .add("updateHeadingList", (state, payload)=>{
-        console.log("updateHeadingList")
+    .add("updateHeadingList", (state, payload)=>{        
         return {
             ...state,
             headingTree: payload.headingTree

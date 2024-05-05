@@ -4,7 +4,7 @@ import { createContext, useEffect } from "react"
 import { topReducer, TopStateType } from "./TopReducer"
 import { PageView } from "./PageView"
 import { PageTreeView } from "./PageTreeView"
-import { HeadingListView } from "./HeadingListView"
+// import { HeadingListView } from "./HeadingListView"
 import { Mediator, MediatorProxy } from "../Mediator"
 import { SearchAppBar } from "./SearchAppBar"
 import { WorkerInvoke } from "../utils/WorkerMessage"
@@ -27,7 +27,7 @@ export interface TopProps {
     initialState: TopStateType,    
 }
 
-export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
+export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {    
 
     const [state, dispatch] = React.useReducer(topReducer, props.initialState)
     const dispatcher = topDispatcher.build(dispatch)
@@ -61,13 +61,13 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
         ></SearchAppBar>        
         <Grid container spacing={2}>
             <Grid item xs={3}>
-                <PageTreeView root={state.pageTree}></PageTreeView>
+                <PageTreeView root={context.mediator.pageTreeRoot}></PageTreeView>
             </Grid>
             <Grid item xs={6}>
                 <PageView html={state.html}></PageView>
             </Grid>            
             <Grid item xs={3}>                
-                <HeadingListView currentPage={mediator.currentPage} headingTree={state.headingTree}></HeadingListView>
+                
             </Grid>            
         </Grid>
     </TopContext.Provider>

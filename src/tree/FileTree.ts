@@ -30,6 +30,18 @@ export function createRootFolder<FT extends FileTreeFileType>():FileTreeFolderTy
     }
 }
 
+export function* walkThroughFileOfTree<FT extends FileTreeFileType>(folder:FileTreeFolderType<FT>, dirPath:string|undefined = undefined):Generator<[string, FT[keyof FT]], void, unknown> {
+    for (const [name, fobj] of Object.entries(folder.children)) {
+        const childPath = addPath(dirPath, name)
+        if (isFileTreeFolder(fobj)) {
+            yield* walkThroughFileOfTree(fobj, childPath)
+        }
+        else {
+            yield [childPath, fobj]
+        }
+    }    
+}
+
 function getOrCreateFolder<FT extends FileTreeFileType>(folder:FileTreeFolderType<FT>, name:string):FileTreeFolderType<FT> {
     if ((name in folder.children) && (folder.children[name].type === "folder")) {
         return folder.children[name] as FileTreeFolderType<FT>
