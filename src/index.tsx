@@ -11,8 +11,6 @@ import { genHeadingTreeRoot } from "./tree/WikiFile"
 import { injectAllMarkdownFileFromElement, injectAllCssFileFromElement, injectAllDataFileFromElement } from "./dataElement/dataFromElement"
 import { TOP_COMPONENT_ID } from "./constant"
 import { makeFileRegexChecker } from "./utils/appUtils"
-import { createRootFolder } from "./tree/FileTree"
-import { PageTreeItemType, getPageTree } from "./tree/PageTree"
 import { getHyperRefData } from "./markdown/converter"
 
 import workerJS from "./tmp/worker.bundle.js.asdata"
@@ -52,8 +50,7 @@ window.onload = async function () {
         heading: undefined,
         headingTree: genHeadingTreeRoot(),
         packFileName: "wikipack",
-        seq: 0,
-        pageTree: getPageTree(mediatorData.rootFolder) || createRootFolder<PageTreeItemType>()
+        seq: 0
     }
 
     if (container !== null) {     

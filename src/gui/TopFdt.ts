@@ -1,4 +1,3 @@
-import { PageTreeFolderType} from "../tree/PageTree"
 import { HeadingTreeType } from "../tree/WikiFile"
 
 export type TopFdt = {
@@ -14,9 +13,6 @@ export type TopFdt = {
     },
     updateSeq: {        
         seq: number
-    },
-    updateMenuRoot: {
-        menuRoot: PageTreeFolderType
     },
     updateHeadingList: {
         headingTree: HeadingTreeType

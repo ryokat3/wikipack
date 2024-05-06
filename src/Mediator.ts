@@ -191,9 +191,11 @@ export class Mediator extends MediatorData {
         })        
     }
 
-    scanDirectoryDone(_payload:WorkerMessageType['scanDirectoryDone']['response']):void {
+    scanDirectoryDone(payload:WorkerMessageType['scanDirectoryDone']['response']):void {
+        console.log('scanDirectoryDone')
         if (this.mode === "directory" && this.directory !== undefined) {
             // TODO:
+            window.setTimeout(()=>this.scanDirectory(payload.handle), 5000)
             // this.scanDirectory(this.directory)
         }
         this.checkCurrentPage()             
@@ -210,9 +212,10 @@ export class Mediator extends MediatorData {
     }
 
     scanUrlDone(_payload:WorkerMessageType['scanUrlDone']['response']):void {        
+        console.log('scanUrlDone')
         if (this.mode === "url") {
             // TODO:
-            // this.scanUrl(this.rootUrl)
+            // window.setTimeout(()=>this.scanUrl(new URL(payload.url)), 5000)
         }
         this.checkCurrentPage()      
     }
@@ -278,8 +281,8 @@ export class Mediator extends MediatorData {
             const htmlInfo = this.convertToHtml(pagePath)
             if (htmlInfo !== undefined) {                            
                 updateFileOfTree(this.pageTreeRoot, pagePath, { ...htmlInfo, type: "markdown" })                
-            }          
-            this.dispatcher.updateMenuRoot({ menuRoot:this.pageTreeRoot })            
+            }
+            this.updateSeq()            
         }
 
         const markdownFile = getFileFromTree(this.rootFolder, this.currentPage)
