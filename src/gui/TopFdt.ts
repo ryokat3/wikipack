@@ -1,5 +1,3 @@
-import { HeadingTreeType } from "../tree/WikiFile"
-
 export type TopFdt = {
     updatePackFileName: {
         name: string
@@ -13,8 +11,5 @@ export type TopFdt = {
     },
     updateSeq: {        
         seq: number
-    },
-    updateHeadingList: {
-        headingTree: HeadingTreeType
     }
 }

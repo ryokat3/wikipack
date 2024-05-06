@@ -1,12 +1,10 @@
 import { Reducer } from "../utils/FdtFlux"
 import { TopFdt } from "./TopFdt"
-import { HeadingTreeType } from "../tree/WikiFile"
 
 export type TopStateType = {
     title: string
     html: string
-    heading: string|undefined
-    headingTree: HeadingTreeType
+    heading: string|undefined    
     packFileName: string
     seq: number    
 }
@@ -35,12 +33,6 @@ export const topReducer = new Reducer<TopFdt, TopStateType>()
         return {
             ...state,
             seq: payload.seq
-        }
-    })
-    .add("updateHeadingList", (state, payload)=>{        
-        return {
-            ...state,
-            headingTree: payload.headingTree
         }
     })
     .build()

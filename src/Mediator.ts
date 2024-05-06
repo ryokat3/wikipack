@@ -127,8 +127,7 @@ export class Mediator extends MediatorData {
         // Update HTML
         const htmlInfo = getFileFromTree(this.pageTreeRoot, this.currentPage)            
         if ((htmlInfo !== undefined) && (htmlInfo.type === "markdown")) {                                
-            this.dispatcher.updateHtml({ title: this.currentPage, html: htmlInfo.html })        
-            this.dispatcher.updateHeadingList({ headingTree: htmlInfo.heading })
+            this.dispatcher.updateHtml({ title: this.currentPage, html: htmlInfo.html })            
         }
         else {
             this.dispatcher.updateHtml({ title: this.currentPage, html: `${this.currentPage} not found` })
@@ -294,8 +293,7 @@ export class Mediator extends MediatorData {
         else if (isCurrentPageExist && this.currentPage === pagePath && !isSame) {
             const htmlInfo = getFileFromTree(this.pageTreeRoot, this.currentPage)            
             if ((htmlInfo !== undefined) && (htmlInfo.type === "markdown")) {                
-                this.dispatcher.updateHtml({ title: this.currentPage, html: htmlInfo.html})
-                this.dispatcher.updateHeadingList({ headingTree: htmlInfo.heading})
+                this.dispatcher.updateHtml({ title: this.currentPage, html: htmlInfo.html})                
             }
         }          
     }

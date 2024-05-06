@@ -7,7 +7,6 @@ import { mediatorData } from "./Mediator"
 import { readConfig } from "./config"
 import { TopStateType } from "./gui/TopReducer"
 import { isEmptyFileTreeFolder, updateFileOfTree } from "./tree/FileTree"
-import { genHeadingTreeRoot } from "./tree/WikiFile"
 import { injectAllMarkdownFileFromElement, injectAllCssFileFromElement, injectAllDataFileFromElement } from "./dataElement/dataFromElement"
 import { TOP_COMPONENT_ID } from "./constant"
 import { makeFileRegexChecker } from "./utils/appUtils"
@@ -47,8 +46,7 @@ window.onload = async function () {
     const initialState:TopStateType = {
         title: "",
         html: "",
-        heading: undefined,
-        headingTree: genHeadingTreeRoot(),
+        heading: undefined,        
         packFileName: "wikipack",
         seq: 0
     }
