@@ -44,16 +44,23 @@ export function getHyperRefData(markdown:string, dirPath:string, isMarkdownFile:
     return hrefData
 }
 
+function extractText(htmlStr:string):string {
+    var span = document.createElement('span')
+    span.innerHTML = htmlStr
+    return span.textContent || span.innerText
+}
+
+
 function getRendererExtension(    
     rootFolder:FolderType,
     filePath:string,
     isMarkdown:(fileName:string)=>boolean,
     headingTree:HeadingTreeType
-): marked.MarkedExtension['renderer'] {
+): marked.MarkedExtension['renderer'] {    
     const dirPath = getDir(filePath)
     const renderer = new marked.Renderer()
     let headingNumber = HeadingNumber.create()
-       
+1
     return {
         link(href: string, title: string|null|undefined, text: string) {            
             const fileName = addPath(dirPath, href)
@@ -82,7 +89,9 @@ function getRendererExtension(
 
         heading(text:string, level:number, _raw:string) {
             headingNumber = headingNumber.increase(level)
-            headingTree.add({ text:text, heading: headingNumber })                                    
+            const textContnet = extractText(text)
+            console.log(`${text} => ${textContnet}`)    
+            headingTree.add({ text:textContnet, heading: headingNumber })                                    
             return `<h${level} id="${headingNumber}" style="scroll-margin-top:16px;">${text}</h${level}>`            
         }
     }
