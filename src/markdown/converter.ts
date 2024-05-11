@@ -3,7 +3,7 @@ import { markedHighlight } from "marked-highlight"
 import hljs from 'highlight.js'
 import { getFileFromTree } from "../tree/FileTree"
 import { HyperRefData, FolderType } from "../tree/WikiFile"
-import { getDir, addPath, isURL } from "../utils/appUtils"
+import { addPath, isURL } from "../utils/appUtils"
 import { HeadingNumber } from "./HeadingNumber"
 import { HeadingTreeType } from "../tree/WikiFile"
 
@@ -53,11 +53,10 @@ function extractText(htmlStr:string):string {
 
 function getRendererExtension(    
     rootFolder:FolderType,
-    filePath:string,
+    dirPath:string,
     isMarkdown:(fileName:string)=>boolean,
     headingTree:HeadingTreeType
-): marked.MarkedExtension['renderer'] {    
-    const dirPath = getDir(filePath)
+): marked.MarkedExtension['renderer'] {        
     const renderer = new marked.Renderer()
     let headingNumber = HeadingNumber.create()
 1
@@ -112,7 +111,7 @@ function decodeUriOrEcho(uri: string) {
 }
 
 
-export function getRenderer(rootFolder: FolderType,  filePath:string, isMarkdown:(fileName:string)=>boolean, headingTree:HeadingTreeType) {
+export function getRenderer(rootFolder: FolderType,  dirPath:string, isMarkdown:(fileName:string)=>boolean, headingTree:HeadingTreeType) {
     const highlightExtension = markedHighlight({
         langPrefix: 'hljs language-',
         highlight(code, _lang, _info) {
@@ -152,7 +151,7 @@ export function getRenderer(rootFolder: FolderType,  filePath:string, isMarkdown
     return (text: string): string => {
         const highlightMarked = new Marked(highlightExtension)
         
-        highlightMarked.use({ renderer:getRendererExtension(rootFolder, filePath, isMarkdown, headingTree) })
+        highlightMarked.use({ renderer:getRendererExtension(rootFolder, dirPath, isMarkdown, headingTree) })
         return highlightMarked.parse(text, { async: false} ) as string
     }
 }

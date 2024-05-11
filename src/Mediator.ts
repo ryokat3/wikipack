@@ -69,12 +69,18 @@ export class Mediator extends MediatorData {
         this.worker.addEventHandler("deleteFile", (payload)=>this.deleteFile(payload))     
         this.worker.addEventHandler("checkCurrentPageDone", (payload)=>this.checkCurrentPageDone(payload))
     }
-
+/*
     convertToHtml(fileName:string):HtmlInfo|undefined {
         const currentFile = getFileFromTree(this.rootFolder, fileName)
         const headingTree = genHeadingTreeRoot()
         const renderer = getRenderer(this.rootFolder, fileName, this.isMarkdown, headingTree)
         return (currentFile !== undefined && currentFile.type === "markdown") ? { html:`<div class="${this.config.markdownBodyClass}">${renderer(currentFile.markdown)}</div>`, heading: headingTree} : undefined
+    }
+*/
+    convertToHtml(dirPath:string, markdownText:string):HtmlInfo {        
+        const headingTree = genHeadingTreeRoot()
+        const renderer = getRenderer(this.rootFolder, dirPath, this.isMarkdown, headingTree)
+        return { html:`<div class="${this.config.markdownBodyClass}">${renderer(markdownText)}</div>`, heading: headingTree}
     }
 
     resetRootFolder():void {
@@ -277,10 +283,8 @@ export class Mediator extends MediatorData {
         const isSame = updateFileOfTree(this.rootFolder, pagePath, payload.markdownFile, isSameFile)
 
         if (isNewFile || !isSame) {            
-            const htmlInfo = this.convertToHtml(pagePath)
-            if (htmlInfo !== undefined) {                            
-                updateFileOfTree(this.pageTreeRoot, pagePath, { ...htmlInfo, type: "markdown" })                
-            }
+            const htmlInfo = this.convertToHtml(getDir(pagePath), payload.markdownFile.markdown)            
+            updateFileOfTree(this.pageTreeRoot, pagePath, { ...htmlInfo, type: "markdown" })                            
             this.updateSeq()            
         }
 
@@ -312,13 +316,11 @@ export class Mediator extends MediatorData {
         if (!isSame) {
             for (const [markdownFileName, fobj] of walkThroughFileOfTree(this.rootFolder)) {
                 if ((fobj.type == "markdown") && (fobj.imageList.includes(fileName) || fobj.linkList.includes(fileName))) {
-                    const htmlInfo = this.convertToHtml(markdownFileName)
-                    if (htmlInfo !== undefined) {
-                        updateFileOfTree(this.pageTreeRoot, markdownFileName, { ...htmlInfo, type: "markdown" })
-                        if (markdownFileName === this.currentPage) {
-                            this.dispatcher.updateHtml({ title: this.currentPage, html: htmlInfo.html })
-                        }
-                    }
+                    const htmlInfo = this.convertToHtml(getDir(markdownFileName), fobj.markdown)                    
+                    updateFileOfTree(this.pageTreeRoot, markdownFileName, { ...htmlInfo, type: "markdown" })
+                    if (markdownFileName === this.currentPage) {
+                        this.dispatcher.updateHtml({ title: this.currentPage, html: htmlInfo.html })
+                    }                    
                 }
             }
         }
