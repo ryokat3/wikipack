@@ -6,7 +6,7 @@ import { HyperRefData, FolderType } from "../tree/WikiFile"
 import { addPath, isURL } from "../utils/appUtils"
 import { HeadingNumber } from "./HeadingNumber"
 import { HeadingTreeType } from "../tree/WikiFile"
-import { genRendererRecorder, RendererRecord } from "./markdownDiff"
+import { genRendererRecorder, RendererRecord, genCompareCall } from "./markdownDiff"
 
 
 function getWalkTokenExtension(hrefData: HyperRefData, dirPath: string, isMarkdownFile: (fileName: string) => boolean): (token:marked.Token)=>void {    
@@ -149,8 +149,9 @@ export function getRenderer(rootFolder: FolderType,  dirPath:string, isMarkdown:
     })
 
     return (text: string, prevRecordList:RendererRecord[], diffId:string): string => {
-        const highlightMarked = new Marked(highlightExtension)        
-        const recorder = genRendererRecorder(recordList, prevRecordList, diffId)
+        const highlightMarked = new Marked(highlightExtension)
+        const compFunc = genCompareCall(prevRecordList)     
+        const recorder = genRendererRecorder(recordList, diffId, compFunc)
 
         highlightMarked.use({ renderer:getRendererExtension(rootFolder, dirPath, isMarkdown, headingTree) })
         highlightMarked.use({ renderer:recorder })
