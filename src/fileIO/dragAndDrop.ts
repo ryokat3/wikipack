@@ -36,7 +36,7 @@ async function ondropped(mediator: Mediator, ev: Event) {
                 mediator.openFile(handle as FileSystemFileHandle)   
             }
             else if (handle.kind === 'directory') {                
-                const rootHandle = handle as FileSystemDirectoryHandle      
+                const rootHandle = handle as FileSystemDirectoryHandle                    
                 mediator.resetRootFolder()                
                 mediator.scanDirectory(rootHandle)
                 mediator.updatePackFileName(rootHandle.name)

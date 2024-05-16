@@ -1,6 +1,7 @@
 import { pipe } from 'fp-ts/function'
 import * as O from 'fp-ts/Option'
 
+
 /************************************************************************************************ 
 Data URI converter
 ************************************************************************************************/
@@ -132,4 +133,55 @@ export function isURL(url:string):boolean {
 
 export function parseQuery(queryStr:string) {
     return [ ...(new URLSearchParams(queryStr)).entries() ].reduce((obj, e)=>({ ...obj, [e[0]]:e[1] }), Object.create(null))    
+}
+
+/************************************************************************************************ 
+Diff Mark
+************************************************************************************************/
+
+export function randomString(n:number=32):string {
+    const CHARS="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    return Array.from(Array(n)).map(()=>CHARS[Math.floor(Math.random()*CHARS.length)]).join('')
+}
+
+const DIFF_CLASS = '33CCD56DCCDA4199B7655F26BD884BAC'
+const MARK_START = '<span'
+const MARK_END = '</span>'
+
+export function createDiffMark(diffId:string):string {
+    return `${MARK_START} style="scroll-margin-top:64px;" class="${DIFF_CLASS}" id="${diffId}">${MARK_END}`
+}
+
+export function removeDiffMark(text:string):[string, string|undefined] {
+    const idx = text.indexOf(DIFF_CLASS)
+    if (idx < 0) {
+        return [text, undefined]
+    }
+    else {
+        const startIdx = text.lastIndexOf(MARK_START, idx)
+        if (startIdx < 0) {
+            console.log(`${MARK_START} not found even though DIFF_CLASS found`)
+            return [text, undefined]
+        }
+        const endIdx = text.indexOf(MARK_END, idx)
+        if (endIdx < 0) {
+            console.log(`${MARK_END} not found even though DIFF_CLASS found`)
+            return [text, undefined]
+        }
+
+        const newText = text.slice(0,startIdx) + text.slice(endIdx + MARK_END.length)
+        const mark = text.slice(startIdx, endIdx + MARK_END.length)
+        return [newText, mark]        
+    }
+}
+
+export function insertDiffMark(newText:string, oldText:string, diffId:string):string {
+    const mark = createDiffMark(diffId)
+    const minlen = Math.min(newText.length, oldText.length)
+    for (let idx = 0; idx < minlen; ++idx) {
+        if (newText[newText.length - idx - 1] !== oldText[oldText.length - idx - 1]) {
+            return newText.slice(0, newText.length - idx) + mark + ((idx > 0) ? newText.slice(newText.length - idx) : "")
+        }
+    }
+    return newText.slice(0, newText.length - minlen) + mark + newText.slice(newText.length - minlen)
 }

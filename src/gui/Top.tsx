@@ -53,6 +53,17 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
         }
     }, [state.heading])
 
+    // View diff
+    useEffect(() => {
+        const diffEl = document.getElementById(state.diffId)
+        if (diffEl !== null) {
+            const rect = diffEl.getBoundingClientRect()
+            if ((rect.top < 0) || (rect.bottom > window.innerHeight)) {
+                diffEl.scrollIntoView({behavior:'smooth'})
+            }
+        }
+    }, [state.diffId])
+
     return <TopContext.Provider value={context}>
         <SearchAppBar
             title={state.title}

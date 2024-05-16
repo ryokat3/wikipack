@@ -6,6 +6,7 @@ import { HyperRefData, FolderType } from "../tree/WikiFile"
 import { addPath, isURL } from "../utils/appUtils"
 import { HeadingNumber } from "./HeadingNumber"
 import { HeadingTreeType } from "../tree/WikiFile"
+import { genRendererRecorder, RendererRecord } from "./markdownDiff"
 
 
 function getWalkTokenExtension(hrefData: HyperRefData, dirPath: string, isMarkdownFile: (fileName: string) => boolean): (token:marked.Token)=>void {    
@@ -88,8 +89,7 @@ function getRendererExtension(
 
         heading(text:string, level:number, _raw:string) {
             headingNumber = headingNumber.increase(level)
-            const textContnet = extractText(text)
-            console.log(`${text} => ${textContnet}`)    
+            const textContnet = extractText(text)            
             headingTree.add({ text:textContnet, heading: headingNumber })                                    
             return `<h${level} id="${headingNumber}" style="scroll-margin-top:16px;">${text}</h${level}>`            
         }
@@ -111,7 +111,7 @@ function decodeUriOrEcho(uri: string) {
 }
 
 
-export function getRenderer(rootFolder: FolderType,  dirPath:string, isMarkdown:(fileName:string)=>boolean, headingTree:HeadingTreeType) {
+export function getRenderer(rootFolder: FolderType,  dirPath:string, isMarkdown:(fileName:string)=>boolean, headingTree:HeadingTreeType, recordList:RendererRecord[]) {
     const highlightExtension = markedHighlight({
         langPrefix: 'hljs language-',
         highlight(code, _lang, _info) {
@@ -148,10 +148,13 @@ export function getRenderer(rootFolder: FolderType,  dirPath:string, isMarkdown:
         }
     })
 
-    return (text: string): string => {
-        const highlightMarked = new Marked(highlightExtension)
-        
+    return (text: string, prevRecordList:RendererRecord[], diffId:string): string => {
+        const highlightMarked = new Marked(highlightExtension)        
+        const recorder = genRendererRecorder(recordList, prevRecordList, diffId)
+
         highlightMarked.use({ renderer:getRendererExtension(rootFolder, dirPath, isMarkdown, headingTree) })
+        highlightMarked.use({ renderer:recorder })
+        
         return highlightMarked.parse(text, { async: false} ) as string
     }
 }

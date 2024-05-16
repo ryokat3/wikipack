@@ -9,6 +9,9 @@ export type TopFdt = {
     updateHeading: {
         heading: string|undefined
     },
+    updateDiffId: {
+        diffId: string
+    },
     updateSeq: {        
         seq: number
     }

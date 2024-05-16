@@ -5,7 +5,7 @@ import { TopDispatcherType } from "./gui/TopDispatcher"
 import { FolderType, WikiFileType, genHeadingTreeRoot } from "./tree/WikiFile"
 import { createRootFolder, getFileFromTree, updateFileOfTree, deleteFileFromTree, FileTreeFolderType, walkThroughFileOfTree } from "./tree/FileTree"
 import { updateCssElement } from "./dataElement/styleElement"
-import { canonicalFileName, getDir, addPath } from "./utils/appUtils"
+import { canonicalFileName, getDir, addPath, randomString } from "./utils/appUtils"
 import { getRenderer } from "./markdown/converter"
 import { makeFileRegexChecker, isURL, addPathToUrl } from "./utils/appUtils"
 import { getProxyDataClass } from "./utils/proxyData"
@@ -16,6 +16,7 @@ import { hasMarkdownFileElement } from "./dataElement/dataFromElement"
 import { getNewCssList } from "./dataElement/styleElement"
 import { HashInfo } from "./markdown/HashInfo"
 import { CssRules } from "./css/CssRules"
+import { RendererRecord } from "./markdown/markdownDiff"
 import packageJson from "../package.json"
 
 export const VERSION:string = packageJson.version
@@ -69,18 +70,12 @@ export class Mediator extends MediatorData {
         this.worker.addEventHandler("deleteFile", (payload)=>this.deleteFile(payload))     
         this.worker.addEventHandler("checkCurrentPageDone", (payload)=>this.checkCurrentPageDone(payload))
     }
-/*
-    convertToHtml(fileName:string):HtmlInfo|undefined {
-        const currentFile = getFileFromTree(this.rootFolder, fileName)
+
+    convertToHtml(dirPath:string, markdownText:string, prevRecordList:RendererRecord[] = [], diffId:string = ""):HtmlInfo {        
         const headingTree = genHeadingTreeRoot()
-        const renderer = getRenderer(this.rootFolder, fileName, this.isMarkdown, headingTree)
-        return (currentFile !== undefined && currentFile.type === "markdown") ? { html:`<div class="${this.config.markdownBodyClass}">${renderer(currentFile.markdown)}</div>`, heading: headingTree} : undefined
-    }
-*/
-    convertToHtml(dirPath:string, markdownText:string):HtmlInfo {        
-        const headingTree = genHeadingTreeRoot()
-        const renderer = getRenderer(this.rootFolder, dirPath, this.isMarkdown, headingTree)
-        return { html:`<div class="${this.config.markdownBodyClass}">${renderer(markdownText)}</div>`, heading: headingTree}
+        const recordList = new Array<RendererRecord>()
+        const renderer = getRenderer(this.rootFolder, dirPath, this.isMarkdown, headingTree, recordList)
+        return { html:`<div class="${this.config.markdownBodyClass}">${renderer(markdownText, prevRecordList, diffId)}</div>`, heading: headingTree, recordList: recordList }
     }
 
     resetRootFolder():void {
@@ -279,35 +274,41 @@ export class Mediator extends MediatorData {
 
     updateMarkdownFile(payload:WorkerMessageType['updateMarkdownFile']['response']):void {      
         const pagePath = canonicalFileName(payload.pagePath)
-        const isNewFile = getFileFromTree(this.rootFolder, pagePath) === undefined
+        const prevPageInfo = getFileFromTree(this.pageTreeRoot, pagePath)        
+        const isNewFile = prevPageInfo === undefined
         const isSame = updateFileOfTree(this.rootFolder, pagePath, payload.markdownFile, isSameFile)
-
+                
         if (isNewFile || !isSame) {            
-            const htmlInfo = this.convertToHtml(getDir(pagePath), payload.markdownFile.markdown)            
-            updateFileOfTree(this.pageTreeRoot, pagePath, { ...htmlInfo, type: "markdown" })                            
-            this.updateSeq()            
-        }
-
-        const markdownFile = getFileFromTree(this.rootFolder, this.currentPage)
-        const isCurrentPageExist = markdownFile !== undefined
-        
-        if (this.currentPage === NO_CURRENT_PAGE) {
-            window.location.hash = `#${pagePath}`            
-        }
-        else if (isCurrentPageExist && this.currentPage === pagePath && !isSame) {
-            const htmlInfo = getFileFromTree(this.pageTreeRoot, this.currentPage)            
-            if ((htmlInfo !== undefined) && (htmlInfo.type === "markdown")) {                
-                this.dispatcher.updateHtml({ title: this.currentPage, html: htmlInfo.html})                
+            if (prevPageInfo !== undefined && prevPageInfo.type === "markdown" && this.currentPage === pagePath && !isSame) {                
+                const diffId = randomString()
+                const htmlInfo = this.convertToHtml(getDir(pagePath), payload.markdownFile.markdown, prevPageInfo.recordList, diffId)
+                updateFileOfTree(this.pageTreeRoot, pagePath, { ...htmlInfo, type: "markdown" })     
+                this.dispatcher.updateHtml({ title: this.currentPage, html: htmlInfo.html })                           
+                this.dispatcher.updateDiffId({ diffId: diffId })                                
             }
-        }          
+            else {
+                const htmlInfo = this.convertToHtml(getDir(pagePath), payload.markdownFile.markdown)            
+                updateFileOfTree(this.pageTreeRoot, pagePath, { ...htmlInfo, type: "markdown" })
+                if (this.currentPage === pagePath && !isSame) {                    
+                    this.dispatcher.updateHtml({ title: this.currentPage, html: htmlInfo.html })     
+                }                
+                this.updateSeq()            
+            }                        
+        }
+        if (this.currentPage === NO_CURRENT_PAGE) {
+            this.updateCurrentPage(pagePath)
+            /*
+            this.currentPage = pagePath
+            window.location.hash = `#${pagePath}`            
+            */
+        }        
     }
 
     updateCssFile(payload:WorkerMessageType['updateCssFile']['response']):void {        
         updateCssElement(payload.cssFile.css, canonicalFileName(payload.pagePath), payload.cssFile.fileStamp)  
     }
 
-    updateDataFile(payload:WorkerMessageType['updateDataFile']['response']):void {
-        
+    updateDataFile(payload:WorkerMessageType['updateDataFile']['response']):void {        
         const fileName = canonicalFileName(payload.pagePath)
         const blob = new Blob( [payload.dataFile.buffer], { type: payload.dataFile.mime })
         const dataRef = URL.createObjectURL(blob)        
@@ -315,10 +316,11 @@ export class Mediator extends MediatorData {
         
         if (!isSame) {
             for (const [markdownFileName, fobj] of walkThroughFileOfTree(this.rootFolder)) {
-                if ((fobj.type == "markdown") && (fobj.imageList.includes(fileName) || fobj.linkList.includes(fileName))) {
+                if ((fobj.type == "markdown") && (fobj.imageList.includes(fileName) || fobj.linkList.includes(fileName))) {                    
                     const htmlInfo = this.convertToHtml(getDir(markdownFileName), fobj.markdown)                    
-                    updateFileOfTree(this.pageTreeRoot, markdownFileName, { ...htmlInfo, type: "markdown" })
-                    if (markdownFileName === this.currentPage) {
+                    updateFileOfTree(this.pageTreeRoot, markdownFileName, { ...htmlInfo, type: "markdown" })                    
+                    
+                    if (markdownFileName === this.currentPage) {                        
                         this.dispatcher.updateHtml({ title: this.currentPage, html: htmlInfo.html })
                     }                    
                 }

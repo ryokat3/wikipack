@@ -48,7 +48,8 @@ window.onload = async function () {
         html: "",
         heading: undefined,        
         packFileName: "wikipack",
-        seq: 0
+        seq: 0,
+        diffId: ""
     }
 
     if (container !== null) {     

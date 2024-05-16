@@ -6,7 +6,8 @@ export type TopStateType = {
     html: string
     heading: string|undefined    
     packFileName: string
-    seq: number    
+    seq: number
+    diffId: string
 }
 
 export const topReducer = new Reducer<TopFdt, TopStateType>()
@@ -21,6 +22,12 @@ export const topReducer = new Reducer<TopFdt, TopStateType>()
         return {
             ...state,            
             heading: payload.heading
+        }
+    })
+    .add("updateDiffId", (state, payload)=>{
+        return {
+            ...state,            
+            diffId: payload.diffId
         }
     })
     .add("updatePackFileName", (state, payload)=>{            
