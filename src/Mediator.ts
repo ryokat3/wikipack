@@ -5,7 +5,7 @@ import { TopDispatcherType } from "./gui/TopDispatcher"
 import { FolderType, WikiFileType, genHeadingTreeRoot } from "./tree/WikiFile"
 import { createRootFolder, getFileFromTree, updateFileOfTree, deleteFileFromTree, FileTreeFolderType, walkThroughFileOfTree } from "./tree/FileTree"
 import { updateCssElement } from "./dataElement/styleElement"
-import { canonicalFileName, getDir, addPath, randomString } from "./utils/appUtils"
+import { canonicalFileName, getDir, addPath } from "./utils/appUtils"
 import { getRenderer } from "./markdown/converter"
 import { makeFileRegexChecker, isURL, addPathToUrl } from "./utils/appUtils"
 import { getProxyDataClass } from "./utils/proxyData"
@@ -71,11 +71,11 @@ export class Mediator extends MediatorData {
         this.worker.addEventHandler("checkCurrentPageDone", (payload)=>this.checkCurrentPageDone(payload))
     }
 
-    convertToHtml(dirPath:string, markdownText:string, prevRecordList:RendererRecord[] = [], diffId:string = ""):HtmlInfo {        
+    convertToHtml(dirPath:string, markdownText:string, prevRecordList:RendererRecord[] = [], setId:(id:string)=>void = (_)=>{}):HtmlInfo {        
         const headingTree = genHeadingTreeRoot()
-        const recordList = new Array<RendererRecord>()
+        const recordList:RendererRecord[] = []     
         const renderer = getRenderer(this.rootFolder, dirPath, this.isMarkdown, headingTree, recordList)
-        return { html:`<div class="${this.config.markdownBodyClass}">${renderer(markdownText, prevRecordList, diffId)}</div>`, heading: headingTree, recordList: recordList }
+        return { html:`<div class="${this.config.markdownBodyClass}">${renderer(markdownText, prevRecordList, setId)}</div>`, heading: headingTree, recordList: recordList }
     }
 
     resetRootFolder():void {
@@ -280,11 +280,13 @@ export class Mediator extends MediatorData {
                 
         if (isNewFile || !isSame) {            
             if (prevPageInfo !== undefined && prevPageInfo.type === "markdown" && this.currentPage === pagePath && !isSame) {                
-                const diffId = randomString()
-                const htmlInfo = this.convertToHtml(getDir(pagePath), payload.markdownFile.markdown, prevPageInfo.recordList, diffId)
+                const wrapId = {
+                    id:"" as string
+                }
+                const htmlInfo = this.convertToHtml(getDir(pagePath), payload.markdownFile.markdown, prevPageInfo.recordList, (id:string)=>{ wrapId.id = id })
                 updateFileOfTree(this.pageTreeRoot, pagePath, { ...htmlInfo, type: "markdown" })     
                 this.dispatcher.updateHtml({ title: this.currentPage, html: htmlInfo.html })                           
-                this.dispatcher.updateDiffId({ diffId: diffId })                                
+                this.dispatcher.updateDiffId({ diffId: wrapId.id })                                
             }
             else {
                 const htmlInfo = this.convertToHtml(getDir(pagePath), payload.markdownFile.markdown)            

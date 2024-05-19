@@ -5,6 +5,7 @@ import { HeadingNumber } from "../src/markdown/HeadingNumber"
 import { TreeRel, createIndexTree, genHierachicalComparator } from "../src/tree/IndexTree"
 import { takeWhile, zip } from "../src/utils/itertools"
 import { insertDiffMark, removeDiffMark, createDiffMark, randomString } from "../src/utils/appUtils"
+import { FailOnce, addElementId } from "../src/markdown/converter"
 
 describe("Javascript common", ()=>{
     it("splitPath", ()=>{        
@@ -225,5 +226,76 @@ describe("textUtils", ()=>{
         chai.assert.deepEqual(removeDiffMark(insertDiffMark("aabd", "abc", diffId)), ["aabd", mark])
         chai.assert.deepEqual(removeDiffMark(insertDiffMark("aabd", "", diffId)), ["aabd", mark])
         chai.assert.deepEqual(removeDiffMark(insertDiffMark("日本人のことば", "日本語のことば", diffId)), ["日本人のことば", mark])
+    })
+})
+
+describe("FailOnce", ()=>{
+    it("Empty is True", ()=>{
+        const fo = new FailOnce()
+        fo.set(true)
+        chai.assert.isTrue(fo.check())
+    })
+
+    it("FailOnce True", ()=>{
+        const fo = new FailOnce()
+        fo.set(true)
+        chai.assert.isTrue(fo.check())
+    })
+
+    it("FailOnce False", ()=>{
+        const fo = new FailOnce()
+        fo.set(false)
+        chai.assert.isFalse(fo.check())
+    })
+
+    it("FailOnce False after True", ()=>{
+        const fo = new FailOnce()
+        fo.set(true)
+        chai.assert.isTrue(fo.check())
+        fo.set(false)
+        chai.assert.isFalse(fo.check())        
+    })
+
+    it("FailOnce True after False", ()=>{
+        const fo = new FailOnce()
+        fo.set(false)
+        chai.assert.isFalse(fo.check())
+        fo.set(true)
+        chai.assert.isTrue(fo.check())        
+    })
+
+    it("syncCounter True only once", ()=>{
+        const fo = new FailOnce()
+        fo.set(true)
+        chai.assert.isTrue(fo.check())
+        fo.set(false)
+        chai.assert.isFalse(fo.check())  
+        fo.set(false)
+        chai.assert.isTrue(fo.check())        
+    })
+
+    it("syncCounter check greater than set", ()=>{
+        const fo = new FailOnce()
+        fo.set(true)
+        fo.set(false)
+        chai.assert.isTrue(fo.check())  
+        chai.assert.isFalse(fo.check())        
+        chai.assert.isTrue(fo.check())  
+        chai.assert.isTrue(fo.check())        
+    })
+})
+
+describe("renderer", ()=>{
+    it("addElementId", ()=>{
+        const wrapId = { id: ""}
+        const setId = (id:string)=>{ wrapId.id = id }
+        const addId = addElementId(setId)
+
+        let html = addId('<span>hello</span')
+        chai.assert.notEqual(wrapId.id, "")
+        chai.assert.include(html, "id=")
+
+        html = addId('<span id="hehe">hello</span')
+        chai.assert.equal(wrapId.id, "hehe")
     })
 })

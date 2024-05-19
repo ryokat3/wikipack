@@ -1,13 +1,71 @@
-import marked, { Marked } from 'marked'
+import marked, { Marked, RendererApi } from 'marked'
 import { markedHighlight } from "marked-highlight"
 import hljs from 'highlight.js'
 import { getFileFromTree } from "../tree/FileTree"
 import { HyperRefData, FolderType } from "../tree/WikiFile"
-import { addPath, isURL } from "../utils/appUtils"
+import { addPath, isURL, randomString } from "../utils/appUtils"
 import { HeadingNumber } from "./HeadingNumber"
 import { HeadingTreeType } from "../tree/WikiFile"
-import { genRendererRecorder, RendererRecord, genCompareCall } from "./markdownDiff"
+import { RendererRecord, genRendererObject, postRenderer, PostRendererObject } from "./markdownDiff"
 
+
+export function addElementId(setId:(id:string)=>void) {
+    return (htmlStr:string):string => {
+        const template = document.createElement('template')
+        template.innerHTML = htmlStr
+        const target = template.content.children[0]
+        const id = target.getAttribute("id")
+        if (id) {
+            setId(id)
+        }
+        else {
+            const randomId = randomString()
+            target.setAttribute("id", randomId)
+            setId(randomId)
+        }        
+        return target.outerHTML
+    }
+}
+
+export function createAddElementIdRenderer(isSame:FailOnce, setId:(id:string)=>void):PostRendererObject {
+    const addIdFunc = addElementId(setId)
+    const elementFunc = (htmlStr:string) => {
+        return isSame.check() ? htmlStr : addIdFunc(htmlStr)
+    }
+    const textFunc = (text:string) => {
+        if (isSame.check()) {
+            return text
+        }
+        else {
+            const randomId = randomString()            
+            setId(randomId)
+            return `<span id="${randomId}">${text}</span>`
+        }
+    }
+
+    return {
+        code: elementFunc,        
+        blockquote: elementFunc,
+        html: textFunc,
+        heading: elementFunc,
+        hr: elementFunc,
+        list: elementFunc,
+        listitem: elementFunc,
+        checkbox: elementFunc,
+        paragraph: elementFunc,
+        table: elementFunc,
+        tablerow: elementFunc,
+        tablecell: elementFunc,
+        strong: elementFunc,
+        em: elementFunc,
+        codespan: elementFunc,
+        br: elementFunc,
+        del: elementFunc,
+        link: elementFunc,
+        image: elementFunc,
+        text: textFunc
+    }
+}
 
 function getWalkTokenExtension(hrefData: HyperRefData, dirPath: string, isMarkdownFile: (fileName: string) => boolean): (token:marked.Token)=>void {    
 
@@ -33,6 +91,7 @@ function getWalkTokenExtension(hrefData: HyperRefData, dirPath: string, isMarkdo
 
 export function getHyperRefData(markdown:string, dirPath:string, isMarkdownFile:(fileName:string)=>boolean):HyperRefData {
 
+
     const mark = new Marked()
     const hrefData:HyperRefData = {
         imageList: [],
@@ -57,7 +116,7 @@ function getRendererExtension(
     dirPath:string,
     isMarkdown:(fileName:string)=>boolean,
     headingTree:HeadingTreeType
-): marked.MarkedExtension['renderer'] {        
+): marked.RendererObject {        
     const renderer = new marked.Renderer()
     let headingNumber = HeadingNumber.create()
 1
@@ -110,11 +169,89 @@ function decodeUriOrEcho(uri: string) {
     }
 }
 
+export function createRendererRecorder(rendererRecordList:RendererRecord[]):marked.RendererObject {
+    function recoder<T extends keyof marked.RendererApi>(type:T) {
+        return (...args:Parameters<marked.RendererApi[T]>):false => {
+            rendererRecordList.push({
+                type: type,
+                parameters: args
+            } as any)
+            return false
+        }
+    }
+    return genRendererObject(recoder)
+}
+
+export function createCompRendererRecord(prevRecordList:RendererRecord[], counter:FailOnce):(type:keyof marked.RendererApi) => (...args:Parameters<RendererApi[typeof type]>) =>false {
+
+    let idx:number = -1
+
+    return (type:keyof marked.RendererApi) => (...args:Parameters<RendererApi[typeof type]>):false => {
+        if (counter.foundFalse) {
+            return false
+        }
+        idx = idx + 1        
+        const result:boolean = 
+            0 <= idx &&
+            idx < prevRecordList.length &&            
+            prevRecordList[idx].type === type &&
+            prevRecordList[idx].parameters.length === args.length &&
+            prevRecordList[idx].parameters.every((v, i)=> v === args[i])
+
+        if (0 <= idx && idx < prevRecordList.length && !result) {
+            console.log(`NOT MATCH: ${idx}: ${type}<=>${prevRecordList[idx].type} : ${JSON.stringify(args)}<=> ${JSON.stringify(prevRecordList[idx].parameters)}`)
+        }
+
+        counter.set(result)                
+        return false
+    }
+}
+
+function createRecordList(recordList:RendererRecord[]):(type:keyof marked.RendererApi) => (...args:Parameters<RendererApi[typeof type]>) =>false {
+
+    return (type:keyof marked.RendererApi) => (...args:Parameters<RendererApi[typeof type]>):false => {
+        console.log(`RECORD: type: ${type}, parameters: ${JSON.stringify(args)}`)
+        recordList.push({
+            type:type,
+            parameters: args
+        } as any)
+        return false
+    }
+}
+
+export class FailOnce {
+    private lst:boolean[] = []
+    private idx:number = -1
+
+    get foundFalse():boolean {        
+        return this.lst.length > 0 && !this.lst.every((x)=>x)
+    }
+
+    set(val:boolean):void {
+        this.lst.push(this.foundFalse ? true : val)
+    }
+
+    check():boolean {        
+        this.idx = this.idx + 1
+
+        if (this.idx < this.lst.length) {
+            return this.lst[this.idx]
+        }
+        else if (this.foundFalse) {
+            return true
+        }
+        else {
+            this.set(false)
+            return false
+        }
+    }
+}
+
 
 export function getRenderer(rootFolder: FolderType,  dirPath:string, isMarkdown:(fileName:string)=>boolean, headingTree:HeadingTreeType, recordList:RendererRecord[]) {
     const highlightExtension = markedHighlight({
         langPrefix: 'hljs language-',
-        highlight(code, _lang, _info) {
+         highlight(code, _lang, _info) {
 
             // NOTE: to avoid space character in lang
             //    
@@ -148,14 +285,36 @@ export function getRenderer(rootFolder: FolderType,  dirPath:string, isMarkdown:
         }
     })
 
-    return (text: string, prevRecordList:RendererRecord[], diffId:string): string => {
-        const highlightMarked = new Marked(highlightExtension)
-        const compFunc = genCompareCall(prevRecordList)     
-        const recorder = genRendererRecorder(recordList, diffId, compFunc)
+    return (text: string, prevRecordList:RendererRecord[], setId:(id:string)=>void): string => {
 
-        highlightMarked.use({ renderer:getRendererExtension(rootFolder, dirPath, isMarkdown, headingTree) })
-        highlightMarked.use({ renderer:recorder })
+        const failOnce = new FailOnce()
+        getRecordList(text, recordList, prevRecordList, failOnce)
+
+
+        const highlightMarked = new Marked(highlightExtension)        
+        const renderer = getRendererExtension(rootFolder, dirPath, isMarkdown, headingTree)        
+
+        if (prevRecordList.length > 0) {
+            highlightMarked.use({ renderer:postRenderer(renderer, createAddElementIdRenderer(failOnce, setId)) })                        
+        }
+        else {
+            highlightMarked.use({ renderer:renderer })            
+        }
         
         return highlightMarked.parse(text, { async: false} ) as string
     }
+}
+
+function getRecordList(text:string, recordList:RendererRecord[], prevRecordList:RendererRecord[], failOnce:FailOnce):RendererRecord[] {    
+    const recordRenderer = createRecordList(recordList)
+    const compRenderer = createCompRendererRecord(prevRecordList, failOnce)
+
+    const parser = new Marked()
+
+    parser.use({ renderer:genRendererObject(compRenderer) })
+    parser.use({ renderer:genRendererObject(recordRenderer) })
+    
+    parser.parse(text, { async: false} ) as string
+
+    return recordList
 }
