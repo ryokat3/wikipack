@@ -1,10 +1,9 @@
 import * as chai from "chai"
-import { splitPath } from "../src/utils/appUtils"
+import { splitPath, deepEqual } from "../src/utils/appUtils"
 import { addProxyProperty, getProxyDataFunction, getProxyDataClass } from "../src/utils/proxyData"
 import { HeadingNumber } from "../src/markdown/HeadingNumber"
 import { TreeRel, createIndexTree, genHierachicalComparator } from "../src/tree/IndexTree"
 import { takeWhile, zip } from "../src/utils/itertools"
-import { insertDiffMark, removeDiffMark, createDiffMark, randomString } from "../src/utils/appUtils"
 import { FailOnce, addElementId } from "../src/markdown/converter"
 
 describe("Javascript common", ()=>{
@@ -23,6 +22,32 @@ describe("Javascript common", ()=>{
         chai.assert.deepEqual(splitPath("../a1/b2/c3/.."), ["..", "a1", "b2" ])
         chai.assert.deepEqual(splitPath("../a1/../../b2/c3/.."), ["..", "..", "b2" ])
         chai.assert.deepEqual(splitPath("../../a1/b2/c3/.."), ["..", "..", "a1", "b2" ])
+    })
+})
+
+describe("DeepEqual", ()=>{
+    it("scalar basic", ()=>{
+        chai.assert.isTrue(deepEqual(1, 1))
+        chai.assert.isFalse(deepEqual(1, 2))
+        chai.assert.isFalse(deepEqual(1, "1"))
+    })
+
+    it("Multibyte Chars", ()=>{
+        chai.assert.isTrue(deepEqual("テスト文書", "テスト文書"))            
+    })
+
+    it("array", ()=>{
+        chai.assert.isTrue(deepEqual([], []))
+        chai.assert.isTrue(deepEqual([1, 2], [1, 2]))
+        chai.assert.isFalse(deepEqual([1, 2], [2, 1]))
+        chai.assert.isFalse(deepEqual([1, 2, 3], [1, 2]))
+    })
+
+    it("object", ()=>{
+        chai.assert.isTrue(deepEqual({}, {}))
+        chai.assert.isTrue(deepEqual({ v1:1, v2:"hello"}, { v2:"hello", v1:1}))        
+        chai.assert.isFalse(deepEqual({ v1:1, v2:"hello"}, { v2:"hello", v1:1, v3:undefined}))        
+        chai.assert.isFalse(deepEqual({ v1:1, v2:"hello"}, { v2:"hello", v1:2}))                
     })
 })
 
@@ -209,23 +234,6 @@ describe("zip", ()=>{
 
         chai.assert.deepEqual(Array.from(zip([1,2,3], ["1","2","3"], [true, false, true])), [[1, "1", true],[2, "2", false],[3, "3", true]])
         chai.assert.deepEqual(Array.from(zip([1,2,3], ["1","2","3"], [])), [])
-    })
-})
-
-describe("textUtils", ()=>{
-    it("DiffMark", ()=>{
-        const diffId = randomString()
-        const mark = createDiffMark(diffId)
-
-        chai.assert.equal(insertDiffMark("aabc", "abc", diffId), `a${mark}abc`)
-        chai.assert.equal(insertDiffMark("aabd", "abc", diffId), `aabd${mark}`)
-        chai.assert.equal(insertDiffMark("aabd", "", diffId), `aabd${mark}`)
-        chai.assert.equal(insertDiffMark("日本人のことば", "日本語のことば", diffId), `日本人${mark}のことば`)
-
-        chai.assert.deepEqual(removeDiffMark(insertDiffMark("aabc", "abc", diffId)), ["aabc", mark])
-        chai.assert.deepEqual(removeDiffMark(insertDiffMark("aabd", "abc", diffId)), ["aabd", mark])
-        chai.assert.deepEqual(removeDiffMark(insertDiffMark("aabd", "", diffId)), ["aabd", mark])
-        chai.assert.deepEqual(removeDiffMark(insertDiffMark("日本人のことば", "日本語のことば", diffId)), ["日本人のことば", mark])
     })
 })
 

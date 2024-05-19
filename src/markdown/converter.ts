@@ -3,7 +3,7 @@ import { markedHighlight } from "marked-highlight"
 import hljs from 'highlight.js'
 import { getFileFromTree } from "../tree/FileTree"
 import { HyperRefData, FolderType } from "../tree/WikiFile"
-import { addPath, isURL, randomString } from "../utils/appUtils"
+import { addPath, isURL, randomString, deepEqual } from "../utils/appUtils"
 import { HeadingNumber } from "./HeadingNumber"
 import { HeadingTreeType } from "../tree/WikiFile"
 import { RendererRecord, genRendererObject, postRenderer, PostRendererObject } from "./markdownDiff"
@@ -193,10 +193,13 @@ export function createCompRendererRecord(prevRecordList:RendererRecord[], counte
         idx = idx + 1        
         const result:boolean = 
             0 <= idx &&
-            idx < prevRecordList.length &&            
-            prevRecordList[idx].type === type &&
+            idx < prevRecordList.length &&
+            prevRecordList[idx].type === type &&            
+            deepEqual(prevRecordList[idx].parameters, args)
+/*            
             prevRecordList[idx].parameters.length === args.length &&
             prevRecordList[idx].parameters.every((v, i)=> v === args[i])
+*/            
 
         if (0 <= idx && idx < prevRecordList.length && !result) {
             console.log(`NOT MATCH: ${idx}: ${type}<=>${prevRecordList[idx].type} : ${JSON.stringify(args)}<=> ${JSON.stringify(prevRecordList[idx].parameters)}`)

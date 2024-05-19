@@ -107,8 +107,7 @@ Markdown File
 
 export function makeFileRegexChecker(regexList:string[]):(name:string)=>boolean {
     const compiledRegexList = regexList.map((re)=>new RegExp(re, "i"))
-    return function (name:string) {
-        //for (const regex of regexList.map((re:string)=>new RegExp(re, "i"))) {
+    return function (name:string) {        
         for (const regex of compiledRegexList) {            
             if (name.match(regex)) {
                 return true
@@ -136,7 +135,7 @@ export function parseQuery(queryStr:string) {
 }
 
 /************************************************************************************************ 
-Diff Mark
+Random
 ************************************************************************************************/
 
 export function randomString(n:number=32):string {
@@ -144,44 +143,47 @@ export function randomString(n:number=32):string {
     return Array.from(Array(n)).map(()=>CHARS[Math.floor(Math.random()*CHARS.length)]).join('')
 }
 
-const DIFF_CLASS = '33CCD56DCCDA4199B7655F26BD884BAC'
-const MARK_START = '<span'
-const MARK_END = '</span>'
+/************************************************************************************************ 
+DeepEqual
+************************************************************************************************/
 
-export function createDiffMark(diffId:string):string {
-    return `${MARK_START} style="scroll-margin-top:64px;" class="${DIFF_CLASS}" id="${diffId}">${MARK_END}`
-}
+export function deepEqual(d1:any, d2:any):boolean {
+    const t1 = typeof d1
+    const t2 = typeof d2
 
-export function removeDiffMark(text:string):[string, string|undefined] {
-    const idx = text.indexOf(DIFF_CLASS)
-    if (idx < 0) {
-        return [text, undefined]
+    if (t1 !== t2) {
+        return false
+    }
+    else if (t1 === 'bigint' || t1 === 'boolean' || t1 === 'number' || t1 === 'string' || t1 === 'symbol' || t1 === 'undefined') {
+        return d1 === d2
+    }
+    else if (d1 === null || d1 === undefined) {
+        return d1 === d2
+    }
+    else if (Array.isArray(d1) !== Array.isArray(d2)) {
+        return false
+    }
+    else if (Array.isArray(d1)) {
+        if (d1.length !== d2.length) {
+            return false
+        }
+        else {
+            return d1.every((val, idx)=>deepEqual(val, d2[idx]))
+        }
+    }
+    else if (t1 === 'object') {
+        if (!deepEqual(Object.keys(d1).sort(), Object.keys(d2).sort())) {
+            return false
+        }
+        else {
+            return Object.keys(d1).every((key)=>deepEqual(d1[key], d2[key]))
+        }
+    }
+    else if (t1 === 'function') {
+        // TODO: is it OK ?
+        return d1 == d2
     }
     else {
-        const startIdx = text.lastIndexOf(MARK_START, idx)
-        if (startIdx < 0) {
-            console.log(`${MARK_START} not found even though DIFF_CLASS found`)
-            return [text, undefined]
-        }
-        const endIdx = text.indexOf(MARK_END, idx)
-        if (endIdx < 0) {
-            console.log(`${MARK_END} not found even though DIFF_CLASS found`)
-            return [text, undefined]
-        }
-
-        const newText = text.slice(0,startIdx) + text.slice(endIdx + MARK_END.length)
-        const mark = text.slice(startIdx, endIdx + MARK_END.length)
-        return [newText, mark]        
+        throw new Error('Unknown type for deepEqual')
     }
-}
-
-export function insertDiffMark(newText:string, oldText:string, diffId:string):string {
-    const mark = createDiffMark(diffId)
-    const minlen = Math.min(newText.length, oldText.length)
-    for (let idx = 0; idx < minlen; ++idx) {
-        if (newText[newText.length - idx - 1] !== oldText[oldText.length - idx - 1]) {
-            return newText.slice(0, newText.length - idx) + mark + ((idx > 0) ? newText.slice(newText.length - idx) : "")
-        }
-    }
-    return newText.slice(0, newText.length - minlen) + mark + newText.slice(newText.length - minlen)
 }
