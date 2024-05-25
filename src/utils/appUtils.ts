@@ -187,3 +187,30 @@ export function deepEqual(d1:any, d2:any):boolean {
         throw new Error('Unknown type for deepEqual')
     }
 }
+
+/************************************************************************************************ 
+Bean
+************************************************************************************************/
+
+export class Bean<T> {
+    value:T|undefined = undefined
+
+    set(v:T):void {
+        this.value = v
+    }
+    get() {
+        return this.value
+    }
+
+    get getter():()=>T|undefined {
+        return ()=>{
+            return this.value
+        }
+    }
+
+    get setter():(val:T)=>void {
+        return (val:T)=> {
+            this.set(val)
+        }
+    }
+}

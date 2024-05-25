@@ -1,7 +1,7 @@
 import { FileTreeFolderType } from "./FileTree"
 import { WikiFileHandlerForUrl } from "../netWorker/netWorker"
 import { WikiFileHandlerForFileHandle, WikiFileHandlerForDirHandle }  from "../fileWorker/fileRW"
-import { getHyperRefData }  from "../markdown/converter"
+import { getHyperRefData }  from "../markdown/markedExt"
 import { getDir } from "../utils/appUtils"
 import { HeadingNumber } from "../markdown/HeadingNumber"
 import { createIndexTree, genHierachicalComparator } from "../tree/IndexTree"

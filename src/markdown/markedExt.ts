@@ -6,7 +6,7 @@ import { HyperRefData, FolderType } from "../tree/WikiFile"
 import { addPath, isURL, randomString, deepEqual } from "../utils/appUtils"
 import { HeadingNumber } from "./HeadingNumber"
 import { HeadingTreeType } from "../tree/WikiFile"
-import { RendererRecord, genRendererObject, postRenderer, PostRendererObject } from "./markdownDiff"
+import { RendererRecord, genRendererObject, postRenderer, PostRendererObject } from "./markedUtils"
 
 
 export function addElementId(setId:(id:string)=>void) {
@@ -27,13 +27,13 @@ export function addElementId(setId:(id:string)=>void) {
     }
 }
 
-export function createAddElementIdRenderer(isSame:FailOnce, setId:(id:string)=>void):PostRendererObject {
+export function createAddElementIdRenderer(equality:CheckEquality, setId:(id:string)=>void):PostRendererObject {
     const addIdFunc = addElementId(setId)
     const elementFunc = (htmlStr:string) => {
-        return isSame.check() ? htmlStr : addIdFunc(htmlStr)
+        return equality.check() ? htmlStr : addIdFunc(htmlStr)
     }
     const textFunc = (text:string) => {
-        if (isSame.check()) {
+        if (equality.check()) {
             return text
         }
         else {
@@ -182,12 +182,12 @@ export function createRendererRecorder(rendererRecordList:RendererRecord[]):mark
     return genRendererObject(recoder)
 }
 
-export function createCompRendererRecord(prevRecordList:RendererRecord[], counter:FailOnce):(type:keyof marked.RendererApi) => (...args:Parameters<RendererApi[typeof type]>) =>false {
+export function createCompRendererRecord(prevRecordList:RendererRecord[], equality:FailOnce):(type:keyof marked.RendererApi) => (...args:Parameters<RendererApi[typeof type]>) =>false {
 
     let idx:number = -1
 
     return (type:keyof marked.RendererApi) => (...args:Parameters<RendererApi[typeof type]>):false => {
-        if (counter.foundFalse) {
+        if (equality.foundFalse) {
             return false
         }
         idx = idx + 1        
@@ -196,16 +196,8 @@ export function createCompRendererRecord(prevRecordList:RendererRecord[], counte
             idx < prevRecordList.length &&
             prevRecordList[idx].type === type &&            
             deepEqual(prevRecordList[idx].parameters, args)
-/*            
-            prevRecordList[idx].parameters.length === args.length &&
-            prevRecordList[idx].parameters.every((v, i)=> v === args[i])
-*/            
 
-        if (0 <= idx && idx < prevRecordList.length && !result) {
-            console.log(`NOT MATCH: ${idx}: ${type}<=>${prevRecordList[idx].type} : ${JSON.stringify(args)}<=> ${JSON.stringify(prevRecordList[idx].parameters)}`)
-        }
-
-        counter.set(result)                
+        equality.set(result)                
         return false
     }
 }
@@ -222,7 +214,11 @@ function createRecordList(recordList:RendererRecord[]):(type:keyof marked.Render
     }
 }
 
-export class FailOnce {
+interface CheckEquality {
+    check:() => boolean
+}
+
+export class FailOnce implements CheckEquality {
     private lst:boolean[] = []
     private idx:number = -1
 

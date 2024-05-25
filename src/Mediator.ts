@@ -6,8 +6,8 @@ import { FolderType, WikiFileType, genHeadingTreeRoot } from "./tree/WikiFile"
 import { createRootFolder, getFileFromTree, updateFileOfTree, deleteFileFromTree, FileTreeFolderType, walkThroughFileOfTree } from "./tree/FileTree"
 import { updateCssElement } from "./dataElement/styleElement"
 import { canonicalFileName, getDir, addPath } from "./utils/appUtils"
-import { getRenderer } from "./markdown/converter"
-import { makeFileRegexChecker, isURL, addPathToUrl } from "./utils/appUtils"
+import { getRenderer } from "./markdown/markedExt"
+import { makeFileRegexChecker, isURL, addPathToUrl, Bean } from "./utils/appUtils"
 import { getProxyDataClass } from "./utils/proxyData"
 import { PageTreeItemType, HtmlInfo } from "./tree/PageTree"
 import { convertToScanTreeFolder } from "./tree/ScanTree"
@@ -16,7 +16,7 @@ import { hasMarkdownFileElement } from "./dataElement/dataFromElement"
 import { getNewCssList } from "./dataElement/styleElement"
 import { HashInfo } from "./markdown/HashInfo"
 import { CssRules } from "./css/CssRules"
-import { RendererRecord } from "./markdown/markdownDiff"
+import { RendererRecord } from "./markdown/markedUtils"
 import packageJson from "../package.json"
 
 export const VERSION:string = packageJson.version
@@ -280,13 +280,14 @@ export class Mediator extends MediatorData {
                 
         if (isNewFile || !isSame) {            
             if (prevPageInfo !== undefined && prevPageInfo.type === "markdown" && this.currentPage === pagePath && !isSame) {                
-                const wrapId = {
-                    id:"" as string
-                }
-                const htmlInfo = this.convertToHtml(getDir(pagePath), payload.markdownFile.markdown, prevPageInfo.recordList, (id:string)=>{ wrapId.id = id })
+                const idBean = new Bean<string>()
+                const htmlInfo = this.convertToHtml(getDir(pagePath), payload.markdownFile.markdown, prevPageInfo.recordList, idBean.setter)
                 updateFileOfTree(this.pageTreeRoot, pagePath, { ...htmlInfo, type: "markdown" })     
-                this.dispatcher.updateHtml({ title: this.currentPage, html: htmlInfo.html })                           
-                this.dispatcher.updateDiffId({ diffId: wrapId.id })                                
+                this.dispatcher.updateHtml({ title: this.currentPage, html: htmlInfo.html })
+                const diffId = idBean.get()
+                if (diffId !== undefined) {
+                    this.dispatcher.updateDiffId({ diffId: diffId })
+                }
             }
             else {
                 const htmlInfo = this.convertToHtml(getDir(pagePath), payload.markdownFile.markdown)            

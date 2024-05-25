@@ -10,7 +10,7 @@ import { isEmptyFileTreeFolder, updateFileOfTree } from "./tree/FileTree"
 import { injectAllMarkdownFileFromElement, injectAllCssFileFromElement, injectAllDataFileFromElement } from "./dataElement/dataFromElement"
 import { TOP_COMPONENT_ID } from "./constant"
 import { makeFileRegexChecker } from "./utils/appUtils"
-import { getHyperRefData } from "./markdown/converter"
+import { getHyperRefData } from "./markdown/markedExt"
 
 import workerJS from "./tmp/worker.bundle.js.asdata"
 import defaultMarkdown from "./defaultMarkdown.md"

@@ -1,10 +1,10 @@
 import * as chai from "chai"
-import { splitPath, deepEqual } from "../src/utils/appUtils"
+import { splitPath, deepEqual, Bean } from "../src/utils/appUtils"
 import { addProxyProperty, getProxyDataFunction, getProxyDataClass } from "../src/utils/proxyData"
 import { HeadingNumber } from "../src/markdown/HeadingNumber"
 import { TreeRel, createIndexTree, genHierachicalComparator } from "../src/tree/IndexTree"
 import { takeWhile, zip } from "../src/utils/itertools"
-import { FailOnce, addElementId } from "../src/markdown/converter"
+import { FailOnce, addElementId } from "../src/markdown/markedExt"
 
 describe("Javascript common", ()=>{
     it("splitPath", ()=>{        
@@ -305,5 +305,22 @@ describe("renderer", ()=>{
 
         html = addId('<span id="hehe">hello</span')
         chai.assert.equal(wrapId.id, "hehe")
+    })
+})
+
+describe("Bean", ()=>{
+    it("basic", ()=>{
+        const bean = new Bean<number>()
+        bean.set(1)
+        chai.assert.equal(bean.get(), 1)
+    })
+
+    it("callback", ()=>{
+        function set5(fn:(n:number)=>void) {
+            fn(5)
+        }
+        const bean = new Bean<number>()
+        set5(bean.setter)
+        chai.assert.equal(bean.get(), 5)
     })
 })

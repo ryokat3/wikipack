@@ -1,6 +1,6 @@
 import { FileTreeFolderType } from "./FileTree"
 import { HeadingTreeType } from "./WikiFile"
-import { RendererRecord } from "../markdown/markdownDiff"
+import { RendererRecord } from "../markdown/markedUtils"
 
 export type HtmlInfo = {
     html:string,
