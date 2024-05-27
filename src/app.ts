@@ -2,12 +2,12 @@ import { WorkerInvoke } from "./utils/WorkerMessage"
 import { WorkerMessageType } from "./worker/WorkerMessageType"
 import { ConfigType } from "./config"
 import { TopDispatcherType } from "./gui/TopDispatcher"
-import { FolderType, WikiFileType, genHeadingTreeRoot } from "./tree/WikiFile"
+import { FolderType, WikiFileType } from "./tree/WikiFile"
 import { createRootFolder, getFileFromTree, updateFileOfTree, deleteFileFromTree, FileTreeFolderType, walkThroughFileOfTree } from "./tree/FileTree"
 import { updateCssElement } from "./dataElement/styleElement"
 import { canonicalFileName, getDir, addPath } from "./utils/appUtils"
-import { getRenderer } from "./markdown/markedExt"
-import { makeFileRegexChecker, isURL, addPathToUrl, Bean } from "./utils/appUtils"
+import { parseMarkdown, parseAndDiffMarkdown, HtmlInfoAndDiff } from "./markdown/markedExt"
+import { makeFileRegexChecker, isURL, addPathToUrl } from "./utils/appUtils"
 import { getProxyDataClass } from "./utils/proxyData"
 import { PageTreeItemType, HtmlInfo } from "./tree/PageTree"
 import { convertToScanTreeFolder } from "./tree/ScanTree"
@@ -33,7 +33,15 @@ function getRootUrl():URL {
     return url
 }
 
-class MediatorData {    
+function addMarkdownClass<T extends HtmlInfo>(info:T, className:string):T {
+    return {
+        ...info,
+        html: `<div class="${className}">${info.html}</div>`
+    }
+
+}
+
+class AppData {    
     readonly rootUrl: URL = getRootUrl()
     rootFolder: FolderType = createRootFolder<WikiFileType>()
     pageTreeRoot: FileTreeFolderType<PageTreeItemType> = createRootFolder<PageTreeItemType>()
@@ -44,7 +52,7 @@ class MediatorData {
     checkInterval: number = 1000
 }
 
-export class Mediator extends MediatorData {
+export class AppHandler extends AppData {
 
     readonly worker: WorkerInvoke<WorkerMessageType>
     readonly config: ConfigType
@@ -71,11 +79,20 @@ export class Mediator extends MediatorData {
         this.worker.addEventHandler("checkCurrentPageDone", (payload)=>this.checkCurrentPageDone(payload))
     }
 
-    convertToHtml(dirPath:string, markdownText:string, prevRecordList:RendererRecord[] = [], setId:(id:string)=>void = (_)=>{}):HtmlInfo {        
-        const headingTree = genHeadingTreeRoot()
-        const recordList:RendererRecord[] = []     
-        const renderer = getRenderer(this.rootFolder, dirPath, this.isMarkdown, headingTree, recordList)
-        return { html:`<div class="${this.config.markdownBodyClass}">${renderer(markdownText, prevRecordList, setId)}</div>`, heading: headingTree, recordList: recordList }
+    convertToHtmlAndDiff(dirPath:string, markdownText:string, prevRecordList:RendererRecord[]):HtmlInfoAndDiff {
+        return addMarkdownClass(parseAndDiffMarkdown(markdownText, {
+            root: this.rootFolder,
+            dir: dirPath,
+            isMarkdown: this.isMarkdown
+        }, prevRecordList), this.config.markdownBodyClass)
+    }
+
+    convertToHtml(dirPath:string, markdownText:string):HtmlInfo {
+        return addMarkdownClass(parseMarkdown(markdownText, {
+            root: this.rootFolder,
+            dir: dirPath,
+            isMarkdown: this.isMarkdown
+        }), this.config.markdownBodyClass)
     }
 
     resetRootFolder():void {
@@ -279,14 +296,12 @@ export class Mediator extends MediatorData {
         const isSame = updateFileOfTree(this.rootFolder, pagePath, payload.markdownFile, isSameFile)
                 
         if (isNewFile || !isSame) {            
-            if (prevPageInfo !== undefined && prevPageInfo.type === "markdown" && this.currentPage === pagePath && !isSame) {                
-                const idBean = new Bean<string>()
-                const htmlInfo = this.convertToHtml(getDir(pagePath), payload.markdownFile.markdown, prevPageInfo.recordList, idBean.setter)
+            if (prevPageInfo !== undefined && prevPageInfo.type === "markdown" && this.currentPage === pagePath && !isSame) {                                
+                const htmlInfo = this.convertToHtmlAndDiff(getDir(pagePath), payload.markdownFile.markdown, prevPageInfo.recordList)
                 updateFileOfTree(this.pageTreeRoot, pagePath, { ...htmlInfo, type: "markdown" })     
-                this.dispatcher.updateHtml({ title: this.currentPage, html: htmlInfo.html })
-                const diffId = idBean.get()
-                if (diffId !== undefined) {
-                    this.dispatcher.updateDiffId({ diffId: diffId })
+                this.dispatcher.updateHtml({ title: this.currentPage, html: htmlInfo.html })                
+                if (htmlInfo.diffId !== undefined) {
+                    this.dispatcher.updateDiffId({ diffId: htmlInfo.diffId })
                 }
             }
             else {
@@ -337,5 +352,5 @@ export class Mediator extends MediatorData {
     }    
 }
 
-export const mediatorData = new MediatorData()
-export const MediatorProxy = getProxyDataClass(Mediator, mediatorData)
+export const appData = new AppData()
+export const AppHandlerProxy = getProxyDataClass(AppHandler, appData)

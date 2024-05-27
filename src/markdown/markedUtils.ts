@@ -34,7 +34,7 @@ export function genRendererObject<Ret>(render:(key:keyof marked.RendererApi)=>(.
     }
 }
 
-export function postRenderer(rndrObj:marked.RendererObject, postObj: PostRendererObject):Required<marked.RendererObject> {
+export function addPostRenderer(rndrObj:marked.RendererObject, postObj: PostRendererObject):Required<marked.RendererObject> {
     return {
         code: (...args:Parameters<marked.RendererApi['code']>) => postObj.code((rndrObj.code && rndrObj.code(...args)) || defaultRenderer.code(...args)),                
         blockquote: (...args:Parameters<marked.RendererApi['blockquote']>) => postObj.blockquote((rndrObj.blockquote && rndrObj.blockquote(...args)) || defaultRenderer.blockquote(...args)),

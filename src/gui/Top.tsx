@@ -4,7 +4,7 @@ import { createContext, useEffect } from "react"
 import { topReducer, TopStateType } from "./TopReducer"
 import { PageView } from "./PageView"
 import { PageTreeView } from "./PageTreeView"
-import { Mediator, MediatorProxy } from "../Mediator"
+import { AppHandler, AppHandlerProxy } from "../app"
 import { SearchAppBar } from "./SearchAppBar"
 import { WorkerInvoke } from "../utils/WorkerMessage"
 import { WorkerMessageType } from "../worker/WorkerMessageType"
@@ -14,7 +14,7 @@ import { extract } from "../fileIO/extract"
 import Grid from "@mui/material/Grid"
 
 export interface TopContextType {
-    mediator: Mediator
+    appHandler: AppHandler
 }
 
 export const TopContext = createContext<TopContextType>(Object.create(null))
@@ -28,19 +28,17 @@ export interface TopProps {
 
 export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {    
 
-    console.log(`Top`)
-    
     const [state, dispatch] = React.useReducer(topReducer, props.initialState)
     const dispatcher = topDispatcher.build(dispatch)
-    const mediator = new MediatorProxy(props.worker, props.config, dispatcher)   
-    const rootFolder = mediator.rootFolder    
+    const appHandler = new AppHandlerProxy(props.worker, props.config, dispatcher)   
+    const rootFolder = appHandler.rootFolder    
     const context:TopContextType = {
-        mediator: mediator
+        appHandler: appHandler
     }
     
     // Call once
     useEffect(() => {
-        mediator.onGuiInitialized()       
+        appHandler.onGuiInitialized()       
     }, [])
     
     // Scroll to heading when changed
@@ -68,12 +66,12 @@ export const Top: React.FunctionComponent<TopProps> = (props:TopProps) => {
         <SearchAppBar
             title={state.title}
             packFileName={state.packFileName}
-            pack={async () => await createPack(props.templateHtml, mediator)}
+            pack={async () => await createPack(props.templateHtml, appHandler)}
             unpack={async () => extract(rootFolder)}
         ></SearchAppBar>        
         <Grid container spacing={2}>
             <Grid item xs={3}>
-                <PageTreeView root={context.mediator.pageTreeRoot}></PageTreeView>
+                <PageTreeView root={context.appHandler.pageTreeRoot}></PageTreeView>
             </Grid>
             <Grid item xs={6}>
                 <PageView html={state.html}></PageView>

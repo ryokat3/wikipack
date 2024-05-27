@@ -1,8 +1,8 @@
-import { Mediator } from "../Mediator"
+import { AppHandler } from "../app"
 import { saveFolderToElement, saveJsonToElement } from "../dataElement/dataToElement"
 import { CONFIG_ID, WIKIPACK_SCRIPT_ID } from "../constant"
 
-export async function createPack(template:string, mediator:Mediator):Promise<Blob> {
+export async function createPack(template:string, mediator:AppHandler):Promise<Blob> {
     const parser = new DOMParser()
     const doc = parser.parseFromString(template, 'text/html')
     const scriptElem = doc.getElementById(WIKIPACK_SCRIPT_ID)

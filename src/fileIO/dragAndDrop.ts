@@ -1,6 +1,6 @@
-import { Mediator } from "../Mediator"
+import { AppHandler } from "../app"
 
-async function ondropped(mediator: Mediator, ev: Event) {    
+async function ondropped(mediator: AppHandler, ev: Event) {    
     if (!(ev instanceof DragEvent)) {
         return
     }
@@ -58,7 +58,7 @@ async function ondropped(mediator: Mediator, ev: Event) {
     }
 }
 
-export function setupDragAndDrop(mediator:Mediator) {
+export function setupDragAndDrop(mediator:AppHandler) {
     window.addEventListener('dragenter', function (e: Event) {
         e.stopPropagation()
         e.preventDefault()

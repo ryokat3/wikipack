@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client"
 import { Top } from "./gui/Top"
 import { WorkerInvoke } from "./utils/WorkerMessage"
 import { WorkerMessageType } from "./worker/WorkerMessageType"
-import { mediatorData } from "./Mediator"
+import { appData } from "./app"
 import { readConfig } from "./config"
 import { TopStateType } from "./gui/TopReducer"
 import { isEmptyFileTreeFolder, updateFileOfTree } from "./tree/FileTree"
@@ -27,14 +27,14 @@ window.onload = async function () {
     
     // Set File Element
     //
-    await injectAllMarkdownFileFromElement(mediatorData.rootFolder, isMarkdownFile)
-    await injectAllCssFileFromElement(mediatorData.rootFolder)
-    await injectAllDataFileFromElement(mediatorData.rootFolder)
+    await injectAllMarkdownFileFromElement(appData.rootFolder, isMarkdownFile)
+    await injectAllCssFileFromElement(appData.rootFolder)
+    await injectAllDataFileFromElement(appData.rootFolder)
 
     // Set default Markdown page if Markdown File element not found
     //
-    if (isEmptyFileTreeFolder(mediatorData.rootFolder)) {
-        updateFileOfTree(mediatorData.rootFolder, config.topPage, {
+    if (isEmptyFileTreeFolder(appData.rootFolder)) {
+        updateFileOfTree(appData.rootFolder, config.topPage, {
             ...getHyperRefData(defaultMarkdown, "", isMarkdownFile),
             type: "markdown",
             markdown: defaultMarkdown,

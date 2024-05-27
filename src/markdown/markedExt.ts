@@ -5,8 +5,10 @@ import { getFileFromTree } from "../tree/FileTree"
 import { HyperRefData, FolderType } from "../tree/WikiFile"
 import { addPath, isURL, randomString, deepEqual } from "../utils/appUtils"
 import { HeadingNumber } from "./HeadingNumber"
-import { HeadingTreeType } from "../tree/WikiFile"
-import { RendererRecord, genRendererObject, postRenderer, PostRendererObject } from "./markedUtils"
+import { HeadingTreeType, genHeadingTreeRoot } from "../tree/WikiFile"
+import { RendererRecord, genRendererObject, addPostRenderer, PostRendererObject } from "./markedUtils"
+import { Bean } from "../utils/appUtils"
+import { HtmlInfo } from "../tree/PageTree"
 
 
 export function addElementId(setId:(id:string)=>void) {
@@ -27,8 +29,13 @@ export function addElementId(setId:(id:string)=>void) {
     }
 }
 
-export function createAddElementIdRenderer(equality:CheckEquality, setId:(id:string)=>void):PostRendererObject {
-    const addIdFunc = addElementId(setId)
+export function createAddElementIdRenderer(equality:CheckEquality):{
+        postRenderer: PostRendererObject,
+        getId: ()=>string|undefined
+    } {
+    const idBean = new Bean<string>()
+
+    const addIdFunc = addElementId(idBean.setter)
     const elementFunc = (htmlStr:string) => {
         return equality.check() ? htmlStr : addIdFunc(htmlStr)
     }
@@ -38,32 +45,35 @@ export function createAddElementIdRenderer(equality:CheckEquality, setId:(id:str
         }
         else {
             const randomId = randomString()            
-            setId(randomId)
+            idBean.set(randomId)
             return `<span id="${randomId}">${text}</span>`
         }
     }
 
     return {
-        code: elementFunc,        
-        blockquote: elementFunc,
-        html: textFunc,
-        heading: elementFunc,
-        hr: elementFunc,
-        list: elementFunc,
-        listitem: elementFunc,
-        checkbox: elementFunc,
-        paragraph: elementFunc,
-        table: elementFunc,
-        tablerow: elementFunc,
-        tablecell: elementFunc,
-        strong: elementFunc,
-        em: elementFunc,
-        codespan: elementFunc,
-        br: elementFunc,
-        del: elementFunc,
-        link: elementFunc,
-        image: elementFunc,
-        text: textFunc
+        postRenderer: {
+            code: elementFunc,        
+            blockquote: elementFunc,
+            html: textFunc,
+            heading: elementFunc,
+            hr: elementFunc,
+            list: elementFunc,
+            listitem: elementFunc,
+            checkbox: elementFunc,
+            paragraph: elementFunc,
+            table: elementFunc,
+            tablerow: elementFunc,
+            tablecell: elementFunc,
+            strong: elementFunc,
+            em: elementFunc,
+            codespan: elementFunc,
+            br: elementFunc,
+            del: elementFunc,
+            link: elementFunc,
+            image: elementFunc,
+            text: textFunc
+        },
+        getId: idBean.getter
     }
 }
 
@@ -110,40 +120,43 @@ function extractText(htmlStr:string):string {
     return span.textContent || span.innerText
 }
 
+const defaultRenderer = new marked.Renderer()
 
-function getRendererExtension(    
-    rootFolder:FolderType,
-    dirPath:string,
-    isMarkdown:(fileName:string)=>boolean,
-    headingTree:HeadingTreeType
-): marked.RendererObject {        
-    const renderer = new marked.Renderer()
+export type MarkdownParseContext = {
+    root: FolderType,
+    dir: string,    
+    isMarkdown:(fileName:string)=>boolean    
+}
+
+function createHeadingTreeRenderer(ctxt:MarkdownParseContext): { renderer: marked.RendererObject, heading: HeadingTreeType } {        
+    
+    const headingTree = genHeadingTreeRoot()
     let headingNumber = HeadingNumber.create()
 1
-    return {
+    const renderer =  {
         link(href: string, title: string|null|undefined, text: string) {            
-            const fileName = addPath(dirPath, href)
-            if (isMarkdown(href)) {                                                
-                return renderer.link(`#${fileName}`, title, text)
+            const fileName = addPath(ctxt.dir, href)
+            if (ctxt.isMarkdown(href)) {                                                
+                return defaultRenderer.link(`#${fileName}`, title, text)
             }
             else {                
-                const dataFile = getFileFromTree(rootFolder, fileName)
+                const dataFile = getFileFromTree(ctxt.root, fileName)
                 if ((dataFile !== undefined) && (dataFile.type === 'data')) {
-                    return renderer.link(dataFile.dataRef, title, text)                    
+                    return defaultRenderer.link(dataFile.dataRef, title, text)                    
                 }
                 else {
-                    return renderer.link(href, title, text)
+                    return defaultRenderer.link(href, title, text)
                 }
             }
         },
 
         image(href:string, title:string|null, text:string) {      
-            const fileName = addPath(dirPath, href)
-            const imageFile = getFileFromTree(rootFolder, fileName)
+            const fileName = addPath(ctxt.dir, href)
+            const imageFile = getFileFromTree(ctxt.root, fileName)
             if ((imageFile !== undefined) && (imageFile.type === 'data')) {
-                return renderer.image(imageFile.dataRef, title, text)
+                return defaultRenderer.image(imageFile.dataRef, title, text)
             }
-            return renderer.image(href, title, text)
+            return defaultRenderer.image(href, title, text)
         }, 
 
         heading(text:string, level:number, _raw:string) {
@@ -152,6 +165,11 @@ function getRendererExtension(
             headingTree.add({ text:textContnet, heading: headingNumber })                                    
             return `<h${level} id="${headingNumber}" style="scroll-margin-top:16px;">${text}</h${level}>`            
         }
+    }
+
+    return {
+        renderer: renderer,
+        heading: headingTree
     }
 }
 
@@ -169,24 +187,15 @@ function decodeUriOrEcho(uri: string) {
     }
 }
 
-export function createRendererRecorder(rendererRecordList:RendererRecord[]):marked.RendererObject {
-    function recoder<T extends keyof marked.RendererApi>(type:T) {
-        return (...args:Parameters<marked.RendererApi[T]>):false => {
-            rendererRecordList.push({
-                type: type,
-                parameters: args
-            } as any)
-            return false
-        }
-    }
-    return genRendererObject(recoder)
-}
+export function createDiffCheckRenderer(prevRecordList:RendererRecord[]): {
+        renderer: (type:keyof marked.RendererApi) => (...args:Parameters<RendererApi[typeof type]>) =>false,
+        equality: FailOnce
+    } {
 
-export function createCompRendererRecord(prevRecordList:RendererRecord[], equality:FailOnce):(type:keyof marked.RendererApi) => (...args:Parameters<RendererApi[typeof type]>) =>false {
-
+    const equality = new FailOnce()
     let idx:number = -1
 
-    return (type:keyof marked.RendererApi) => (...args:Parameters<RendererApi[typeof type]>):false => {
+    const renderer = (type:keyof marked.RendererApi) => (...args:Parameters<RendererApi[typeof type]>):false => {
         if (equality.foundFalse) {
             return false
         }
@@ -200,17 +209,30 @@ export function createCompRendererRecord(prevRecordList:RendererRecord[], equali
         equality.set(result)                
         return false
     }
+
+    return {
+        renderer: renderer,
+        equality: equality
+    }
 }
 
-function createRecordList(recordList:RendererRecord[]):(type:keyof marked.RendererApi) => (...args:Parameters<RendererApi[typeof type]>) =>false {
+function createRecordListRenderer():{
+        renderer: (type:keyof marked.RendererApi) => (...args:Parameters<RendererApi[typeof type]>) =>false,
+        recordList: RendererRecord[]
+    } {
 
-    return (type:keyof marked.RendererApi) => (...args:Parameters<RendererApi[typeof type]>):false => {
-        console.log(`RECORD: type: ${type}, parameters: ${JSON.stringify(args)}`)
+    const recordList:RendererRecord[] = []
+    const renderer = (type:keyof marked.RendererApi) => (...args:Parameters<RendererApi[typeof type]>):false => {        
         recordList.push({
             type:type,
             parameters: args
         } as any)
         return false
+    }
+
+    return {
+        renderer: renderer,
+        recordList: recordList
     }
 }
 
@@ -246,74 +268,88 @@ export class FailOnce implements CheckEquality {
     }
 }
 
+const highlightExtension = markedHighlight({
+    langPrefix: 'hljs language-',
+     highlight(code, _lang, _info) {
 
-export function getRenderer(rootFolder: FolderType,  dirPath:string, isMarkdown:(fileName:string)=>boolean, headingTree:HeadingTreeType, recordList:RendererRecord[]) {
-    const highlightExtension = markedHighlight({
-        langPrefix: 'hljs language-',
-         highlight(code, _lang, _info) {
+        // NOTE: to avoid space character in lang
+        //    
+        const lang = decodeUriOrEcho(_lang)
 
-            // NOTE: to avoid space character in lang
-            //    
-            const lang = decodeUriOrEcho(_lang)
+        if ((!lang) || (lang.match(colorAndKeywordsRegex) === null)) {
+            const language = hljs.getLanguage(lang) ? lang : 'plaintext'
+            return hljs.highlight(code, { language }).value
+        }
 
-            if ((!lang) || (lang.match(colorAndKeywordsRegex) === null)) {
-                const language = hljs.getLanguage(lang) ? lang : 'plaintext'
-                return hljs.highlight(code, { language }).value
+        const escapedCode = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+        const highlightedCode = lang.split(';').reduce((codeByColor, colorAndKeywords) => {
+
+            const colorAndKeywordsMatch: RegExpMatchArray | null = colorAndKeywords.match(colorAndKeywordsRegex)
+            if (colorAndKeywordsMatch === null) {
+                return codeByColor
             }
+            else {
+                const isTextHighlight: boolean = (colorAndKeywordsMatch[1][0] === '#')
+                const color: string = colorAndKeywordsMatch[1].substring(1)
+                const isRgb: boolean = (color.match(/^[0-9a-fA-F]{3,6}$/) !== null)
 
-            const escapedCode = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                return colorAndKeywordsMatch[2].split(',').reduce((codeByWord, keyword) => {
+                    return codeByWord.replace(new RegExp(keyword, 'gi'), `<span style="${(isTextHighlight) ? 'color' : 'background-color'}:${(isRgb) ? '#' : ''}${color}">${keyword}</span>`)
+                }, codeByColor)
+            }
+        }, escapedCode)
 
-            const highlightedCode = lang.split(';').reduce((codeByColor, colorAndKeywords) => {
+        return `<pre><code>${highlightedCode}</code></pre>`        
+    }
+})
 
-                const colorAndKeywordsMatch: RegExpMatchArray | null = colorAndKeywords.match(colorAndKeywordsRegex)
-                if (colorAndKeywordsMatch === null) {
-                    return codeByColor
-                }
-                else {
-                    const isTextHighlight: boolean = (colorAndKeywordsMatch[1][0] === '#')
-                    const color: string = colorAndKeywordsMatch[1].substring(1)
-                    const isRgb: boolean = (color.match(/^[0-9a-fA-F]{3,6}$/) !== null)
-
-                    return colorAndKeywordsMatch[2].split(',').reduce((codeByWord, keyword) => {
-                        return codeByWord.replace(new RegExp(keyword, 'gi'), `<span style="${(isTextHighlight) ? 'color' : 'background-color'}:${(isRgb) ? '#' : ''}${color}">${keyword}</span>`)
-                    }, codeByColor)
-                }
-            }, escapedCode)
-
-            return `<pre><code>${highlightedCode}</code></pre>`
-        }
-    })
-
-    return (text: string, prevRecordList:RendererRecord[], setId:(id:string)=>void): string => {
-
-        const failOnce = new FailOnce()
-        getRecordList(text, recordList, prevRecordList, failOnce)
+export type HtmlInfoAndDiff = HtmlInfo & {
+    diffId: string|undefined
+}
 
 
-        const highlightMarked = new Marked(highlightExtension)        
-        const renderer = getRendererExtension(rootFolder, dirPath, isMarkdown, headingTree)        
+export function parseAndDiffMarkdown(
+        markdown:string,
+        ctxt: MarkdownParseContext,
+        prevMd: RendererRecord[]
+    ):HtmlInfoAndDiff {
 
-        if (prevRecordList.length > 0) {
-            highlightMarked.use({ renderer:postRenderer(renderer, createAddElementIdRenderer(failOnce, setId)) })                        
-        }
-        else {
-            highlightMarked.use({ renderer:renderer })            
-        }
-        
-        return highlightMarked.parse(text, { async: false} ) as string
+    const recordListRenderer = createRecordListRenderer()
+    const diffCheckRenderer = createDiffCheckRenderer(prevMd)
+    doParse(markdown, new Marked(), [ genRendererObject(diffCheckRenderer.renderer), genRendererObject(recordListRenderer.renderer) ])
+
+    const headingRenderer = createHeadingTreeRenderer(ctxt)        
+    const postRenderer = createAddElementIdRenderer(diffCheckRenderer.equality)
+    const renderer = addPostRenderer(headingRenderer.renderer, postRenderer.postRenderer)
+
+    return {
+        html: doParse(markdown, new Marked(highlightExtension), [renderer]),
+        recordList: recordListRenderer.recordList,
+        heading: headingRenderer.heading,
+        diffId: postRenderer.getId()
+    }                      
+}
+
+export function parseMarkdown(
+        markdown:string,
+        ctxt: MarkdownParseContext
+    ):HtmlInfo {
+
+    const recordListRenderer = createRecordListRenderer()    
+    doParse(markdown, new Marked(), [ genRendererObject(recordListRenderer.renderer) ])
+
+    const headingRenderer = createHeadingTreeRenderer(ctxt)      
+    return {
+        html: doParse(markdown, new Marked(highlightExtension), [ headingRenderer.renderer ] ),
+        recordList: recordListRenderer.recordList,
+        heading: headingRenderer.heading     
     }
 }
 
-function getRecordList(text:string, recordList:RendererRecord[], prevRecordList:RendererRecord[], failOnce:FailOnce):RendererRecord[] {    
-    const recordRenderer = createRecordList(recordList)
-    const compRenderer = createCompRendererRecord(prevRecordList, failOnce)
-
-    const parser = new Marked()
-
-    parser.use({ renderer:genRendererObject(compRenderer) })
-    parser.use({ renderer:genRendererObject(recordRenderer) })
-    
-    parser.parse(text, { async: false} ) as string
-
-    return recordList
+function doParse(markdown:string, parser:marked.Marked, rendererList:marked.RendererObject[]):string {
+    for (const renderer of rendererList) {
+        parser.use({ renderer: renderer})
+    }
+    return parser.parse(markdown, { async: false} ) as string
 }
