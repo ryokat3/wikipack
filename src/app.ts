@@ -289,7 +289,7 @@ export class AppHandler extends AppData {
     // Handler for Worker Message Responses
     ////////////////////////////////////////////////////////////////////////
 
-    updateMarkdownFile(payload:WorkerMessageType['updateMarkdownFile']['response']):void {      
+    updateMarkdownFile(payload:WorkerMessageType['updateMarkdownFile']['response']):void {        
         const pagePath = canonicalFileName(payload.pagePath)
         const prevPageInfo = getFileFromTree(this.pageTreeRoot, pagePath)        
         const isNewFile = prevPageInfo === undefined

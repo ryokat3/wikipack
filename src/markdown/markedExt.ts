@@ -5,7 +5,7 @@ import { getFileFromTree } from "../tree/FileTree"
 import { HyperRefData, FolderType } from "../tree/WikiFile"
 import { addPath, isURL, randomString, deepEqual } from "../utils/appUtils"
 import { HeadingNumber } from "./HeadingNumber"
-import { HeadingTreeType, genHeadingTreeRoot } from "../tree/WikiFile"
+import { genHeadingTreeRoot } from "../tree/WikiFile"
 import { RendererRecord, genRendererObject, addPostRenderer, PostRendererObject } from "./markedUtils"
 import { Bean } from "../utils/appUtils"
 import { HtmlInfo } from "../tree/PageTree"
@@ -49,9 +49,14 @@ export function createAddElementIdRenderer(equality:CheckEquality):{
             return `<span id="${randomId}">${text}</span>`
         }
     }
+    const ignoreFunc = (text:string) => {
+        equality.check()
+        return text
+    }
 
     return {
         postRenderer: {
+            space: ignoreFunc,
             code: elementFunc,        
             blockquote: elementFunc,
             html: textFunc,
@@ -85,7 +90,7 @@ function getWalkTokenExtension(hrefData: HyperRefData, dirPath: string, isMarkdo
                 hrefData.imageList.push(addPath(dirPath, token.href))
             }
         }
-        else if (token.type === "link") {
+        else if (token.type === "link") {            
             const pagePath = addPath(dirPath, token.href)
             if (!isURL(token.href)) {
                 if (isMarkdownFile(token.href)) {
@@ -120,7 +125,7 @@ function extractText(htmlStr:string):string {
     return span.textContent || span.innerText
 }
 
-const defaultRenderer = new marked.Renderer()
+const defaultRenderer:marked.Renderer = new marked.Renderer()
 
 export type MarkdownParseContext = {
     root: FolderType,
@@ -128,42 +133,45 @@ export type MarkdownParseContext = {
     isMarkdown:(fileName:string)=>boolean    
 }
 
-function createHeadingTreeRenderer(ctxt:MarkdownParseContext): { renderer: marked.RendererObject, heading: HeadingTreeType } {        
-    
+function createHeadingTreeRenderer(ctxt:MarkdownParseContext) {        
+        
+
     const headingTree = genHeadingTreeRoot()
     let headingNumber = HeadingNumber.create()
 1
-    const renderer =  {
-        link(href: string, title: string|null|undefined, text: string) {            
-            const fileName = addPath(ctxt.dir, href)
-            if (ctxt.isMarkdown(href)) {                                                
-                return defaultRenderer.link(`#${fileName}`, title, text)
+    const renderer:Partial<marked.RendererApi> =  {
+        link(token:marked.Tokens.Link) {        
+            const fileName = addPath(ctxt.dir, token.href)
+            console.log(`token.href = ${token.href}`)
+            console.log(`token = ${token}`)
+            if (ctxt.isMarkdown(token.href)) {                                                
+                return defaultRenderer.link({ ...token, href: `#${fileName}` })
             }
             else {                
                 const dataFile = getFileFromTree(ctxt.root, fileName)
                 if ((dataFile !== undefined) && (dataFile.type === 'data')) {
-                    return defaultRenderer.link(dataFile.dataRef, title, text)                    
+                    return defaultRenderer.link({ ...token, href: dataFile.dataRef })                    
                 }
                 else {
-                    return defaultRenderer.link(href, title, text)
+                    return defaultRenderer.link(token)
                 }
             }
         },
 
-        image(href:string, title:string|null, text:string) {      
-            const fileName = addPath(ctxt.dir, href)
+        image(token:marked.Tokens.Image) {      
+            const fileName = addPath(ctxt.dir, token.href)
             const imageFile = getFileFromTree(ctxt.root, fileName)
             if ((imageFile !== undefined) && (imageFile.type === 'data')) {
-                return defaultRenderer.image(imageFile.dataRef, title, text)
+                return defaultRenderer.image({ ...token, href:imageFile.dataRef })
             }
-            return defaultRenderer.image(href, title, text)
+            return defaultRenderer.image(token)
         }, 
 
-        heading(text:string, level:number, _raw:string) {
-            headingNumber = headingNumber.increase(level)
-            const textContnet = extractText(text)            
+        heading(token:marked.Tokens.Heading) {
+            headingNumber = headingNumber.increase(token.depth)
+            const textContnet = extractText(token.text)            
             headingTree.add({ text:textContnet, heading: headingNumber })                                    
-            return `<h${level} id="${headingNumber}" style="scroll-margin-top:16px;">${text}</h${level}>`            
+            return `<h${token.depth} id="${headingNumber}" style="scroll-margin-top:16px;">${token.text}</h${token.depth}>`            
         }
     }
 
@@ -317,12 +325,14 @@ export function parseAndDiffMarkdown(
 
     const recordListRenderer = createRecordListRenderer()
     const diffCheckRenderer = createDiffCheckRenderer(prevMd)
+    console.log(`from parseAndDiffMarkdown 1`)
     doParse(markdown, new Marked(), [ genRendererObject(diffCheckRenderer.renderer), genRendererObject(recordListRenderer.renderer) ])
 
     const headingRenderer = createHeadingTreeRenderer(ctxt)        
     const postRenderer = createAddElementIdRenderer(diffCheckRenderer.equality)
     const renderer = addPostRenderer(headingRenderer.renderer, postRenderer.postRenderer)
 
+    console.log(`from parseAndDiffMarkdown 2`)
     return {
         html: doParse(markdown, new Marked(highlightExtension), [renderer]),
         recordList: recordListRenderer.recordList,
@@ -337,19 +347,30 @@ export function parseMarkdown(
     ):HtmlInfo {
 
     const recordListRenderer = createRecordListRenderer()    
+    console.log(`from parseMarkdown 1`)
     doParse(markdown, new Marked(), [ genRendererObject(recordListRenderer.renderer) ])
 
     const headingRenderer = createHeadingTreeRenderer(ctxt)      
+    console.log(`from parseMarkdown 2`)
+    const defaultRenderer = new marked.Renderer()
+    
+    const renderer = {
+        ...defaultRenderer,
+        ...headingRenderer.renderer
+    }
+    
     return {
-        html: doParse(markdown, new Marked(highlightExtension), [ headingRenderer.renderer ] ),
+        // html: doParse(markdown, new Marked(highlightExtension), [ headingRenderer.renderer ] ),
+        html: doParse(markdown, new Marked(highlightExtension), [ renderer ] ),
+        // html: doParse(markdown, new Marked(highlightExtension), [ defaultRenderer ] ),
         recordList: recordListRenderer.recordList,
         heading: headingRenderer.heading     
     }
 }
 
 function doParse(markdown:string, parser:marked.Marked, rendererList:marked.RendererObject[]):string {
-    for (const renderer of rendererList) {
-        parser.use({ renderer: renderer})
+    for (const renderer of rendererList) {        
+        parser.use({ useNewRenderer: true, renderer: renderer})        
     }
     return parser.parse(markdown, { async: false} ) as string
 }

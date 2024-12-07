@@ -96,7 +96,7 @@ export function getFileName(filePath:string|undefined|null):string {
 }
 
 export function addPathToUrl(urlStr:string, fileName:string, isMarkdownFile:(name:string)=>boolean):string {
-    const url = new URL(urlStr)
+    const url = new URL(urlStr)    
     url.pathname = "/" + (isMarkdownFile(url.pathname) ? getDir(url.pathname) : canonicalFileName(url.pathname)) + "/" + fileName
     return url.toString()
 }
@@ -106,8 +106,8 @@ Markdown File
 ************************************************************************************************/
 
 export function makeFileRegexChecker(regexList:string[]):(name:string)=>boolean {
-    const compiledRegexList = regexList.map((re)=>new RegExp(re, "i"))
-    return function (name:string) {        
+    const compiledRegexList = regexList.map((re)=>new RegExp(re, "i"))    
+    return function (name:string) {                
         for (const regex of compiledRegexList) {            
             if (name.match(regex)) {
                 return true
